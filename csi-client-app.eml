@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component inheritJdk="true">
+	<exclude-output/>
+	<contentEntry url="file://$MODULE_DIR$"/>
+	<levels>
+		<level name="gson-2.8.5" value="project"/>
+		<level name="lombok" value="project"/>
+		<level name="xchart-3.5.4" value="project"/>
+	</levels>
+</component>
