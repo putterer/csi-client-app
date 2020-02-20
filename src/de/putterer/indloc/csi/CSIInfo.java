@@ -1,5 +1,6 @@
 package de.putterer.indloc.csi;
 
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,18 +12,14 @@ import java.nio.ByteBuffer;
  * Represents a CSIInfo object as sent by a station
  */
 @Data
-public class CSIInfo implements Serializable {
+public class CSIInfo extends DataInfo implements Serializable {
 	private static final transient long serialVersionUID = 979206976253508405L;
 
-	private long clientTimestamp; // the timestamp when this message was RECEIVED by this client, unix timestamp in millis
-	
-	private int messageId; // the message id as set by the csi server
 	private CSIStatus csi_status = new CSIStatus();
 	private Complex[][][] csi_matrix = new Complex[3][3][114];
 
 	public CSIInfo(long clientTimestamp, int messageId, CSIStatus csi_status, Complex[][][] csi_matrix) {
-		this.clientTimestamp = clientTimestamp;
-		this.messageId = messageId;
+		super(clientTimestamp, messageId);
 		this.csi_status = csi_status;
 		this.csi_matrix = csi_matrix;
 	}
@@ -32,9 +29,8 @@ public class CSIInfo implements Serializable {
 	 * @param buffer
 	 */
 	public CSIInfo(ByteBuffer buffer) {
-		clientTimestamp = System.currentTimeMillis();
-		
-		messageId = buffer.getInt();
+		super(System.currentTimeMillis(), buffer.getInt());
+
 		csi_status.tstamp = buffer.getLong();
 		csi_status.channel = buffer.getShort();
 		csi_status.chanBW = buffer.get();

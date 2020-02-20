@@ -1,10 +1,12 @@
 package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Config;
+import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.PhaseOffsetCalibration;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.FilterOptions;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
+import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.util.Logger;
 
 import java.io.IOException;
@@ -34,15 +36,15 @@ public class CSITesting {
 		previews.add(new CSIPreview(new CSIPreview.PhaseDiffEvolutionPreview(0, 2, new int[] {10, 30, 50})));
 
 		SubscriptionOptions subscriptionOptions = new SubscriptionOptions(
-				new FilterOptions(CSIClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
+				new FilterOptions(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
 		);
 
 		List<Double> phaseShiftHistory = new LinkedList<>();
 		List<CSIInfo[]> shiftedCsiGroup = new LinkedList<>();
 		
 		for(Station station : Config.ROOM.getStations()) {
-			CSIClient.addClient(new CSIClient(station, csiInfo -> {
-                previews.forEach(p -> p.setCSIData(csiInfo));
+			DataClient.addClient(new DataClient(station, subscriptionOptions, new DataConsumer<CSIInfo>(CSIInfo.class, csiInfo -> {
+				previews.forEach(p -> p.setCSIData(csiInfo));
 				Logger.info("Received message with payload length: %d", csiInfo.getCsi_status().getPayload_len());
 				Logger.warn("Antenna signal strenght: 0: %d., 1: %d, 2: %d",
 						csiInfo.getCsi_status().getRssi_0(),
@@ -87,14 +89,14 @@ public class CSITesting {
 				}
 
 				if((csiInfo.getCsi_status().getRssi_0() > 45 && (rxAnt0 != 0 && rxAnt1 != 0))
-					|| (csiInfo.getCsi_status().getRssi_1() > 45 && (rxAnt0 != 1 && rxAnt1 != 1))
-					|| (csiInfo.getCsi_status().getRssi_2() > 45 && (rxAnt0 != 2 && rxAnt1 != 2))) {
+						|| (csiInfo.getCsi_status().getRssi_1() > 45 && (rxAnt0 != 1 && rxAnt1 != 1))
+						|| (csiInfo.getCsi_status().getRssi_2() > 45 && (rxAnt0 != 2 && rxAnt1 != 2))) {
 					Logger.error("WRONG ANTENNA CONNECTED");
 				}
 
 				phaseShiftHistory.add(phaseDiff);
 				Logger.warn("Phase diff %d%d: %f,   Avg: %f", rxAnt0, rxAnt1, Math.toDegrees(phaseDiff), Math.toDegrees(phaseShiftHistory.stream().mapToDouble(d -> d).average().getAsDouble()));
-			}, subscriptionOptions));
+			})));
 		}
 
 //		CSIReplay.main(new String[] {

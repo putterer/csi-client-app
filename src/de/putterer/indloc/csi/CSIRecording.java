@@ -1,9 +1,11 @@
 package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Config;
+import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.FilterOptions;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
+import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.util.FileUtils;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.Serialization;
@@ -27,7 +29,7 @@ public class CSIRecording {
 			System.err.println("Running with default configuration...");
 			args = new String[] {
 					"2los90deg_dist4",
-					String.valueOf(CSIClient.DEFAULT_ICMP_PAYLOAD_LENGTH),
+					String.valueOf(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH),
 					String.valueOf(100)
 			};
 		}
@@ -66,7 +68,7 @@ public class CSIRecording {
 
 		recordedPackets = 0;
 		for(Station station : Config.ROOM.getStations()) {
-			CSIClient.addClient(new CSIClient(station, csiInfo -> {
+			DataClient.addClient(new DataClient(station, subscriptionOptions, new DataConsumer<CSIInfo>(CSIInfo.class, csiInfo -> {
 				try {
 					Serialization.save(folder.resolve(station.getHW_ADDRESS() + "-" + csiInfo.getMessageId() + ".csi"), csiInfo);
 				} catch (IOException e) {
@@ -80,7 +82,7 @@ public class CSIRecording {
 					Logger.info("Captured %d packets, terminating.", recordedPackets);
 					System.exit(0);
 				}
-			}, subscriptionOptions));
+			})));
 			Logger.info("Registering station %s", station.getIP_ADDRESS());
 		}
 		

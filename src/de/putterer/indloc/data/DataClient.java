@@ -1,6 +1,8 @@
-package de.putterer.indloc.csi;
+package de.putterer.indloc.data;
 
 import de.putterer.indloc.Station;
+import de.putterer.indloc.csi.CSIInfo;
+import de.putterer.indloc.csi.calibration.AccelerationInfo;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
 import de.putterer.indloc.util.Logger;
@@ -12,15 +14,18 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
- * Represents a connection + subscription to a csi server
+ * Represents a connection + subscription to a data server, this can be a CSI server or an acceleration server
  * The static part contains the general code for sending / receiving messages and handling multiple clients
  */
 @Getter
-public class CSIClient implements CSIProvider {
+public class DataClient {
 	private static final int SERVER_PORT = 9380;
 	private static final int CLIENT_PORT = 9381;
 
@@ -30,6 +35,7 @@ public class CSIClient implements CSIProvider {
 	public static final byte TYPE_CONFIRM_SUBSCRIPTION = 12;
 	public static final byte TYPE_CONFIRM_UNSUBSCRIPTION = 13;
 	public static final byte TYPE_CSI_INFO = 14;
+	public static final byte TYPE_ACCELERATION_INFO = 20;
 	
 	public static final int MAX_MESSAGE_LENGTH = 65507;
 
@@ -39,7 +45,7 @@ public class CSIClient implements CSIProvider {
 	private static int SUBSCRIPTION_ID_FACTORY = 0;
 	
 	private static DatagramSocket socket;
-	private static List<CSIClient> clients = new ArrayList<>();
+	private static List<DataClient> clients = new ArrayList<>();
 	
 	static {
 		try {
@@ -51,7 +57,7 @@ public class CSIClient implements CSIProvider {
 		}
 		
 		Logger.info("Starting csi client on port %d...", CLIENT_PORT);
-		new Thread(CSIClient::listener).start();
+		new Thread(DataClient::listener).start();
 	}
 
 	/**
@@ -68,36 +74,50 @@ public class CSIClient implements CSIProvider {
 				e.printStackTrace();
 			}
 			Logger.trace("Received %d bytes from %s", packet.getLength(), packet.getAddress().getHostAddress());
-			for(CSIClient client : clients) {
-				if(client.getStation().getIP_ADDRESS().equals(packet.getAddress().getHostAddress())) {
-					client.onPacket(packet);
+			synchronized (clients) {
+				for(DataClient client : clients) {
+					if(client.getStation().getIP_ADDRESS().equals(packet.getAddress().getHostAddress())) {
+						client.onPacket(packet);
+					}
 				}
 			}
 		}
 	}
 
-	public static void addClient(CSIClient client) {
-		clients.add(client);
-		client.subscribe();
+	public static void addClient(DataClient client) {
+		synchronized (clients) {
+			clients.add(client);
+			client.subscribe();
+		}
 	}
 	
-	public static void removeClient(CSIClient client) {
-		clients.remove(client);
-		client.unsubscribe();
+	public static void removeClient(DataClient client) {
+		synchronized (clients) {
+			clients.remove(client);
+			client.unsubscribe();
+		}
 	}
 
 	private final Station station; // the station this client is connected to
 	private boolean connected = false; // whether the subscription was successful
 	private final int subscriptionId;
-	private final Consumer<CSIInfo> callback; // callback to be called when CSIInfo was received from this station
+	private final DataConsumer[] consumers; // callback to be called when CSIInfo was received from this station
 	private final SubscriptionOptions subscriptionOptions; // the subscription options for this client, e.g. payload length filter
 
-	public CSIClient(Station station, Consumer<CSIInfo> callback, SubscriptionOptions subscriptionOptions) {
+	public DataClient(Station station, SubscriptionOptions subscriptionOptions, DataConsumer... consumers) {
 		this.station = station;
-		this.callback = callback;
-		this.subscriptionOptions = subscriptionOptions;
+		this.consumers = consumers;
+
+		this.subscriptionOptions = Objects.requireNonNullElseGet(
+				subscriptionOptions,
+				() -> new SubscriptionOptions(new SubscriptionMessage.FilterOptions(0)
+		));
 		
 		this.subscriptionId = SUBSCRIPTION_ID_FACTORY++;
+	}
+
+	public DataClient(Station station, DataConsumer... consumers) {
+		this(station, null, consumers);
 	}
 
 	/**
@@ -152,11 +172,21 @@ public class CSIClient implements CSIProvider {
 		case TYPE_CSI_INFO: {
 			Logger.trace("Got csi from station %s", station.getIP_ADDRESS());
 			CSIInfo info = new CSIInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1));
-			callback.accept(info);
+
+			getApplicableConsumers(CSIInfo.class).forEach(c -> c.accept(info));
 			break;
 		}
+
+		case TYPE_ACCELERATION_INFO: {
+			Logger.trace("Got acceleration info from station %s", station.getIP_ADDRESS());
+			AccelerationInfo info = new AccelerationInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1));
+
+			getApplicableConsumers(AccelerationInfo.class).forEach(c -> c.accept(info));
+			break;
+		}
+
 		default: {
-			Logger.warn("Received packet with unknown type from station %s", station.getIP_ADDRESS());
+			Logger.warn("Received packet with unknown type %d from station %s", packet.getData()[0], station.getIP_ADDRESS());
 		}
 		}
 	}
@@ -174,5 +204,10 @@ public class CSIClient implements CSIProvider {
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private <T> Stream<Consumer<T>> getApplicableConsumers(Class<T> type) {
+		return Arrays.stream(consumers).filter(c -> c.getType().getCanonicalName().equals(type.getCanonicalName()))
+				.map(c -> (Consumer<T>) c.getConsumer());
 	}
 }

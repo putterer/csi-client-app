@@ -1,6 +1,6 @@
 package de.putterer.indloc.csi.messages;
 
-import de.putterer.indloc.csi.CSIClient;
+import de.putterer.indloc.data.DataClient;
 import lombok.Data;
 
 import java.nio.ByteBuffer;
@@ -16,7 +16,7 @@ public class SubscriptionMessage extends Message {
 	@Override
 	public byte[] toBytes() {
 		ByteBuffer buffer = ByteBuffer.allocate(5);
-		buffer.put(CSIClient.TYPE_SUBSCRIBE);
+		buffer.put(DataClient.TYPE_SUBSCRIBE);
 		buffer.putInt(options.filter_options.payload_size);
 		return buffer.array();
 	}
