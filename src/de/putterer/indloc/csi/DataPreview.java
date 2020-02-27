@@ -1,5 +1,7 @@
 package de.putterer.indloc.csi;
 
+import de.putterer.indloc.csi.calibration.AccelerationInfo;
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.CSIUtil;
 import lombok.Getter;
 import org.knowm.xchart.SwingWrapper;
@@ -13,18 +15,21 @@ import org.knowm.xchart.style.Styler.LegendPosition;
 import javax.swing.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.IntStream;
+
+import static de.putterer.indloc.util.Util.square;
 
 /**
  * A preview of incoming / replayed CSI data
  * Requires XChart: https://github.com/knowm/XChart
  */
-public class CSIPreview {
+public class DataPreview<T extends DataInfo> {
 	
 	public static final Styler.ChartTheme CHART_THEME = ChartTheme.XChart;
 
-	// The csi currently being displayed
-	private CSIInfo csi;
+	// The data currently being displayed
+	private DataInfo dataInfo;
 
 	// The preview mode used for displaying
 	@Getter
@@ -33,7 +38,7 @@ public class CSIPreview {
 	private final XYChart chart;
 	private final SwingWrapper<XYChart> wrapper;
 	
-	public CSIPreview(PreviewMode mode) {
+	public DataPreview(PreviewMode mode) {
 		this.mode = mode;
 		
 		chart = mode.createChart();		
@@ -42,8 +47,8 @@ public class CSIPreview {
 		wrapper.displayChart();
 	}
 	
-	public void setCSIData(CSIInfo info) {
-		this.csi = info;
+	public void setData(T info) {
+		this.dataInfo = info;
 		
 		mode.updateChart(info, chart);
 		
@@ -58,7 +63,85 @@ public class CSIPreview {
 		protected int height;
 		
 		public abstract XYChart createChart();
-		public abstract void updateChart(CSIInfo csi, XYChart chart);
+		public abstract void updateChart(DataInfo dataInfo, XYChart chart);
+	}
+
+	public static class AccelerationEvolutionPreview extends PreviewMode {
+		{ width = 700; height = 500; }
+		private final int dataWidth = 150;
+
+		private final List<Double>[] previousDataPoints;
+
+		private final float limit;
+		private final AccelerationType[] accelerationTypes;
+
+		public AccelerationEvolutionPreview(float limit, AccelerationType... accelerationTypes) {
+			this.limit = limit;
+			this.accelerationTypes = accelerationTypes;
+			previousDataPoints = new List[accelerationTypes.length];
+			for (int i = 0;i < accelerationTypes.length;i++) {
+				previousDataPoints[i] = new LinkedList<>();
+				for(int j = 0;j < dataWidth;j++) {
+					previousDataPoints[i].add(0.0);
+				}
+			}
+		}
+
+		@Override
+		public XYChart createChart() {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("Acceleration Preview")
+					.xAxisTitle("Subcarrier")
+					.yAxisTitle("Magnitude")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			chart.getStyler().setYAxisMin((-1.0) * limit);
+			chart.getStyler().setYAxisMax(( 1.0) * limit);
+			chart.getStyler().setXAxisMin((double) dataWidth);
+			chart.getStyler().setXAxisMax(0.0);
+
+			for(AccelerationType accelerationType : accelerationTypes) {
+				chart.addSeries(accelerationType.name(), new double[dataWidth]);
+			}
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof AccelerationInfo)) {
+				return;
+			}
+			AccelerationInfo info = (AccelerationInfo) dataInfo;
+
+
+			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
+
+			for (int accelerationType = 0; accelerationType < accelerationTypes.length; accelerationType++) {
+				List<Double> previousList = this.previousDataPoints[accelerationType];
+				if(previousList.size() == dataWidth) {
+					previousList.remove(previousList.size() - 1);
+				}
+				previousList.add(0, (double)accelerationTypes[accelerationType].valueDerivationFunction.apply(info.getAcceleration()));
+				chart.updateXYSeries(accelerationTypes[accelerationType].name(), xData, previousList.stream().mapToDouble(d -> d).toArray(), null);
+			}
+		}
+
+		public enum AccelerationType {
+			X( accel -> accel[0] ),
+			Y( accel -> accel[1] ),
+			Z( accel -> accel[2] ),
+			EUCLIDEAN( accel -> (float)Math.sqrt(square(accel[0]) + square(accel[1]) + square(accel[2]))),
+			MANHATTAN( accel -> accel[0] + accel[1] + accel[2]),
+			MAX( accel -> Math.max(accel[0], Math.max(accel[1], accel[2])) );
+
+			AccelerationType(Function<float[], Float> valueDerivationFunction) { this.valueDerivationFunction = valueDerivationFunction; }
+			@Getter private final Function<float[], Float> valueDerivationFunction;
+		}
 	}
 
 	/**
@@ -67,7 +150,7 @@ public class CSIPreview {
 	public static class SubcarrierPropertyPreview extends PreviewMode {
 		{ width = 700; height = 500; }
 		
-		public static enum PropertyType { AMPLITUDE, PHASE }
+		public enum PropertyType { AMPLITUDE, PHASE }
 		private final PropertyType type;
 		private final int rxAntennas; // number of rx antennas to display
 		private final int txAntennas; // number of tx antennas to display
@@ -113,7 +196,12 @@ public class CSIPreview {
 		}
 
 		@Override
-		public void updateChart(CSIInfo csi, XYChart chart) {
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
 			int subcarriers = csi.getCsi_status().getNum_tones();
 			
 			for(int rx = 0;rx < rxAntennas;rx++) {
@@ -192,7 +280,12 @@ public class CSIPreview {
 		}
 
 		@Override
-		public void updateChart(CSIInfo csi, XYChart chart) {
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
 			int subcarriers = csi.getCsi_status().getNum_tones();
 			if(subcarriers > 56) {
 				chart.getStyler().setXAxisMax((double) subcarriers);
@@ -284,7 +377,12 @@ public class CSIPreview {
 		}
 
 		@Override
-		public void updateChart(CSIInfo csi, XYChart chart) {
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
 			int subcarriers = csi.getCsi_status().getNum_tones();
 
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
@@ -359,7 +457,12 @@ public class CSIPreview {
 		}
 
 		@Override
-		public void updateChart(CSIInfo csi, XYChart chart) {
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
 			int subcarriers = csi.getCsi_status().getNum_tones();
 			
 			for(int rx = 0;rx < rxAntennas;rx++) {

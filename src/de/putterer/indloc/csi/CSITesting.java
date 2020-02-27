@@ -1,16 +1,19 @@
 package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Config;
-import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.PhaseOffsetCalibration;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.FilterOptions;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
+import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.util.Logger;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,13 +30,13 @@ public class CSITesting {
 		Logger.setLogLevel(Logger.Level.WARNING);
 		int groupThreshold = 10;
 
-	    List<CSIPreview> previews = new ArrayList<>();
-//		previews.add(new CSIPreview(new CSIPreview.CSIPlotPreview(3, 1)));
-//		previews.add(new CSIPreview(new CSIPreview.SubcarrierPropertyPreview(CSIPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE, 3, 1)));
-//		previews.add(new CSIPreview(new CSIPreview.SubcarrierPropertyPreview(CSIPreview.SubcarrierPropertyPreview.PropertyType.PHASE, 3, 1)));
-//		previews.add(new CSIPreview(new CSIPreview.PhaseDiffPreview(0, 1)));
-        previews.add(new CSIPreview(new CSIPreview.PhaseDiffPreview(0, 2)));
-		previews.add(new CSIPreview(new CSIPreview.PhaseDiffEvolutionPreview(0, 2, new int[] {10, 30, 50})));
+	    List<DataPreview> previews = new ArrayList<>();
+//		previews.add(new DataPreview(new DataPreview.CSIPlotPreview(3, 1)));
+//		previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE, 3, 1)));
+//		previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(DataPreview.SubcarrierPropertyPreview.PropertyType.PHASE, 3, 1)));
+//		previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 1)));
+        previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 2)));
+		previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, new int[] {10, 30, 50})));
 
 		SubscriptionOptions subscriptionOptions = new SubscriptionOptions(
 				new FilterOptions(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
@@ -44,7 +47,7 @@ public class CSITesting {
 		
 		for(Station station : Config.ROOM.getStations()) {
 			DataClient.addClient(new DataClient(station, subscriptionOptions, new DataConsumer<CSIInfo>(CSIInfo.class, csiInfo -> {
-				previews.forEach(p -> p.setCSIData(csiInfo));
+				previews.forEach(p -> p.setData(csiInfo));
 				Logger.info("Received message with payload length: %d", csiInfo.getCsi_status().getPayload_len());
 				Logger.warn("Antenna signal strenght: 0: %d., 1: %d, 2: %d",
 						csiInfo.getCsi_status().getRssi_0(),

@@ -1,10 +1,10 @@
 package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Config;
-import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.FilterOptions;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
+import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.util.FileUtils;
 import de.putterer.indloc.util.Logger;
@@ -64,7 +64,7 @@ public class CSIRecording {
 				new FilterOptions(payloadLen)
 		);
 		
-		CSIPreview preview = new CSIPreview(new CSIPreview.CSIPlotPreview(3, 3));
+		DataPreview preview = new DataPreview(new DataPreview.CSIPlotPreview(3, 3));
 
 		recordedPackets = 0;
 		for(Station station : Config.ROOM.getStations()) {
@@ -75,7 +75,7 @@ public class CSIRecording {
 					Logger.error("Couldn't save CSI from %s", station.getIP_ADDRESS());
 					e.printStackTrace();
 				}
-				preview.setCSIData(csiInfo);
+				preview.setData(csiInfo);
 				Logger.debug("Recorded message %d", csiInfo.getMessageId());
 
 				if(recordedPackets++ >= packetLimit) {

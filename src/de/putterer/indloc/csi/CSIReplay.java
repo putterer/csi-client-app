@@ -20,8 +20,8 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static de.putterer.indloc.csi.CSIPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE;
-import static de.putterer.indloc.csi.CSIPreview.SubcarrierPropertyPreview.PropertyType.PHASE;
+import static de.putterer.indloc.csi.DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE;
+import static de.putterer.indloc.csi.DataPreview.SubcarrierPropertyPreview.PropertyType.PHASE;
 
 /**
  * Represents a replay
@@ -142,23 +142,23 @@ public class CSIReplay {
         Path path = Paths.get(args[0]);
         boolean spotfi = args[1].equals("dry") || args[1].equals("lookup") || args[1].equals("store") || args[1].equals("lookup_store");
         int groupThreshold = Integer.parseInt(args[2]);
-        List<CSIPreview> previews = new ArrayList<>();
+        List<DataPreview> previews = new ArrayList<>();
         if(args.length >= 6) {
             int rxAntennas = Integer.parseInt(args[4]);
             int txAntennas = Integer.parseInt(args[5]);
             if(args[3].toLowerCase().contains("a")) {
-                previews.add(new CSIPreview(new CSIPreview.SubcarrierPropertyPreview(AMPLITUDE, rxAntennas, txAntennas)));
+                previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(AMPLITUDE, rxAntennas, txAntennas)));
             }
             if(args[3].toLowerCase().contains("p")) {
-                previews.add(new CSIPreview(new CSIPreview.SubcarrierPropertyPreview(PHASE, rxAntennas, txAntennas)));
+                previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(PHASE, rxAntennas, txAntennas)));
             }
             if(args[3].toLowerCase().contains("c")) {
-                previews.add(new CSIPreview(new CSIPreview.CSIPlotPreview(rxAntennas, txAntennas)));
+                previews.add(new DataPreview(new DataPreview.CSIPlotPreview(rxAntennas, txAntennas)));
             }
         }
         //TODO: remove
         try {Thread.sleep(1000);} catch(InterruptedException e) {e.printStackTrace();}
-//        val prev = new CSIPreview(new CSIPreview.CSIPlotPreview(3, 1));
+//        val prev = new DataPreview(new DataPreview.CSIPlotPreview(3, 1));
 
         CSIReplay replay = new CSIReplay(path, groupThreshold, true);
         for(Station station : replay.getRoom().getStations()) {
@@ -188,7 +188,7 @@ public class CSIReplay {
                             );
                         }
 
-                        previews.forEach(p -> p.setCSIData(shiftedCsi[0]));
+                        previews.forEach(p -> p.setData(shiftedCsi[0]));
                     }, pool);
                     instances.add(instance);
                 }

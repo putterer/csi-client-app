@@ -31,8 +31,8 @@ public class PhaseOffsetCalibration {
     }
 
     public static double getPhaseDiff(List<CSIInfo> csi, int txAntenna, int rxAntenna0, int rxAntenna1) {
-//        CSIPreview preview = new CSIPreview(new CSIPreview.CSIPlotPreview(3, 3));
-//        preview.setCSIData(csi.get(1));
+//        DataPreview preview = new DataPreview(new DataPreview.CSIPlotPreview(3, 3));
+//        preview.setData(csi.get(1));
 
         double totalAverage = 0;
 
