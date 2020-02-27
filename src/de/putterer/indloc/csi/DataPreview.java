@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static de.putterer.indloc.util.Util.square;
+import static de.putterer.indloc.util.Util.euclidean;
+import static de.putterer.indloc.util.Util.manhattan;
 
 /**
  * A preview of incoming / replayed CSI data
@@ -126,21 +127,36 @@ public class DataPreview<T extends DataInfo> {
 				if(previousList.size() == dataWidth) {
 					previousList.remove(previousList.size() - 1);
 				}
-				previousList.add(0, (double)accelerationTypes[accelerationType].valueDerivationFunction.apply(info.getAcceleration()));
+				previousList.add(0, (double)accelerationTypes[accelerationType].valueDerivationFunction.apply(info));
 				chart.updateXYSeries(accelerationTypes[accelerationType].name(), xData, previousList.stream().mapToDouble(d -> d).toArray(), null);
+
+
+				// http://www.trex-game.skipser.com/
+//				if(Math.abs(previousList.get(0)) > 0.1) {
+//					try {
+//						Robot robot = new Robot();
+////						robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+////						robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+//						robot.keyPress(KeyEvent.VK_SPACE);
+//						robot.keyRelease(KeyEvent.VK_SPACE);
+//					} catch (AWTException e) {
+//						e.printStackTrace();
+//					}
+//
+//				}
 			}
 		}
 
 		public enum AccelerationType {
-			X( accel -> accel[0] ),
-			Y( accel -> accel[1] ),
-			Z( accel -> accel[2] ),
-			EUCLIDEAN( accel -> (float)Math.sqrt(square(accel[0]) + square(accel[1]) + square(accel[2]))),
-			MANHATTAN( accel -> accel[0] + accel[1] + accel[2]),
-			MAX( accel -> Math.max(accel[0], Math.max(accel[1], accel[2])) );
+			X( i -> i.accel()[0] - i.getCalibration()[0]),
+			Y( i -> i.accel()[1] - i.getCalibration()[1]),
+			Z( i -> i.accel()[2] - i.getCalibration()[2]),
+			EUCLIDEAN( i -> euclidean(i.accel()) - euclidean(i.getCalibration())),
+			MANHATTAN( i -> manhattan(i.accel()) - manhattan(i.getCalibration())),
+			MAX( i -> Math.max(i.accel()[0], Math.max(i.accel()[1], i.accel()[2])) );
 
-			AccelerationType(Function<float[], Float> valueDerivationFunction) { this.valueDerivationFunction = valueDerivationFunction; }
-			@Getter private final Function<float[], Float> valueDerivationFunction;
+			AccelerationType(Function<AccelerationInfo, Float> valueDerivationFunction) { this.valueDerivationFunction = valueDerivationFunction; }
+			@Getter private final Function<AccelerationInfo, Float> valueDerivationFunction;
 		}
 	}
 

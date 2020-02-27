@@ -7,6 +7,7 @@ import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
 import de.putterer.indloc.util.Logger;
 import lombok.Getter;
+import lombok.var;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -104,6 +105,9 @@ public class DataClient {
 	private final DataConsumer[] consumers; // callback to be called when CSIInfo was received from this station
 	private final SubscriptionOptions subscriptionOptions; // the subscription options for this client, e.g. payload length filter
 
+	// only for acceleration clients
+	private float[] accelerationCalibration = null;
+
 	public DataClient(Station station, SubscriptionOptions subscriptionOptions, DataConsumer... consumers) {
 		this.station = station;
 		this.consumers = consumers;
@@ -160,6 +164,11 @@ public class DataClient {
 		switch(packet.getData()[0]) {
 		case TYPE_CONFIRM_SUBSCRIPTION: {
 			Logger.info("Subscription confirmed by station %s", station.getIP_ADDRESS());
+			if(packet.getLength() > 1) {
+				var byteBuffer = ByteBuffer.wrap(packet.getData(), 1, packet.getLength());
+				accelerationCalibration = new float[] {byteBuffer.getFloat(), byteBuffer.getFloat(), byteBuffer.getFloat()};
+				Logger.info("Received acceleration calibration:  X:%.3f, Y:%.3f, Z:%.3f", accelerationCalibration[0], accelerationCalibration[1], accelerationCalibration[2]);
+			}
 			connected = true;
 			break;
 		}
@@ -179,7 +188,7 @@ public class DataClient {
 
 		case TYPE_ACCELERATION_INFO: {
 			Logger.trace("Got acceleration info from station %s", station.getIP_ADDRESS());
-			AccelerationInfo info = new AccelerationInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1));
+			AccelerationInfo info = new AccelerationInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1), accelerationCalibration);
 
 			getApplicableConsumers(AccelerationInfo.class).forEach(c -> c.accept(info));
 			break;

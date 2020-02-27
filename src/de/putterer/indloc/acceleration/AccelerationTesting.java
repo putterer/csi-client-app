@@ -16,11 +16,11 @@ public class AccelerationTesting {
 
 	public static void main(String args[]) {
 		DataPreview<AccelerationInfo> preview = new DataPreview<>(new DataPreview.AccelerationEvolutionPreview(
-				11.0f,
-//				AccelerationType.X,
-//				AccelerationType.Y,
-//				AccelerationType.Z
-				AccelerationType.EUCLIDEAN
+				30.0f,
+//				AccelerationType.X
+				AccelerationType.Y,
+				AccelerationType.Z
+//				AccelerationType.EUCLIDEAN
 		));
 
 		Logger.setLogLevel(Logger.Level.INFO);
