@@ -182,6 +182,10 @@ public class DataClient {
 			Logger.trace("Got csi from station %s", station.getIP_ADDRESS());
 			CSIInfo info = new CSIInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1));
 
+			if(station.getActivityDetector() != null) {
+				station.getActivityDetector().onCsiInfo(info);
+			}
+
 			getApplicableConsumers(CSIInfo.class).forEach(c -> c.accept(info));
 			break;
 		}

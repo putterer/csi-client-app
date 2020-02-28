@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static de.putterer.indloc.csi.DataPreview.PhaseDiffVariancePreview.SUBCARRIER_AVG;
+import static de.putterer.indloc.csi.DataPreview.PhaseDiffVariancePreview.SUBCARRIER_MAX;
+
 /**
  * FOR TESTING PURPOSES
  * lots of commented out, unstructured, testing code
@@ -27,7 +30,7 @@ public class CSITesting {
 
 	//TODO: extract code, restructure/align
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
-		Logger.setLogLevel(Logger.Level.WARNING);
+		Logger.setLogLevel(Logger.Level.INFO);
 		int groupThreshold = 10;
 
 	    List<DataPreview> previews = new ArrayList<>();
@@ -35,8 +38,9 @@ public class CSITesting {
 //		previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE, 3, 1)));
 //		previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(DataPreview.SubcarrierPropertyPreview.PropertyType.PHASE, 3, 1)));
 //		previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 1)));
-        previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 2)));
+//        previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 2)));
 		previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, new int[] {10, 30, 50})));
+		previews.add(new DataPreview(new DataPreview.PhaseDiffVariancePreview(Config.ROOM.getStations()[0], new int[] {SUBCARRIER_AVG, SUBCARRIER_MAX})));
 
 		SubscriptionOptions subscriptionOptions = new SubscriptionOptions(
 				new FilterOptions(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
@@ -46,7 +50,7 @@ public class CSITesting {
 		List<CSIInfo[]> shiftedCsiGroup = new LinkedList<>();
 		
 		for(Station station : Config.ROOM.getStations()) {
-			DataClient.addClient(new DataClient(station, subscriptionOptions, new DataConsumer<CSIInfo>(CSIInfo.class, csiInfo -> {
+			DataClient.addClient(new DataClient(station, subscriptionOptions, new DataConsumer<>(CSIInfo.class, csiInfo -> {
 				previews.forEach(p -> p.setData(csiInfo));
 				Logger.info("Received message with payload length: %d", csiInfo.getCsi_status().getPayload_len());
 				Logger.warn("Antenna signal strenght: 0: %d., 1: %d, 2: %d",

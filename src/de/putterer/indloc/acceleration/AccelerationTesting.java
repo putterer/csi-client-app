@@ -25,7 +25,7 @@ public class AccelerationTesting {
 
 		Logger.setLogLevel(Logger.Level.INFO);
 		DataClient client = new DataClient(
-				new Station("00:00:00:00:00:00", "192.168.43.1", null),
+				new Station("00:00:00:00:00:00", "192.168.43.1", null, null),
 				new DataConsumer<>(AccelerationInfo.class, accelerationInfo -> {
 					double lenSquared = square(accelerationInfo.getAcceleration()[0]) + square(accelerationInfo.getAcceleration()[1]) + square(accelerationInfo.getAcceleration()[2]);
 					double len = Math.sqrt(lenSquared);

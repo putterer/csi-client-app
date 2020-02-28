@@ -1,5 +1,6 @@
 package de.putterer.indloc;
 
+import de.putterer.indloc.activity.ActivityDetector;
 import de.putterer.indloc.rssi.RSSI;
 import de.putterer.indloc.rssi.estimator.RSSIDistanceEstimator;
 import de.putterer.indloc.util.Observable;
@@ -27,6 +28,7 @@ public class Station implements Serializable {
 	private transient final List<RSSI> pastRSSIs = new LinkedList<>();
 	private Vector location = new Vector();
 	private transient final RSSIDistanceEstimator estimator;
+	private transient final ActivityDetector activityDetector;
 	
 	{
 		getRSSI().setStation(this);

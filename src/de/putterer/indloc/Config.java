@@ -1,9 +1,8 @@
 package de.putterer.indloc;
 
-import de.putterer.indloc.rssi.estimator.SimpleDistanceEstimator;
+import de.putterer.indloc.activity.ActivityDetector;
 import de.putterer.indloc.trilateration.SimpleTrilaterator;
 import de.putterer.indloc.trilateration.Trilaterator;
-import de.putterer.indloc.util.FileUtils;
 import de.putterer.indloc.util.Vector;
 import lombok.Data;
 
@@ -37,7 +36,7 @@ public class Config {
 	private static final RoomConfig ROOM_CSI_TESTING = new RoomConfig(
 			1300, 1150, 
 			new Station[] {
-					new Station(STATION_10_MAC, "192.168.178.250", new Vector(0, 0), null)
+					new Station(STATION_10_MAC, "10.10.0.10", new Vector(0, 0), null, new ActivityDetector())
 			},
 			new RoomObject[] {
 

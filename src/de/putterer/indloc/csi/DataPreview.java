@@ -1,9 +1,11 @@
 package de.putterer.indloc.csi;
 
+import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AccelerationInfo;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.CSIUtil;
 import lombok.Getter;
+import lombok.var;
 import org.knowm.xchart.SwingWrapper;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
@@ -13,9 +15,11 @@ import org.knowm.xchart.style.Styler.ChartTheme;
 import org.knowm.xchart.style.Styler.LegendPosition;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 import static de.putterer.indloc.util.Util.euclidean;
@@ -65,6 +69,102 @@ public class DataPreview<T extends DataInfo> {
 		
 		public abstract XYChart createChart();
 		public abstract void updateChart(DataInfo dataInfo, XYChart chart);
+	}
+
+	public static class PhaseDiffVariancePreview extends PreviewMode {
+		{ width = 700; height = 500; }
+		private final int dataWidth = 150;
+
+		public static final int SUBCARRIER_MAX = 120;
+		public static final int SUBCARRIER_AVG = 121;
+
+		private final Station station;
+		private final int[] subcarriers;
+
+		private final List<Double>[] previousDataPoints;
+
+		/**
+		 * @param station the station of which to use the activity tracker
+		 * @param subcarriers the subcarriers to display
+		 */
+		public PhaseDiffVariancePreview(Station station, int[] subcarriers) {
+			this.station = station;
+			this.subcarriers = subcarriers;
+
+			previousDataPoints = new List[subcarriers.length];
+			for(int i = 0;i < subcarriers.length;i++) {
+				previousDataPoints[i] = new LinkedList<>();
+				DoubleStream.generate(() -> 0.0).limit(dataWidth).forEach(previousDataPoints[i]::add);
+			}
+		}
+
+		@Override
+		public XYChart createChart() {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("PhaseDiffVariance")
+					.xAxisTitle("Time")
+					.yAxisTitle("Variance")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			chart.getStyler().setYAxisMin(-Math.PI * 0.2);
+			chart.getStyler().setYAxisMax(Math.PI * 0.2);
+			chart.getStyler().setXAxisMin((double) dataWidth);
+			chart.getStyler().setXAxisMax(0.0);
+
+			for (int subcarrierIndex = 0;subcarrierIndex < subcarriers.length;subcarrierIndex++) {
+				String subcarrierName = "";
+				switch(subcarriers[subcarrierIndex]) {
+					case SUBCARRIER_MAX: subcarrierName = "max";break;
+					case SUBCARRIER_AVG: subcarrierName = "avg";break;
+					default: subcarrierName += this.subcarriers[subcarrierIndex];
+				}
+				String seriesName = String.format("sub: %s", subcarrierName);
+				chart.addSeries(seriesName, new double[dataWidth]);
+			}
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
+			int subcarriers = csi.getCsi_status().getNum_tones();
+			var detector = station.getActivityDetector();
+
+			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
+			double[] variances = detector.getVariancePerSubcarrier();
+
+			for (int subcarrierIndex = 0;subcarrierIndex < this.subcarriers.length;subcarrierIndex++) {
+				List<Double> previousList = this.previousDataPoints[subcarrierIndex];
+				if(previousList.size() == dataWidth) {
+					previousList.remove(previousList.size() - 1);
+				}
+				if(this.subcarriers[subcarrierIndex] < 113) {
+					previousList.add(0, variances[this.subcarriers[subcarrierIndex]]);
+				} else if (this.subcarriers[subcarrierIndex] == SUBCARRIER_MAX) {
+					previousList.add(0, Arrays.stream(variances).max().getAsDouble());
+				} else if (this.subcarriers[subcarrierIndex] == SUBCARRIER_AVG) {
+					previousList.add(0, Arrays.stream(variances).average().getAsDouble());
+				}
+
+				String subcarrierName = "";
+				switch(this.subcarriers[subcarrierIndex]) {
+					case SUBCARRIER_MAX: subcarrierName = "max";break;
+					case SUBCARRIER_AVG: subcarrierName = "avg";break;
+					default: subcarrierName += this.subcarriers[subcarrierIndex];
+				}
+				String seriesName = String.format("sub: %s", subcarrierName);
+				chart.updateXYSeries(seriesName, xData, previousList.stream().mapToDouble(d -> d).toArray(), null);
+			}
+		}
 	}
 
 	public static class AccelerationEvolutionPreview extends PreviewMode {
