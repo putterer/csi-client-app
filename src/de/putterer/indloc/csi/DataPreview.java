@@ -29,7 +29,7 @@ import static de.putterer.indloc.util.Util.manhattan;
  * A preview of incoming / replayed CSI data
  * Requires XChart: https://github.com/knowm/XChart
  */
-public class DataPreview<T extends DataInfo> {
+public class DataPreview {
 	
 	public static final Styler.ChartTheme CHART_THEME = ChartTheme.XChart;
 
@@ -52,7 +52,7 @@ public class DataPreview<T extends DataInfo> {
 		wrapper.displayChart();
 	}
 	
-	public void setData(T info) {
+	public void setData(DataInfo info) {
 		this.dataInfo = info;
 		
 		mode.updateChart(info, chart);
@@ -87,7 +87,7 @@ public class DataPreview<T extends DataInfo> {
 		 * @param station the station of which to use the activity tracker
 		 * @param subcarriers the subcarriers to display
 		 */
-		public PhaseDiffVariancePreview(Station station, int[] subcarriers) {
+		public PhaseDiffVariancePreview(Station station, int... subcarriers) {
 			this.station = station;
 			this.subcarriers = subcarriers;
 
@@ -111,8 +111,8 @@ public class DataPreview<T extends DataInfo> {
 
 			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
 			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
-			chart.getStyler().setYAxisMin(-Math.PI * 0.2);
-			chart.getStyler().setYAxisMax(Math.PI * 0.2);
+			chart.getStyler().setYAxisMin(-Math.PI * 0.02);
+			chart.getStyler().setYAxisMax(Math.PI * 0.35);
 			chart.getStyler().setXAxisMin((double) dataWidth);
 			chart.getStyler().setXAxisMax(0.0);
 
@@ -455,7 +455,7 @@ public class DataPreview<T extends DataInfo> {
 		 * @param rxAntenna2 the second antenna to compare
 		 * @param subcarriers the subcarriers to display
 		 */
-		public PhaseDiffEvolutionPreview(int rxAntenna1, int rxAntenna2, int[] subcarriers) {
+		public PhaseDiffEvolutionPreview(int rxAntenna1, int rxAntenna2, int... subcarriers) {
 			this.rxAntenna1 = rxAntenna1;
 			this.rxAntenna2 = rxAntenna2;
 			this.subcarriers = subcarriers;

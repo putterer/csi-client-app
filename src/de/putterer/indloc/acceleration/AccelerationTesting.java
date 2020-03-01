@@ -15,7 +15,7 @@ import static de.putterer.indloc.util.Util.square;
 public class AccelerationTesting {
 
 	public static void main(String args[]) {
-		DataPreview<AccelerationInfo> preview = new DataPreview<>(new DataPreview.AccelerationEvolutionPreview(
+		DataPreview preview = new DataPreview(new DataPreview.AccelerationEvolutionPreview(
 				30.0f,
 //				AccelerationType.X
 				AccelerationType.Y,
