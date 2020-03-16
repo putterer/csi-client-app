@@ -26,7 +26,7 @@ public class ActivityUI extends JPanel {
             new SubscriptionMessage.FilterOptions(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
     );
     private static final Station station = new Station(
-            Config.STATION_10_MAC, "10.10.0.10",
+            Config.STATION_10_MAC, "192.168.178.250",
             null, null,
             new ActivityDetector()
     );

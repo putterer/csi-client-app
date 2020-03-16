@@ -3,7 +3,6 @@ package de.putterer.indloc.csi;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AccelerationInfo;
 import de.putterer.indloc.data.DataInfo;
-import de.putterer.indloc.util.CSIUtil;
 import lombok.Getter;
 import lombok.var;
 import org.knowm.xchart.SwingWrapper;
@@ -22,6 +21,7 @@ import java.util.function.Function;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
+import static de.putterer.indloc.util.CSIUtil.*;
 import static de.putterer.indloc.util.Util.euclidean;
 import static de.putterer.indloc.util.Util.manhattan;
 
@@ -270,6 +270,7 @@ public class DataPreview {
 		private final PropertyType type;
 		private final int rxAntennas; // number of rx antennas to display
 		private final int txAntennas; // number of tx antennas to display
+		private final double previousMeanPhase[][];
 
 		/**
 		 * @param type amplitude or phase
@@ -280,6 +281,8 @@ public class DataPreview {
 			this.type = type;
 			this.rxAntennas = rxAntennas;
 			this.txAntennas = txAntennas;
+
+			previousMeanPhase = new double[rxAntennas][txAntennas];
 		}
 		
 		@Override
@@ -332,17 +335,11 @@ public class DataPreview {
 						}
 					}
 
-					// Unwrap phase
 					if(type == PropertyType.PHASE) {
-						for(int i = 1;i < subcarriers;i++) {
-							while(yData[i] - yData[i - 1] > Math.PI) {
-								yData[i] -= 2 * Math.PI;
-							}
-							while(yData[i] - yData[i - 1] < (-1) * Math.PI) {
-								yData[i] += 2 * Math.PI;
-							}
-						}
+						unwrapPhase(yData);
 					}
+
+					previousMeanPhase[rx][tx] = timeUnwrapped(yData, previousMeanPhase[rx][tx]);
 
 					// move antennas above each other
 //					while(yData[0] < csi.getCsi_matrix()[0][0][0].getPhase()) {
@@ -366,10 +363,13 @@ public class DataPreview {
 		
 		private final int rxAntenna1; // number of tx antennas to display
 		private final int rxAntenna2; // number of tx antennas to display
+		private final double[] previousPhaseMean;
 		
 		public PhaseDiffPreview(int rxAntenna1, int rxAntenna2) {
 			this.rxAntenna1 = rxAntenna1;
 			this.rxAntenna2 = rxAntenna2;
+
+			previousPhaseMean = new double[2];
 		}
 		
 		@Override
@@ -409,17 +409,20 @@ public class DataPreview {
 			double[] xData = new double[subcarriers];
 			double[] yData = new double[subcarriers];
 
+			double[] rx1Phase = Arrays.stream(csi.getCsi_matrix()[rxAntenna1][0]).mapToDouble(CSIInfo.Complex::getPhase).toArray();
+			double[] rx2Phase = Arrays.stream(csi.getCsi_matrix()[rxAntenna2][0]).mapToDouble(CSIInfo.Complex::getPhase).toArray();
+			unwrapPhase(rx1Phase);
+			unwrapPhase(rx2Phase);
+			previousPhaseMean[0] = timeUnwrapped(rx1Phase, previousPhaseMean[0]);
+			previousPhaseMean[1] = timeUnwrapped(rx2Phase, previousPhaseMean[1]);
+
 			for(int i = 0;i < subcarriers;i++) {
 				xData[i] = i;
-				double diff = csi.getCsi_matrix()[rxAntenna1][0][i].getPhase() - csi.getCsi_matrix()[rxAntenna2][0][i].getPhase();
-//				diff = Math.abs(diff);
-//				if(diff >= Math.PI) {
-//					diff -= Math.PI;
-//				}
+				double diff = rx1Phase[i] - rx2Phase[i];
 				yData[i] = diff;
 			}
 
-			CSIUtil.unwrapPhase(yData);
+			unwrapPhase(yData);
 
 			// Visualization only, unwrap in time
 //			double previousStart = chart.getSeriesMap().get(String.format("RX1:%d, RX2:%d", rxAntenna1, rxAntenna2)).getYData()[0];
@@ -429,7 +432,7 @@ public class DataPreview {
 //			if(previousStart - yData[0] < -Math.PI) {
 //				CSIUtil.shift(yData, -2.0 * Math.PI);
 //			}
-			CSIUtil.shift(yData, -CSIUtil.mean(yData));
+			shift(yData, -mean(yData));
 
 
 
@@ -449,6 +452,7 @@ public class DataPreview {
 		private final int[] subcarriers;
 
 		private final List<Double>[] previousDataPoints;
+		private final double[] previousPhaseMean;
 
 		/**
 		 * @param rxAntenna1 the first antenna to compare
@@ -466,6 +470,8 @@ public class DataPreview {
 					previousDataPoints[i].add(0.0);
 				}
 			}
+
+			previousPhaseMean = new double[2];
 		}
 
 		@Override
@@ -504,17 +510,20 @@ public class DataPreview {
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
 			double[] diffs = new double[subcarriers];
 
+			double[] rx1Phase = Arrays.stream(csi.getCsi_matrix()[rxAntenna1][0]).mapToDouble(CSIInfo.Complex::getPhase).toArray();
+			double[] rx2Phase = Arrays.stream(csi.getCsi_matrix()[rxAntenna2][0]).mapToDouble(CSIInfo.Complex::getPhase).toArray();
+			unwrapPhase(rx1Phase);
+			unwrapPhase(rx2Phase);
+			previousPhaseMean[0] = timeUnwrapped(rx1Phase, previousPhaseMean[0]);
+			previousPhaseMean[1] = timeUnwrapped(rx2Phase, previousPhaseMean[1]);
+
 			for(int i = 0;i < subcarriers;i++) {
-				double diff = csi.getCsi_matrix()[rxAntenna1][0][i].getPhase() - csi.getCsi_matrix()[rxAntenna2][0][i].getPhase();
-//				diff = Math.abs(diff);
-//				if(diff >= Math.PI) {
-//					diff -= Math.PI;
-//				}
+				double diff = rx1Phase[i] - rx2Phase[i];
 				diffs[i] = diff;
 			}
 
-			CSIUtil.unwrapPhase(diffs);
-			CSIUtil.shift(diffs, -CSIUtil.mean(diffs));
+			unwrapPhase(diffs);
+			shift(diffs, -mean(diffs));
 
 			for (int subcarrierIndex = 0;subcarrierIndex < this.subcarriers.length;subcarrierIndex++) {
 				List<Double> previousList = this.previousDataPoints[subcarrierIndex];

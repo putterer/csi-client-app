@@ -22,7 +22,10 @@ public class ActivityDetector {
     @Getter
     private double[] variancePerSubcarrier = null;
 
+    private final double[][] previousPhaseMean = new double[3][3];
+
     public void onCsiInfo(CSIInfo csi) {
+        //TODO: only save phase-> allows processing?
         csiHistory.add(csi);
         while(csiHistory.size() > CSI_ACTIVITY_HISTORY_LENGTH) {
             csiHistory.remove(0);
@@ -35,7 +38,7 @@ public class ActivityDetector {
             int finalI = i;
             double[] phaseDiff = csiHistory.stream().mapToDouble(
                     c -> c.getCsi_matrix()[CSI_ACTIVITY_ANTENNA_RX1][CSI_ACTIVITY_ANTENNA_TX][finalI].getPhase()
-                        - c.getCsi_matrix()[CSI_ACTIVITY_ANTENNA_RX2][CSI_ACTIVITY_ANTENNA_TX][finalI].getPhase())
+                            - c.getCsi_matrix()[CSI_ACTIVITY_ANTENNA_RX2][CSI_ACTIVITY_ANTENNA_TX][finalI].getPhase())
                     .toArray();
 
             CSIUtil.unwrapPhase(phaseDiff);

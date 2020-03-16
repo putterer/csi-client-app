@@ -72,4 +72,14 @@ public class CSIUtil {
     public static double mean(double[] data) {
         return Arrays.stream(data).sum() / data.length;
     }
+
+    public static double timeUnwrapped(double[] data, double previousMeanPhase) {
+        while(mean(data) - previousMeanPhase > 1.1 * Math.PI) {  // TODO: 1.1?
+            shift(data, -2.0 * Math.PI);
+        }
+        while(mean(data) - previousMeanPhase < 1.1 * -Math.PI) {
+            shift(data, 2.0 * Math.PI);
+        }
+        return mean(data);
+    }
 }

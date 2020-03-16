@@ -16,8 +16,8 @@ public class AccelerationTesting {
 
 	public static void main(String args[]) {
 		DataPreview preview = new DataPreview(new DataPreview.AccelerationEvolutionPreview(
-				30.0f,
-//				AccelerationType.X
+				2.0f,
+//				AccelerationType.X,
 				AccelerationType.Y,
 				AccelerationType.Z
 //				AccelerationType.EUCLIDEAN

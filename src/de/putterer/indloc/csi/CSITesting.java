@@ -2,7 +2,6 @@ package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Config;
 import de.putterer.indloc.Station;
-import de.putterer.indloc.csi.calibration.PhaseOffsetCalibration;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.FilterOptions;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
 import de.putterer.indloc.data.DataClient;
@@ -11,14 +10,10 @@ import de.putterer.indloc.util.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static de.putterer.indloc.csi.DataPreview.PhaseDiffVariancePreview.SUBCARRIER_AVG;
-import static de.putterer.indloc.csi.DataPreview.PhaseDiffVariancePreview.SUBCARRIER_MAX;
 
 /**
  * FOR TESTING PURPOSES
@@ -38,9 +33,9 @@ public class CSITesting {
 //		previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE, 3, 1)));
 //		previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(DataPreview.SubcarrierPropertyPreview.PropertyType.PHASE, 3, 1)));
 //		previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 1)));
-//        previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 2)));
-		previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, new int[] {10, 30, 50})));
-		previews.add(new DataPreview(new DataPreview.PhaseDiffVariancePreview(Config.ROOM.getStations()[0], new int[] {SUBCARRIER_AVG, SUBCARRIER_MAX})));
+//      previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 2)));
+		previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, new int[] {10, 20, 30, 40, 50})));
+//		previews.add(new DataPreview(new DataPreview.PhaseDiffVariancePreview(Config.ROOM.getStations()[0], new int[] {SUBCARRIER_AVG, SUBCARRIER_MAX})));
 
 		SubscriptionOptions subscriptionOptions = new SubscriptionOptions(
 				new FilterOptions(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
@@ -53,11 +48,11 @@ public class CSITesting {
 			DataClient.addClient(new DataClient(station, subscriptionOptions, new DataConsumer<>(CSIInfo.class, csiInfo -> {
 				previews.forEach(p -> p.setData(csiInfo));
 				Logger.info("Received message with payload length: %d", csiInfo.getCsi_status().getPayload_len());
-				Logger.warn("Antenna signal strenght: 0: %d., 1: %d, 2: %d",
-						csiInfo.getCsi_status().getRssi_0(),
-						csiInfo.getCsi_status().getRssi_1(),
-						csiInfo.getCsi_status().getRssi_2()
-				);
+//				Logger.warn("Antenna signal strenght: 0: %d., 1: %d, 2: %d",
+//						csiInfo.getCsi_status().getRssi_0(),
+//						csiInfo.getCsi_status().getRssi_1(),
+//						csiInfo.getCsi_status().getRssi_2()
+//				);
 
 				// Real time shifting + spotfi processing
 //				CSIInfo[] shiftedCsi = new CSIInfo[4];
@@ -87,22 +82,22 @@ public class CSITesting {
 //				}
 
 				// Phase diff calibration:
-				int rxAnt0 = 0;
-				int rxAnt1 = 1;
-				double phaseDiff = PhaseOffsetCalibration.getPhaseDiff(Collections.singletonList(csiInfo), 0, rxAnt0, rxAnt1);
-				if(phaseDiff == 0.0) {
-					Logger.warn("DISCARDING PHASE SHIFT");
-					return;
-				}
-
-				if((csiInfo.getCsi_status().getRssi_0() > 45 && (rxAnt0 != 0 && rxAnt1 != 0))
-						|| (csiInfo.getCsi_status().getRssi_1() > 45 && (rxAnt0 != 1 && rxAnt1 != 1))
-						|| (csiInfo.getCsi_status().getRssi_2() > 45 && (rxAnt0 != 2 && rxAnt1 != 2))) {
-					Logger.error("WRONG ANTENNA CONNECTED");
-				}
-
-				phaseShiftHistory.add(phaseDiff);
-				Logger.warn("Phase diff %d%d: %f,   Avg: %f", rxAnt0, rxAnt1, Math.toDegrees(phaseDiff), Math.toDegrees(phaseShiftHistory.stream().mapToDouble(d -> d).average().getAsDouble()));
+//				int rxAnt0 = 0;
+//				int rxAnt1 = 1;
+//				double phaseDiff = PhaseOffsetCalibration.getPhaseDiff(Collections.singletonList(csiInfo), 0, rxAnt0, rxAnt1);
+//				if(phaseDiff == 0.0) {
+//					Logger.warn("DISCARDING PHASE SHIFT");
+//					return;
+//				}
+//
+//				if((csiInfo.getCsi_status().getRssi_0() > 45 && (rxAnt0 != 0 && rxAnt1 != 0))
+//						|| (csiInfo.getCsi_status().getRssi_1() > 45 && (rxAnt0 != 1 && rxAnt1 != 1))
+//						|| (csiInfo.getCsi_status().getRssi_2() > 45 && (rxAnt0 != 2 && rxAnt1 != 2))) {
+//					Logger.error("WRONG ANTENNA CONNECTED");
+//				}
+//
+//				phaseShiftHistory.add(phaseDiff);
+//				Logger.warn("Phase diff %d%d: %f,   Avg: %f", rxAnt0, rxAnt1, Math.toDegrees(phaseDiff), Math.toDegrees(phaseShiftHistory.stream().mapToDouble(d -> d).average().getAsDouble()));
 			})));
 		}
 
