@@ -2,7 +2,7 @@ package de.putterer.indloc.data;
 
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.CSIInfo;
-import de.putterer.indloc.csi.calibration.AccelerationInfo;
+import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
 import de.putterer.indloc.util.Logger;
@@ -192,9 +192,9 @@ public class DataClient {
 
 		case TYPE_ACCELERATION_INFO: {
 			Logger.trace("Got acceleration info from station %s", station.getIP_ADDRESS());
-			AccelerationInfo info = new AccelerationInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1), accelerationCalibration);
+			AndroidInfo info = new AndroidInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1), accelerationCalibration);
 
-			getApplicableConsumers(AccelerationInfo.class).forEach(c -> c.accept(info));
+			getApplicableConsumers(AndroidInfo.class).forEach(c -> c.accept(info));
 			break;
 		}
 

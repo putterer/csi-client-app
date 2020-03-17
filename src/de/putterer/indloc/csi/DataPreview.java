@@ -1,7 +1,7 @@
 package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Station;
-import de.putterer.indloc.csi.calibration.AccelerationInfo;
+import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataInfo;
 import lombok.Getter;
 import lombok.var;
@@ -167,20 +167,20 @@ public class DataPreview {
 		}
 	}
 
-	public static class AccelerationEvolutionPreview extends PreviewMode {
+	public static class AndroidEvolutionPreview extends PreviewMode {
 		{ width = 700; height = 500; }
 		private final int dataWidth = 150;
 
 		private final List<Double>[] previousDataPoints;
 
 		private final float limit;
-		private final AccelerationType[] accelerationTypes;
+		private final AndroidDataType[] androidDataTypes;
 
-		public AccelerationEvolutionPreview(float limit, AccelerationType... accelerationTypes) {
+		public AndroidEvolutionPreview(float limit, AndroidDataType... androidDataTypes) {
 			this.limit = limit;
-			this.accelerationTypes = accelerationTypes;
-			previousDataPoints = new List[accelerationTypes.length];
-			for (int i = 0;i < accelerationTypes.length;i++) {
+			this.androidDataTypes = androidDataTypes;
+			previousDataPoints = new List[androidDataTypes.length];
+			for (int i = 0; i < androidDataTypes.length; i++) {
 				previousDataPoints[i] = new LinkedList<>();
 				for(int j = 0;j < dataWidth;j++) {
 					previousDataPoints[i].add(0.0);
@@ -193,7 +193,7 @@ public class DataPreview {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("Acceleration Preview")
+					.title("Android position/acceleration Preview")
 					.xAxisTitle("Subcarrier")
 					.yAxisTitle("Magnitude")
 					.theme(CHART_THEME)
@@ -206,29 +206,29 @@ public class DataPreview {
 			chart.getStyler().setXAxisMin((double) dataWidth);
 			chart.getStyler().setXAxisMax(0.0);
 
-			for(AccelerationType accelerationType : accelerationTypes) {
-				chart.addSeries(accelerationType.name(), new double[dataWidth]);
+			for(AndroidDataType androidDataType : androidDataTypes) {
+				chart.addSeries(androidDataType.name(), new double[dataWidth]);
 			}
 			return chart;
 		}
 
 		@Override
 		public void updateChart(DataInfo dataInfo, XYChart chart) {
-			if(! (dataInfo instanceof AccelerationInfo)) {
+			if(! (dataInfo instanceof AndroidInfo)) {
 				return;
 			}
-			AccelerationInfo info = (AccelerationInfo) dataInfo;
+			AndroidInfo info = (AndroidInfo) dataInfo;
 
 
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
 
-			for (int accelerationType = 0; accelerationType < accelerationTypes.length; accelerationType++) {
+			for (int accelerationType = 0; accelerationType < androidDataTypes.length; accelerationType++) {
 				List<Double> previousList = this.previousDataPoints[accelerationType];
 				if(previousList.size() == dataWidth) {
 					previousList.remove(previousList.size() - 1);
 				}
-				previousList.add(0, (double)accelerationTypes[accelerationType].valueDerivationFunction.apply(info));
-				chart.updateXYSeries(accelerationTypes[accelerationType].name(), xData, previousList.stream().mapToDouble(d -> d).toArray(), null);
+				previousList.add(0, (double) androidDataTypes[accelerationType].valueDerivationFunction.apply(info));
+				chart.updateXYSeries(androidDataTypes[accelerationType].name(), xData, previousList.stream().mapToDouble(d -> d).toArray(), null);
 
 
 				// http://www.trex-game.skipser.com/
@@ -247,7 +247,7 @@ public class DataPreview {
 			}
 		}
 
-		public enum AccelerationType {
+		public enum AndroidDataType {
 			X( i -> i.accel()[0] - i.getCalibration()[0]),
 			Y( i -> i.accel()[1] - i.getCalibration()[1]),
 			Z( i -> i.accel()[2] - i.getCalibration()[2]),
@@ -255,8 +255,8 @@ public class DataPreview {
 			MANHATTAN( i -> manhattan(i.accel()) - manhattan(i.getCalibration())),
 			MAX( i -> Math.max(i.accel()[0], Math.max(i.accel()[1], i.accel()[2])) );
 
-			AccelerationType(Function<AccelerationInfo, Float> valueDerivationFunction) { this.valueDerivationFunction = valueDerivationFunction; }
-			@Getter private final Function<AccelerationInfo, Float> valueDerivationFunction;
+			AndroidDataType(Function<AndroidInfo, Float> valueDerivationFunction) { this.valueDerivationFunction = valueDerivationFunction; }
+			@Getter private final Function<AndroidInfo, Float> valueDerivationFunction;
 		}
 	}
 
