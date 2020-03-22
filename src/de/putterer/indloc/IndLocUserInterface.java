@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * A user interface for Indoor Localization
  */
 @SuppressWarnings("serial")
-public class UserInterface extends JPanel implements KeyListener {
+public class IndLocUserInterface extends JPanel implements KeyListener {
 
 	public static boolean DEMO_MODE = true;
 	public static List<de.putterer.indloc.util.Vector> measuredLocations = Collections.emptyList();
@@ -46,7 +46,7 @@ public class UserInterface extends JPanel implements KeyListener {
 
 	private Image scaledBackground;
 	
-	public UserInterface(Config.RoomConfig room) {
+	public IndLocUserInterface(Config.RoomConfig room) {
 		this.room = room;
 		Arrays.stream(room.getStations()).forEach(s -> s.rssiProperty().addListener(() -> this.repaint()));
 		
@@ -265,7 +265,7 @@ public class UserInterface extends JPanel implements KeyListener {
 	public static void main(String args[]) throws IOException {
 		measuredLocations = TargetRecordingAnalyzer.getMeasuredLocations();
 
-		UserInterface ui = new UserInterface(Config.ROOM);
+		IndLocUserInterface ui = new IndLocUserInterface(Config.ROOM);
 
 		BufferedImage image = new BufferedImage((int) (1072 * 1.00f), (int) (1258 * 1.00f), BufferedImage.TYPE_INT_ARGB);
 		ui.renderImage(image);

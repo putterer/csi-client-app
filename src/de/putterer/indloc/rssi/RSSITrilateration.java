@@ -2,7 +2,7 @@ package de.putterer.indloc.rssi;
 
 import de.putterer.indloc.Config;
 import de.putterer.indloc.Station;
-import de.putterer.indloc.UserInterface;
+import de.putterer.indloc.IndLocUserInterface;
 
 import java.io.IOException;
 
@@ -17,7 +17,7 @@ public class RSSITrilateration {
 			RSSIUtil.spawnIcmpEchoProcess(station);
 		}
 		
-		UserInterface ui = new UserInterface(Config.ROOM);
+		IndLocUserInterface ui = new IndLocUserInterface(Config.ROOM);
 		
 		while(true) {
 			try {

@@ -65,7 +65,7 @@ public class IndoorLocalization {
         }
 
         if(cmd.equals("uidemo")) {
-            UserInterface.main(new String[]{});
+            IndLocUserInterface.main(new String[]{});
         }
     }
 
