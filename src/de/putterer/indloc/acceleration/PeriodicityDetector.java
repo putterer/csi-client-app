@@ -2,6 +2,7 @@ package de.putterer.indloc.acceleration;
 
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.respiratory.Periodicity;
+import de.putterer.indloc.util.Observable;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -11,7 +12,7 @@ import java.util.List;
 public class PeriodicityDetector {
     //TODO: also support non android
     @Getter
-    private double currentFrequency = 0.0;
+    private Observable<Double> currentFrequency = new Observable<>(0.0);
 
     @Getter
     private final double samplingFrequency;
@@ -42,6 +43,6 @@ public class PeriodicityDetector {
         // process sliding window
         //TODO: how to deal with X, Y? parameter? Max?
         double[] values = history.stream().mapToDouble(e -> e.getData()[1]).toArray();
-        currentFrequency = Periodicity.detectMLPeriodicity(values, samplingFrequency, 0.0, 10.0);
+        currentFrequency.set(Periodicity.detectMLPeriodicity(values, samplingFrequency, 0.0, 10.0));
     }
 }

@@ -1,5 +1,7 @@
 package de.putterer.indloc.ui;
 
+import de.putterer.indloc.Station;
+import de.putterer.indloc.data.DataInfo;
 import lombok.Getter;
 
 import javax.swing.*;
@@ -27,4 +29,6 @@ public abstract class UIComponentWindow extends JPanel {
 		frame.setLocation(x, y);
 		return this;
 	}
+
+	public abstract void onDataInfo(Station station, DataInfo dataInfo);
 }

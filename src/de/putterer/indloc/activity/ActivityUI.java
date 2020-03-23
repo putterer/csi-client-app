@@ -7,10 +7,9 @@ import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataConsumer;
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.ui.UIComponentWindow;
-import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.Util;
-import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +43,14 @@ public class ActivityUI extends UIComponentWindow {
         setupFinished();
     }
 
-    private void onCsi(CSIInfo csi) {
+    @Override
+    public void onDataInfo(Station station, DataInfo info) {
+        if(! (info instanceof CSIInfo)) {
+            return;
+        }
+
+        CSIInfo csi = (CSIInfo) info;
+
         double avgVariance = Arrays.stream(station.getActivityDetector().getVariancePerSubcarrier()).average().orElse(0);
 
         SwingUtilities.invokeLater(() -> {
@@ -86,6 +92,6 @@ public class ActivityUI extends UIComponentWindow {
 
         ActivityUI activityUI = new ActivityUI(station, subscriptionOptions);
 
-        addClient(new DataClient(station, subscriptionOptions, new DataConsumer<>(CSIInfo.class, activityUI::onCsi)));
+        addClient(new DataClient(station, subscriptionOptions, new DataConsumer<>(CSIInfo.class, csi -> activityUI.onDataInfo(station, csi))));
     }
 }

@@ -4,9 +4,11 @@ import de.putterer.indloc.Station;
 import de.putterer.indloc.acceleration.PeriodicityDetector;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.ui.UIComponentWindow;
 
 import javax.swing.*;
+import java.awt.*;
 import java.time.Duration;
 import java.util.Arrays;
 
@@ -22,7 +24,9 @@ public class RespiratoryUI extends UIComponentWindow {
 	private final JLabel packetsReceivedLabel = new JLabel("Packets:");
 	private final JButton samplingFrequencyLabel = new JButton("Sampl. freq.:");
 	private final JButton slidingWindowSizeLabel = new JButton("Sliding window:");
+	private final JLabel bpmLabel = new JLabel("");
 
+	private Station station;
 	private PeriodicityDetector periodicityDetector;
 
 	public RespiratoryUI() {
@@ -45,6 +49,35 @@ public class RespiratoryUI extends UIComponentWindow {
 		this.add(samplingFrequencyLabel);
 		slidingWindowSizeLabel.setBounds(215, 40, 195, 20);
 		this.add(slidingWindowSizeLabel);
+
+		samplingFrequencyLabel.addActionListener(a -> {
+			try {
+				double newSamplingFrequency = Double.parseDouble(JOptionPane.showInputDialog(this,
+						"Sampling frequency?", periodicityDetector.getSamplingFrequency()));
+				rebuild(station, newSamplingFrequency, periodicityDetector.getSlidingWindowDuration());
+			} catch (NumberFormatException | NullPointerException e) {}
+		});
+		slidingWindowSizeLabel.addActionListener(a -> {
+			try {
+				long newSlidingWindowDuration = Long.parseLong(JOptionPane.showInputDialog(this,
+						"Sliding window duration (ms)?", periodicityDetector.getSlidingWindowDuration().toMillis()));
+				rebuild(station, periodicityDetector.getSamplingFrequency(), Duration.ofMillis(newSlidingWindowDuration));
+			} catch (NumberFormatException | NullPointerException e) {}
+		});
+
+		bpmLabel.setFont(new Font(bpmLabel.getFont().getName(), Font.PLAIN, 42));
+		bpmLabel.setHorizontalAlignment(JLabel.CENTER);
+		bpmLabel.setVerticalAlignment(JLabel.CENTER);
+		bpmLabel.setBounds(10, 70, 400, 60);
+		this.add(bpmLabel);
+	}
+
+	@Override
+	public void onDataInfo(Station station, DataInfo info) {
+		if (info instanceof AndroidInfo) {
+			AndroidInfo androidInfo = (AndroidInfo) info;
+			periodicityDetector.onData(androidInfo);
+		}
 	}
 
 	public void setStation(Station station) {
@@ -56,18 +89,21 @@ public class RespiratoryUI extends UIComponentWindow {
 	}
 
 	public void rebuild(Station station, double samplingFrequency, Duration slidingWindowSize) {
+		this.station = station;
 		DataClient client = DataClient.getClient(station);
+
 		typeLabel.setText(station.getDataType() == AndroidInfo.class ? "Type: Android" : "Type: CSI");
 		client.getPacketsReceived().addListener((oldValue, newValue) -> invokeLater(
 				() -> packetsReceivedLabel.setText("Packets: " + newValue)
 		), false);
 
 		periodicityDetector = new PeriodicityDetector(samplingFrequency, slidingWindowSize);
+		periodicityDetector.getCurrentFrequency().addListener((oldValue, newValue) -> {
+			invokeLater(() -> bpmLabel.setText(String.format("%.1f bpm", newValue * 60.0f)));
+		}, false);
 
 		samplingFrequencyLabel.setText(String.format("Sampl. freq.: %.1f Hz", periodicityDetector.getSamplingFrequency()));
 		slidingWindowSizeLabel.setText(String.format("Sliding window: %.1f s", periodicityDetector.getSlidingWindowDuration().toMillis() / 1000.0f));
-
-
-		//TODO: instead use update method periodically called? or observables inside the detector?
+		//TODO: show frequency in Hz, bucket spacing, previews
 	}
 }

@@ -42,7 +42,7 @@ public class AndroidTesting {
 						lastUpdate = System.currentTimeMillis();
 
 						periodicityDetector.onData(info);
-						System.out.printf("%.1f bpm\n", periodicityDetector.getCurrentFrequency() * 60.0);
+						System.out.printf("%.1f bpm\n", periodicityDetector.getCurrentFrequency().get() * 60.0);
 					}
 
 //					System.out.printf("%.2f\n", periodicityDetector.getCurrentFrequency());

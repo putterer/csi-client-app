@@ -3,6 +3,7 @@ package de.putterer.indloc.ui;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.respiratory.RespiratoryUI;
 
 import javax.swing.*;
@@ -17,6 +18,8 @@ public class GenericStatusUI extends UIComponentWindow {
 	private final JLabel stationsLabel = new JLabel("Stations:");
 	private final JList<String> stationsList = new JList<>();
 	private final JButton selectRespiratoryButton = new JButton("Select");
+	private final JButton resubscribeButton = new JButton("Subs.");
+	private final JButton unsubscribeButton = new JButton("Unsubs.");
 
 	public GenericStatusUI(RespiratoryUI respiratoryUI) {
 		super("CSI toolbox - Fabian Putterer - TUM", 420, 300);
@@ -55,9 +58,29 @@ public class GenericStatusUI extends UIComponentWindow {
 		selectRespiratoryButton.setBounds(10, 140, 100, 30);
 		selectRespiratoryButton.addActionListener(a -> respiratoryUI.setStation(ROOM.getStations()[stationsList.getSelectedIndex()]));
 		this.add(selectRespiratoryButton);
+		resubscribeButton.setBounds(120, 140, 100, 30);
+		resubscribeButton.addActionListener(a -> new Thread(() -> {
+			DataClient client = getCurrentlySelectedClient();
+			client.unsubscribe();
+			try { Thread.sleep(500); } catch(InterruptedException e) { e.printStackTrace(); }
+			client.subscribe();
+		}).start());
+		this.add(resubscribeButton);
+		unsubscribeButton.setBounds(230, 140, 100, 30);
+		unsubscribeButton.addActionListener(a -> getCurrentlySelectedClient().unsubscribe());
+		this.add(unsubscribeButton);
 
 		onStationUpdated(null);
 
 		getFrame().repaint();
+	}
+
+	private DataClient getCurrentlySelectedClient() {
+		return DataClient.getClient(ROOM.getStations()[stationsList.getSelectedIndex()]);
+	}
+
+	@Override
+	public void onDataInfo(Station station, DataInfo dataInfo) {
+		//TODO: count packets?
 	}
 }

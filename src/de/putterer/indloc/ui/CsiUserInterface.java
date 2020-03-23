@@ -2,13 +2,12 @@ package de.putterer.indloc.ui;
 
 import de.putterer.indloc.Station;
 import de.putterer.indloc.activity.ActivityUI;
-import de.putterer.indloc.csi.CSIInfo;
-import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.respiratory.RespiratoryUI;
+import de.putterer.indloc.util.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +16,8 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static de.putterer.indloc.Config.ROOM;
 
@@ -28,6 +28,7 @@ public class CsiUserInterface implements KeyListener {
 			new SubscriptionMessage.FilterOptions(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
 	);
 
+	private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 	private final List<UIComponentWindow> componentWindows = new ArrayList<>();
 
 	private final GenericStatusUI genericStatusUI;
@@ -41,6 +42,7 @@ public class CsiUserInterface implements KeyListener {
 		genericStatusUI = new GenericStatusUI(respiratoryUI);
 		genericStatusUI.setPosition(TOP_LEFT_OFFSET.x, TOP_LEFT_OFFSET.y);
 		respiratoryUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y);
+		componentWindows.addAll(Arrays.asList(genericStatusUI, respiratoryUI));
 
 		for(int i = 0;i < ROOM.getStations().length;i++) {
 			Station station = ROOM.getStations()[i];
@@ -60,31 +62,30 @@ public class CsiUserInterface implements KeyListener {
 
 	private void startClients() {
 		Arrays.stream(ROOM.getStations()).forEach(s ->
-				DataClient.addClient(new DataClient(s, SUBSCRIPTION_OPTIONS, new DataConsumer<>(s.getDataType(), this::onData)))
+				DataClient.addClient(new DataClient(s, SUBSCRIPTION_OPTIONS, new DataConsumer<>(
+						s.getDataType(), info -> this.onData(s, info))
+				))
 		);
 
-		Stream.concat(
-				DataClient.getClients().stream().map(DataClient::getConnectedFuture),
-				DataClient.getClients().stream().map(DataClient::getTimeoutFuture)
-		).forEach(f -> f.thenAcceptAsync(s -> {
+		DataClient.getClients().stream().map(DataClient::getStatusUpdateCallback).forEach(c -> c.addListener((_void, s) -> {
 			if(genericStatusUI != null) {
 				genericStatusUI.onStationUpdated(s);
 			}
-		}));
+		}, true));
 	}
 
-	private void onData(DataInfo info) {
-		//TODO: missing station?
-		if(info instanceof CSIInfo) {
-			CSIInfo csi = (CSIInfo) info;
-			//todo
-		} else if (info instanceof AndroidInfo) {
-			AndroidInfo androidInfo = (AndroidInfo) info;
-			//TODO
-		}
+	private void onData(Station station, DataInfo info) {
+		componentWindows.forEach(w -> executorService.submit(() -> w.onDataInfo(station, info)));
+
+//		if(info instanceof CSIInfo) {
+//			CSIInfo csi = (CSIInfo) info;
+//		} else if (info instanceof AndroidInfo) {
+//			AndroidInfo androidInfo = (AndroidInfo) info;
+//		}
 	}
 
 	public static void main(String[] args) {
+		Logger.setLogLevel(Logger.Level.DEBUG);
 		new CsiUserInterface();
 	}
 

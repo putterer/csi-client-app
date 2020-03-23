@@ -16,7 +16,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -121,8 +120,7 @@ public class DataClient {
 	// only for acceleration clients
 	private float[] accelerationCalibration = null;
 
-	private final CompletableFuture<Station> connectedFuture = new CompletableFuture<>();
-	private final CompletableFuture<Station> timeoutFuture = new CompletableFuture<>();
+	private final Observable<Station> statusUpdateCallback = new Observable<>(null);
 	private final Observable<Integer> packetsReceived = new Observable<>(0);
 
 	public DataClient(Station station, SubscriptionOptions subscriptionOptions, DataConsumer<? extends DataInfo>... consumers) {
@@ -144,7 +142,7 @@ public class DataClient {
 	/**
 	 * Sends a subscription message to the associated station
 	 */
-	private void subscribe() {
+	public void subscribe() {
 		new Thread(() -> {
 			for(int i = 0;i < 10 && !connected;i++) {
 				Logger.info("Subscribing to %s, subscription id: %d, attempt %d/10", station.getIP_ADDRESS(), subscriptionId, i + 1);
@@ -157,7 +155,7 @@ public class DataClient {
 			if(!connected) {
 				Logger.warn("Subscription for %s timed out", station.getIP_ADDRESS());
 				timedOut = true;
-				timeoutFuture.complete(station);
+				statusUpdateCallback.set(station);
 			}
 		}).start();
 	}
@@ -166,9 +164,11 @@ public class DataClient {
 	 * Sends an unsubscription message to the associated station
 	 * BEST EFFORT, the success it not confirmed nor repeated
 	 */
-	private void unsubscribe() {
+	public void unsubscribe() {
 		send(new byte[] {TYPE_UNSUBSCRIBE});
 		connected = false;
+		timedOut = false;
+		statusUpdateCallback.set(station);
 	}
 
 	/**
@@ -189,7 +189,7 @@ public class DataClient {
 				Logger.info("Received acceleration calibration:  X:%.3f, Y:%.3f, Z:%.3f", accelerationCalibration[0], accelerationCalibration[1], accelerationCalibration[2]);
 			}
 			connected = true;
-			connectedFuture.complete(station);
+			statusUpdateCallback.set(station);
 			break;
 		}
 		
