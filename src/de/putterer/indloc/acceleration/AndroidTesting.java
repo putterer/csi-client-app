@@ -29,11 +29,11 @@ public class AndroidTesting {
 //				AndroidDataType.EUCLIDEAN
 		));
 
-		AndroidPeriodicityDetector periodicityDetector = new AndroidPeriodicityDetector(SAMPLING_FREQUENCY, Duration.ofSeconds(7));
+		PeriodicityDetector periodicityDetector = new PeriodicityDetector(SAMPLING_FREQUENCY, Duration.ofSeconds(7));
 
 
 		DataClient client = new DataClient(
-				new Station("00:00:00:00:00:00", "192.168.178.28", null, null),
+				new Station("00:00:00:00:00:00", "192.168.178.28", AndroidInfo.class, null, null),
 				new DataConsumer<>(AndroidInfo.class, info -> {
 					preview.setData(info);
 

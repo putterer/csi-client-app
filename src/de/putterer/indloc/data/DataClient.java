@@ -6,6 +6,7 @@ import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
 import de.putterer.indloc.util.Logger;
+import de.putterer.indloc.util.Observable;
 import lombok.Getter;
 import lombok.var;
 
@@ -14,10 +15,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -85,30 +84,48 @@ public class DataClient {
 		}
 	}
 
-	public static void addClient(DataClient client) {
+	public static DataClient addClient(DataClient client) {
 		synchronized (clients) {
 			clients.add(client);
 			client.subscribe();
 		}
+		return client;
 	}
 	
-	public static void removeClient(DataClient client) {
+	public static DataClient removeClient(DataClient client) {
 		synchronized (clients) {
 			clients.remove(client);
 			client.unsubscribe();
 		}
+		return client;
 	}
+
+	public static List<DataClient> getClients() {
+		return Collections.unmodifiableList(clients);
+	}
+	public static DataClient getClient(Station station) {
+		return clients.stream().filter(c -> c.getStation() == station).findFirst().orElse(null);
+	}
+
+
+
+
 
 	private final Station station; // the station this client is connected to
 	private boolean connected = false; // whether the subscription was successful
+	private boolean timedOut = false;
 	private final int subscriptionId;
-	private final DataConsumer[] consumers; // callback to be called when CSIInfo was received from this station
+	private final DataConsumer<? extends DataInfo>[] consumers; // callback to be called when CSIInfo was received from this station
 	private final SubscriptionOptions subscriptionOptions; // the subscription options for this client, e.g. payload length filter
 
 	// only for acceleration clients
 	private float[] accelerationCalibration = null;
 
-	public DataClient(Station station, SubscriptionOptions subscriptionOptions, DataConsumer... consumers) {
+	private final CompletableFuture<Station> connectedFuture = new CompletableFuture<>();
+	private final CompletableFuture<Station> timeoutFuture = new CompletableFuture<>();
+	private final Observable<Integer> packetsReceived = new Observable<>(0);
+
+	public DataClient(Station station, SubscriptionOptions subscriptionOptions, DataConsumer<? extends DataInfo>... consumers) {
 		this.station = station;
 		this.consumers = consumers;
 
@@ -120,7 +137,7 @@ public class DataClient {
 		this.subscriptionId = SUBSCRIPTION_ID_FACTORY++;
 	}
 
-	public DataClient(Station station, DataConsumer... consumers) {
+	public DataClient(Station station, DataConsumer<? extends DataInfo>... consumers) {
 		this(station, null, consumers);
 	}
 
@@ -135,10 +152,12 @@ public class DataClient {
 						subscriptionOptions
 					).toBytes()
 				);
-				try { Thread.sleep(5000); } catch(InterruptedException e) {e.printStackTrace();}
+				try { Thread.sleep(2000); } catch(InterruptedException e) {e.printStackTrace();}
 			}
 			if(!connected) {
 				Logger.warn("Subscription for %s timed out", station.getIP_ADDRESS());
+				timedOut = true;
+				timeoutFuture.complete(station);
 			}
 		}).start();
 	}
@@ -170,6 +189,7 @@ public class DataClient {
 				Logger.info("Received acceleration calibration:  X:%.3f, Y:%.3f, Z:%.3f", accelerationCalibration[0], accelerationCalibration[1], accelerationCalibration[2]);
 			}
 			connected = true;
+			connectedFuture.complete(station);
 			break;
 		}
 		
@@ -180,6 +200,7 @@ public class DataClient {
 		
 		case TYPE_CSI_INFO: {
 			Logger.trace("Got csi from station %s", station.getIP_ADDRESS());
+			packetsReceived.set(packetsReceived.get() + 1);
 			CSIInfo info = new CSIInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1));
 
 			if(station.getActivityDetector() != null) {
@@ -192,6 +213,7 @@ public class DataClient {
 
 		case TYPE_ACCELERATION_INFO: {
 			Logger.trace("Got acceleration info from station %s", station.getIP_ADDRESS());
+			packetsReceived.set(packetsReceived.get() + 1);
 			AndroidInfo info = new AndroidInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1), accelerationCalibration);
 
 			getApplicableConsumers(AndroidInfo.class).forEach(c -> c.accept(info));

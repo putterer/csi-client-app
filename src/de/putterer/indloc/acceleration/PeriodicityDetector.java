@@ -8,19 +8,24 @@ import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 
-public class AndroidPeriodicityDetector {
-
+public class PeriodicityDetector {
+    //TODO: also support non android
     @Getter
     private double currentFrequency = 0.0;
 
+    @Getter
     private final double samplingFrequency;
+    @Getter
     private final int slidingWindowSize;
+    @Getter
+    private final Duration slidingWindowDuration; // not used internally, just for external queries
 
     private final List<AndroidInfo> history = new LinkedList<>();
 
-    public AndroidPeriodicityDetector(double samplingFrequency, Duration slidingWindowDuration) {
+    public PeriodicityDetector(double samplingFrequency, Duration slidingWindowDuration) {
         this.samplingFrequency = samplingFrequency;
         this.slidingWindowSize = (int) ((double)slidingWindowDuration.toSeconds() * samplingFrequency);
+        this.slidingWindowDuration = slidingWindowDuration;
     }
 
     public void onData(AndroidInfo info) {

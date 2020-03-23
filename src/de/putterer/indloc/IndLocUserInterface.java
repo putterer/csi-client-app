@@ -1,8 +1,8 @@
 package de.putterer.indloc;
 
 import de.putterer.indloc.util.Logger;
-import de.putterer.indloc.util.dataprocessing.TargetRecordingAnalyzer;
 import de.putterer.indloc.util.Vector;
+import de.putterer.indloc.util.dataprocessing.TargetRecordingAnalyzer;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -13,8 +13,8 @@ import java.awt.image.BufferedImage;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -48,7 +48,7 @@ public class IndLocUserInterface extends JPanel implements KeyListener {
 	
 	public IndLocUserInterface(Config.RoomConfig room) {
 		this.room = room;
-		Arrays.stream(room.getStations()).forEach(s -> s.rssiProperty().addListener(() -> this.repaint()));
+		Arrays.stream(room.getStations()).forEach(s -> s.rssiProperty().addListener(() -> this.repaint(), true));
 		
 		frame = new JFrame("Indoor Localization - Fabian Putterer - TUM");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

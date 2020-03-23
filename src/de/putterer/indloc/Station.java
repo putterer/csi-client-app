@@ -1,6 +1,7 @@
 package de.putterer.indloc;
 
 import de.putterer.indloc.activity.ActivityDetector;
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.rssi.RSSI;
 import de.putterer.indloc.rssi.estimator.RSSIDistanceEstimator;
 import de.putterer.indloc.util.Observable;
@@ -24,6 +25,7 @@ public class Station implements Serializable {
 	
 	private final String HW_ADDRESS; // the MAC address of the station
 	private final String IP_ADDRESS; // the IP address the station is reachable at
+	private transient final Class<? extends DataInfo> dataType;
 	private transient final Observable<RSSI> rssi = new Observable<>(new RSSI(-100));
 	private transient final List<RSSI> pastRSSIs = new LinkedList<>();
 	private Vector location = new Vector();

@@ -1,7 +1,9 @@
 package de.putterer.indloc.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * An util class representing an observable value
@@ -10,9 +12,11 @@ import java.util.List;
  * @param <T> The type of the encapsulated value
  */
 public class Observable<T> {
+	private static final ExecutorService executorService = Executors.newFixedThreadPool(4);
+
 	private T value;
-	private List<InvalidationListener<T>> invalidationListener = new ArrayList<>();
-	private List<ChangeListener<T>> changeListener = new ArrayList<>();
+	private Map<InvalidationListener<T>, Boolean> invalidationListener = new HashMap<>();
+	private Map<ChangeListener<T>, Boolean> changeListener = new HashMap<>();
 	
 	public Observable(T value) {
 		this.value = value;
@@ -25,12 +29,24 @@ public class Observable<T> {
 	public void set(T newValue) {
 		T oldValue = value;
 		this.value = newValue;
-		changeListener.forEach(l -> l.onChange(oldValue, newValue));
+		changeListener.forEach((listener, async) -> {
+			if(async) {
+				executorService.submit(() -> listener.onChange(oldValue, newValue));
+			} else {
+				listener.onChange(oldValue, newValue);
+			}
+		});
 		invalidate();
 	}
 	
 	public void invalidate() {
-		invalidationListener.forEach(InvalidationListener::invalidated);
+		invalidationListener.forEach((listener, async) -> {
+			if (async) {
+				executorService.submit(listener::invalidated);
+			} else {
+				listener.invalidated();
+			}
+		});
 	}
 	
 	/**
@@ -38,15 +54,15 @@ public class Observable<T> {
 	 * @param observable The observable to bind to
 	 */
 	public void bind(Observable<T> observable) {
-		observable.addListener((_void, newValue) -> this.set(newValue));
+		observable.addListener((_void, newValue) -> this.set(newValue), false);
 	}
 	
-	public void addListener(InvalidationListener<T> listener) {
-		invalidationListener.add(listener);
+	public void addListener(InvalidationListener<T> listener, boolean async) {
+		invalidationListener.put(listener, async);
 	}
 	
-	public void addListener(ChangeListener<T> listener) {
-		changeListener.add(listener);
+	public void addListener(ChangeListener<T> listener, boolean async) {
+		changeListener.put(listener, async);
 	}
 	
 	@FunctionalInterface

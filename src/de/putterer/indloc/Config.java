@@ -1,6 +1,6 @@
 package de.putterer.indloc;
 
-import de.putterer.indloc.activity.ActivityDetector;
+import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.trilateration.SimpleTrilaterator;
 import de.putterer.indloc.trilateration.Trilaterator;
 import de.putterer.indloc.util.Vector;
@@ -36,7 +36,8 @@ public class Config {
 	private static final RoomConfig ROOM_CSI_TESTING = new RoomConfig(
 			1300, 1150, 
 			new Station[] {
-					new Station(STATION_10_MAC, "10.10.0.10", new Vector(0, 0), null, new ActivityDetector())
+//					new Station(STATION_10_MAC, "10.10.0.10", AndroidInfo.class, new Vector(0, 0), null, new ActivityDetector())
+					new Station("Phone", "192.168.178.28", AndroidInfo.class, new Vector(0, 0), null, null)
 			},
 			new RoomObject[] {
 
