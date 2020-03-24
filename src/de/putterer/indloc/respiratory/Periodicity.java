@@ -12,11 +12,19 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import static de.putterer.indloc.util.CSIUtil.mean;
+import static de.putterer.indloc.util.CSIUtil.shift;
+
 public class Periodicity {
 
     private static FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
 
     public static Map<Double, Double> detectPeriodicity(double[] values, double samplingFreq) {
+        //shift values by mean
+        double mean = mean(values);
+        values = Arrays.copyOf(values, values.length);
+        shift(values, -mean);
+
         values = Arrays.copyOf(values, (int)Math.pow(2, Math.ceil(Math.log(values.length) / Math.log(2))));
 
         //TODO: test what happens with padding
