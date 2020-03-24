@@ -93,5 +93,7 @@ public class ActivityUI extends UIComponentWindow {
         ActivityUI activityUI = new ActivityUI(station, subscriptionOptions);
 
         addClient(new DataClient(station, subscriptionOptions, new DataConsumer<>(CSIInfo.class, csi -> activityUI.onDataInfo(station, csi))));
+
+        activityUI.getFrame().setVisible(true);
     }
 }

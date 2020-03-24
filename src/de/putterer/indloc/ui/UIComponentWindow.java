@@ -22,12 +22,15 @@ public abstract class UIComponentWindow extends JPanel {
 
 	protected void setupFinished() {
 		frame.add(this);
-		frame.setVisible(true);
 	}
 
 	public UIComponentWindow setPosition(int x, int y) {
 		frame.setLocation(x, y);
 		return this;
+	}
+
+	public void postConstruct() {
+
 	}
 
 	public abstract void onDataInfo(Station station, DataInfo dataInfo);

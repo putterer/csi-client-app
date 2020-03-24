@@ -33,16 +33,19 @@ public class CsiUserInterface implements KeyListener {
 
 	private final GenericStatusUI genericStatusUI;
 	private final RespiratoryUI respiratoryUI;
+	private final FrequencyGeneratorUI frequencyGeneratorUI;
 	private final List<ActivityUI> activityUIs = new ArrayList<>();
 
 	public CsiUserInterface() {
 		startClients();
 
-		respiratoryUI = new RespiratoryUI();
+		frequencyGeneratorUI = new FrequencyGeneratorUI();
+		respiratoryUI = new RespiratoryUI(frequencyGeneratorUI);
 		genericStatusUI = new GenericStatusUI(respiratoryUI);
 		genericStatusUI.setPosition(TOP_LEFT_OFFSET.x, TOP_LEFT_OFFSET.y);
 		respiratoryUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y);
-		componentWindows.addAll(Arrays.asList(genericStatusUI, respiratoryUI));
+		frequencyGeneratorUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y + respiratoryUI.getWindowHeight());
+		componentWindows.addAll(Arrays.asList(genericStatusUI, respiratoryUI, frequencyGeneratorUI));
 
 		for(int i = 0;i < ROOM.getStations().length;i++) {
 			Station station = ROOM.getStations()[i];
@@ -56,8 +59,11 @@ public class CsiUserInterface implements KeyListener {
 		//TODO: more status?
 		//TODO: previews
 
-
+		componentWindows.stream().map(UIComponentWindow::getFrame).forEach(f -> f.setVisible(true));
 		componentWindows.stream().map(UIComponentWindow::getFrame).forEach(f -> f.addKeyListener(this));
+
+		try { Thread.sleep(200); } catch(InterruptedException e) { e.printStackTrace(); }
+		componentWindows.forEach(UIComponentWindow::postConstruct);
 	}
 
 	private void startClients() {

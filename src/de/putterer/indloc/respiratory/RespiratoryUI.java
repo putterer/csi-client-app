@@ -5,6 +5,7 @@ import de.putterer.indloc.acceleration.PeriodicityDetector;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
+import de.putterer.indloc.ui.FrequencyGeneratorUI;
 import de.putterer.indloc.ui.UIComponentWindow;
 
 import javax.swing.*;
@@ -25,12 +26,16 @@ public class RespiratoryUI extends UIComponentWindow {
 	private final JButton samplingFrequencyLabel = new JButton("Sampl. freq.:");
 	private final JButton slidingWindowSizeLabel = new JButton("Sliding window:");
 	private final JLabel bpmLabel = new JLabel("");
+	private final JToggleButton frequencyGeneratorCheckBox = new JToggleButton("Frequency generator", false);
+
+	private final FrequencyGeneratorUI frequencyGeneratorUI;
 
 	private Station station;
 	private PeriodicityDetector periodicityDetector;
 
-	public RespiratoryUI() {
+	public RespiratoryUI(FrequencyGeneratorUI frequencyGeneratorUI) {
 		super("Respiratory Detection", 420, 300);
+		this.frequencyGeneratorUI = frequencyGeneratorUI;
 
 		this.setLayout(null);
 		initUI();
@@ -70,6 +75,10 @@ public class RespiratoryUI extends UIComponentWindow {
 		bpmLabel.setVerticalAlignment(JLabel.CENTER);
 		bpmLabel.setBounds(10, 70, 400, 60);
 		this.add(bpmLabel);
+
+		frequencyGeneratorCheckBox.setBounds(210, 230, 200, 20);
+		frequencyGeneratorCheckBox.addActionListener(a -> frequencyGeneratorUI.getFrame().setVisible(frequencyGeneratorCheckBox.isSelected()));
+		this.add(frequencyGeneratorCheckBox);
 	}
 
 	@Override
