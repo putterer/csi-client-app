@@ -2,6 +2,8 @@ package de.putterer.indloc.respiratory;
 
 import de.putterer.indloc.Station;
 import de.putterer.indloc.acceleration.PeriodicityDetector;
+import de.putterer.indloc.csi.DataPreview;
+import de.putterer.indloc.csi.DataPreview.AndroidEvolutionPreview.AndroidDataType;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
@@ -18,20 +20,25 @@ import static javax.swing.SwingUtilities.invokeLater;
 
 public class RespiratoryUI extends UIComponentWindow {
 
-	public static final double DEFAULT_SAMPLING_FREQUENCY = 1.0 / 0.08;
-	public static final Duration DEFAULT_SLIDING_WINDOW = Duration.ofSeconds(7);
+	public static final double DEFAULT_SAMPLING_FREQUENCY = 1.0 / 0.02; // "game mode" on android
+	public static final Duration DEFAULT_SLIDING_WINDOW = Duration.ofSeconds(4);
 
 	private final JLabel typeLabel = new JLabel("Type:");
 	private final JLabel packetsReceivedLabel = new JLabel("Packets:");
 	private final JButton samplingFrequencyLabel = new JButton("Sampl. freq.:");
 	private final JButton slidingWindowSizeLabel = new JButton("Sliding window:");
 	private final JLabel bpmLabel = new JLabel("");
-	private final JToggleButton frequencyGeneratorCheckBox = new JToggleButton("Frequency generator", false);
+	private final JToggleButton frequencyGeneratorButton = new JToggleButton("Frequency generator", false);
+	private final JToggleButton previwewAndroidDataButton = new JToggleButton("Android data preview", false);
+
+	private final DataPreview rawAndroidDataPreview;
 
 	private final FrequencyGeneratorUI frequencyGeneratorUI;
 
 	private Station station;
 	private PeriodicityDetector periodicityDetector;
+	private Thread samplingThread;
+	private DataInfo lastSeenDataInfo = null;
 
 	public RespiratoryUI(FrequencyGeneratorUI frequencyGeneratorUI) {
 		super("Respiratory Detection", 420, 300);
@@ -43,6 +50,20 @@ public class RespiratoryUI extends UIComponentWindow {
 		Arrays.stream(ROOM.getStations()).findFirst().ifPresent(this::setStation);
 
 		setupFinished();
+
+		rawAndroidDataPreview = new DataPreview(new DataPreview.AndroidEvolutionPreview(
+				10.0f,
+				AndroidDataType.Y,
+				AndroidDataType.Z
+		));
+		rawAndroidDataPreview.getFrame().setBounds(500, 450, 1200, 600);
+	}
+
+	@Override
+	public void postConstruct() {
+		rawAndroidDataPreview.getFrame().setVisible(false);
+		samplingThread = new Thread(this::samplingThread);
+		samplingThread.start();
 	}
 
 	private void initUI() {
@@ -76,16 +97,24 @@ public class RespiratoryUI extends UIComponentWindow {
 		bpmLabel.setBounds(10, 70, 400, 60);
 		this.add(bpmLabel);
 
-		frequencyGeneratorCheckBox.setBounds(210, 230, 200, 20);
-		frequencyGeneratorCheckBox.addActionListener(a -> frequencyGeneratorUI.getFrame().setVisible(frequencyGeneratorCheckBox.isSelected()));
-		this.add(frequencyGeneratorCheckBox);
+		previwewAndroidDataButton.setBounds(10, 230, 195, 20);
+		previwewAndroidDataButton.addActionListener(a -> rawAndroidDataPreview.getFrame().setVisible(previwewAndroidDataButton.isSelected()));
+		this.add(previwewAndroidDataButton);
+
+		frequencyGeneratorButton.setBounds(215, 230, 195, 20);
+		frequencyGeneratorButton.addActionListener(a -> frequencyGeneratorUI.getFrame().setVisible(frequencyGeneratorButton.isSelected()));
+		this.add(frequencyGeneratorButton);
 	}
 
 	@Override
 	public void onDataInfo(Station station, DataInfo info) {
 		if (info instanceof AndroidInfo) {
 			AndroidInfo androidInfo = (AndroidInfo) info;
-			periodicityDetector.onData(androidInfo);
+			lastSeenDataInfo = androidInfo;
+
+			if(rawAndroidDataPreview.getFrame().isVisible()) {
+				rawAndroidDataPreview.setData(androidInfo);
+			}
 		}
 	}
 
@@ -114,5 +143,21 @@ public class RespiratoryUI extends UIComponentWindow {
 		samplingFrequencyLabel.setText(String.format("Sampl. freq.: %.1f Hz", periodicityDetector.getSamplingFrequency()));
 		slidingWindowSizeLabel.setText(String.format("Sliding window: %.1f s", periodicityDetector.getSlidingWindowDuration().toMillis() / 1000.0f));
 		//TODO: show frequency in Hz, bucket spacing, previews
+	}
+
+	private void samplingThread() {
+		long nextTime = System.currentTimeMillis();
+		while(true) {
+			if(periodicityDetector != null && lastSeenDataInfo != null) {
+				periodicityDetector.onData((AndroidInfo) lastSeenDataInfo);
+			}
+
+			long desiredDelta = (long) (1.0 / periodicityDetector.getSamplingFrequency() * 1000.0);
+			nextTime += desiredDelta;
+
+			while(System.currentTimeMillis() < nextTime) {
+				try { Thread.sleep(Math.max(1, (System.currentTimeMillis() - nextTime) / 2)); } catch(InterruptedException e) { e.printStackTrace();break; }
+			}
+		}
 	}
 }

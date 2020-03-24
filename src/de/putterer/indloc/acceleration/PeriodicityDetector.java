@@ -30,6 +30,9 @@ public class PeriodicityDetector {
     }
 
     public void onData(AndroidInfo info) {
+        //TODO: TODO: TODO: I AM TESTING CODE REMOVE ME
+        info.getData()[1] = (float) Math.sin(System.currentTimeMillis() / 1000.0 * 2.0 * Math.PI / 60.0 * 15.0) + (float)Math.random() * 1f - 0.5f;
+
         history.add(info);
         while(history.size() > slidingWindowSize) {
             history.remove(0);
@@ -43,6 +46,7 @@ public class PeriodicityDetector {
         // process sliding window
         //TODO: how to deal with X, Y? parameter? Max?
         double[] values = history.stream().mapToDouble(e -> e.getData()[1]).toArray();
-        currentFrequency.set(Periodicity.detectMLPeriodicity(values, samplingFrequency, 0.0, 10.0));
+        currentFrequency.set(Periodicity.detectSmoothedMLPeriodicity(values, samplingFrequency, 0.0, 10.0));
+//        System.out.printf("%.1f%n", Periodicity.detectSmoothedMLPeriodicity(values, samplingFrequency, 0.0, 10.0) * 60.0);
     }
 }

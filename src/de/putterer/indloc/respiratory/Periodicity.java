@@ -1,5 +1,6 @@
 package de.putterer.indloc.respiratory;
 
+import lombok.var;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
@@ -32,6 +33,7 @@ public class Periodicity {
 
         double binSpacing = samplingFreq / 2.0 / (bins.length / 2.0); // half of the values in the array are discarded
 
+
         double[] magnitudeByBin = Arrays.stream(bins, 1, bins.length / 2)
                 .mapToDouble(c -> Math.sqrt(c.getReal() * c.getReal() + c.getImaginary() * c.getImaginary())).toArray();
 
@@ -52,8 +54,21 @@ public class Periodicity {
     }
 
     public static double detectMLPeriodicity(double[] values, double samplingFreq, double minFreq, double maxFreq) {
-        return detectPeriodicity(values, samplingFreq, minFreq, maxFreq).entrySet()
-                .stream().max(Comparator.comparingDouble(Map.Entry::getValue)).get().getKey();
+        return detectPeriodicity(values, samplingFreq, minFreq, maxFreq).entrySet().stream()
+                .max(Comparator.comparingDouble(Map.Entry::getValue)).get().getKey();
+    }
+
+    public static double detectSmoothedMLPeriodicity(double[] values, double samplingFreq, double minFreq, double maxFreq) {
+        Map<Double, Double> freqSpectrum = detectPeriodicity(values, samplingFreq, minFreq, maxFreq);
+        var maxEntry = freqSpectrum.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue)).get();
+
+        //TODO
+        //TODO line break
+        //this is inefficient, should have stored the entire transform
+        var lowerEntry = freqSpectrum.entrySet().stream().filter(e -> e.getKey() < maxEntry.getKey()).max(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
+        var upperEntry = freqSpectrum.entrySet().stream().filter(e -> e.getKey() > maxEntry.getKey()).min(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
+        return (maxEntry.getKey() * maxEntry.getValue() + lowerEntry.getKey() * lowerEntry.getValue() + upperEntry.getKey() * upperEntry.getValue())
+                / (maxEntry.getValue() + lowerEntry.getValue() + upperEntry.getValue());
     }
 
 

@@ -3,6 +3,7 @@ package de.putterer.indloc.csi;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataInfo;
+import de.putterer.indloc.util.Logger;
 import lombok.Getter;
 import lombok.var;
 import org.knowm.xchart.SwingWrapper;
@@ -42,6 +43,8 @@ public class DataPreview {
 	
 	private final XYChart chart;
 	private final SwingWrapper<XYChart> wrapper;
+	@Getter
+	private final JFrame frame;
 	
 	public DataPreview(PreviewMode mode) {
 		this.mode = mode;
@@ -49,10 +52,15 @@ public class DataPreview {
 		chart = mode.createChart();		
 		
 		wrapper = new SwingWrapper<XYChart>(chart);
-		wrapper.displayChart();
+		this.frame = wrapper.displayChart();
 	}
 	
 	public void setData(DataInfo info) {
+		if(! frame.isVisible()) {
+			Logger.error("Frame not visible, aborting setting data info");
+			return;
+		}
+
 		this.dataInfo = info;
 		
 		mode.updateChart(info, chart);

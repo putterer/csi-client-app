@@ -30,6 +30,7 @@ public class CsiUserInterface implements KeyListener {
 
 	private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 	private final List<UIComponentWindow> componentWindows = new ArrayList<>();
+	private volatile boolean initComplete = false;
 
 	private final GenericStatusUI genericStatusUI;
 	private final RespiratoryUI respiratoryUI;
@@ -64,6 +65,8 @@ public class CsiUserInterface implements KeyListener {
 
 		try { Thread.sleep(200); } catch(InterruptedException e) { e.printStackTrace(); }
 		componentWindows.forEach(UIComponentWindow::postConstruct);
+
+		initComplete = true;
 	}
 
 	private void startClients() {
@@ -81,6 +84,10 @@ public class CsiUserInterface implements KeyListener {
 	}
 
 	private void onData(Station station, DataInfo info) {
+		if(!initComplete) {
+			return;
+		}
+
 		componentWindows.forEach(w -> executorService.submit(() -> w.onDataInfo(station, info)));
 
 //		if(info instanceof CSIInfo) {
