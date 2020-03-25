@@ -1,5 +1,6 @@
 package de.putterer.indloc.respiratory;
 
+import lombok.Data;
 import lombok.var;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
@@ -20,18 +21,18 @@ public class Periodicity {
 
     private static FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
 
-    public static Map<Double, Double> detectPeriodicity(double[] values, double samplingFreq) {
+    public static FrequencySpectrum detectPeriodicity(double[] values, double samplingFreq) {
         //shift values by mean
         double mean = mean(values);
         values = Arrays.copyOf(values, values.length);
         shift(values, -mean);
 
-        values = Arrays.copyOf(values, (int)Math.pow(2, Math.ceil(Math.log(values.length) / Math.log(2))));
+        values = Arrays.copyOf(values, getNextPowerOfTwo(values.length));
 
         //TODO: test what happens with padding
         Complex[] bins = transformer.transform(values, TransformType.FORWARD);
 
-        double binSpacing = samplingFreq / 2.0 / (bins.length / 2.0); // half of the values in the array are discarded
+        double binSpacing = getBinSpacingPowerOfTwo(samplingFreq, bins.length); // half of the values in the array are discarded
 
 
         double[] magnitudeByBin = Arrays.stream(bins, 1, bins.length / 2)
@@ -42,36 +43,49 @@ public class Periodicity {
             magnitudeByFrequency.put((i + 1) * binSpacing, magnitudeByBin[i]);
         }
 
-        return magnitudeByFrequency;
+        return new FrequencySpectrum(magnitudeByFrequency);
     }
 
-    public static Map<Double, Double> detectPeriodicity(double[] values, double samplingFreq, double minFreq, double maxFreq) {
-        Map<Double, Double> filteredMagnitudes = new HashMap<>();
-        detectPeriodicity(values, samplingFreq).entrySet().stream()
-                .filter(e -> e.getKey() >= minFreq && e.getKey() <= maxFreq)
-                .forEach(e -> filteredMagnitudes.put(e.getKey(), e.getValue()));
-        return filteredMagnitudes;
+    @Data
+    public static class FrequencySpectrum {
+        private final Map<Double, Double> magnitudesByFrequency;
+
+        public FrequencySpectrum filter(double minFreq, double maxFreq) {
+            Map<Double, Double> filteredMagnitudes = new HashMap<>();
+            magnitudesByFrequency.entrySet().stream()
+                    .filter(e -> e.getKey() >= minFreq && e.getKey() <= maxFreq)
+                    .forEach(e -> filteredMagnitudes.put(e.getKey(), e.getValue()));
+            return new FrequencySpectrum(filteredMagnitudes);
+        }
+
+        public double getMLFreq() {
+            return magnitudesByFrequency.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue)).get().getKey();
+        }
+
+        public double detectSmoothedMLPeriodicity() {
+            var maxEntry = magnitudesByFrequency.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue)).get();
+
+            //TODO
+            //TODO line break
+            //this is inefficient, should have stored the entire transform
+            var lowerEntry = magnitudesByFrequency.entrySet().stream().filter(e -> e.getKey() < maxEntry.getKey()).max(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
+            var upperEntry = magnitudesByFrequency.entrySet().stream().filter(e -> e.getKey() > maxEntry.getKey()).min(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
+            return (maxEntry.getKey() * maxEntry.getValue() + lowerEntry.getKey() * lowerEntry.getValue() + upperEntry.getKey() * upperEntry.getValue())
+                    / (maxEntry.getValue() + lowerEntry.getValue() + upperEntry.getValue());
+        }
     }
 
-    public static double detectMLPeriodicity(double[] values, double samplingFreq, double minFreq, double maxFreq) {
-        return detectPeriodicity(values, samplingFreq, minFreq, maxFreq).entrySet().stream()
-                .max(Comparator.comparingDouble(Map.Entry::getValue)).get().getKey();
+    public static double getBinSpacingPowerOfTwo(double samplingFreq, int bins) {
+        return samplingFreq / 2.0 / (bins / 2.0);
     }
 
-    public static double detectSmoothedMLPeriodicity(double[] values, double samplingFreq, double minFreq, double maxFreq) {
-        Map<Double, Double> freqSpectrum = detectPeriodicity(values, samplingFreq, minFreq, maxFreq);
-        var maxEntry = freqSpectrum.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue)).get();
-
-        //TODO
-        //TODO line break
-        //this is inefficient, should have stored the entire transform
-        var lowerEntry = freqSpectrum.entrySet().stream().filter(e -> e.getKey() < maxEntry.getKey()).max(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
-        var upperEntry = freqSpectrum.entrySet().stream().filter(e -> e.getKey() > maxEntry.getKey()).min(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
-        return (maxEntry.getKey() * maxEntry.getValue() + lowerEntry.getKey() * lowerEntry.getValue() + upperEntry.getKey() * upperEntry.getValue())
-                / (maxEntry.getValue() + lowerEntry.getValue() + upperEntry.getValue());
+    public static double getBinSpacing(double samplingFreq, int inputSize) {
+        return getBinSpacingPowerOfTwo(samplingFreq, getNextPowerOfTwo(inputSize));
     }
 
-
+    public static int getNextPowerOfTwo(int val) {
+        return (int)Math.pow(2, Math.ceil(Math.log(val) / Math.log(2)));
+    }
 
 
     // ------------------------------------------
@@ -115,6 +129,6 @@ public class Periodicity {
             System.out.printf("%d, %.2f Hz: %.3f\n", i, i * binSpacing, magnitude);
         }
 
-        System.out.println("\n\n" + detectMLPeriodicity(values, sampleFrequency, 0.0, 20.0));
+        System.out.println("\n\n" + detectPeriodicity(values, sampleFrequency).filter(0.0, 20.0).getMLFreq());
     }
 }

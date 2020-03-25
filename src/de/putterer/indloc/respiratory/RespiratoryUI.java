@@ -20,13 +20,15 @@ import static javax.swing.SwingUtilities.invokeLater;
 
 public class RespiratoryUI extends UIComponentWindow {
 
-	public static final double DEFAULT_SAMPLING_FREQUENCY = 1.0 / 0.02; // "game mode" on android
-	public static final Duration DEFAULT_SLIDING_WINDOW = Duration.ofSeconds(4);
+//	public static final double DEFAULT_SAMPLING_FREQUENCY = 1.0 / 0.02; // "game mode" on android
+	public static final double DEFAULT_SAMPLING_FREQUENCY = 5.0;
+	public static final Duration DEFAULT_SLIDING_WINDOW = Duration.ofSeconds(15);
 
 	private final JLabel typeLabel = new JLabel("Type:");
 	private final JLabel packetsReceivedLabel = new JLabel("Packets:");
 	private final JButton samplingFrequencyLabel = new JButton("Sampl. freq.:");
 	private final JButton slidingWindowSizeLabel = new JButton("Sliding window:");
+	private final JLabel binSpacingLabel = new JLabel("");
 	private final JLabel bpmLabel = new JLabel("");
 	private final JToggleButton frequencyGeneratorButton = new JToggleButton("Frequency generator", false);
 	private final JToggleButton previwewAndroidDataButton = new JToggleButton("Android data preview", false);
@@ -85,16 +87,19 @@ public class RespiratoryUI extends UIComponentWindow {
 		});
 		slidingWindowSizeLabel.addActionListener(a -> {
 			try {
-				long newSlidingWindowDuration = Long.parseLong(JOptionPane.showInputDialog(this,
-						"Sliding window duration (ms)?", periodicityDetector.getSlidingWindowDuration().toMillis()));
-				rebuild(station, periodicityDetector.getSamplingFrequency(), Duration.ofMillis(newSlidingWindowDuration));
+				double newSlidingWindowDuration = Double.parseDouble(JOptionPane.showInputDialog(this,
+						"Sliding window duration (s)?", periodicityDetector.getSlidingWindowDuration().toMillis()));
+				rebuild(station, periodicityDetector.getSamplingFrequency(), Duration.ofMillis((long)(newSlidingWindowDuration * 1000.0)));
 			} catch (NumberFormatException | NullPointerException e) {}
 		});
+
+		binSpacingLabel.setBounds(10, 70, 400, 20);
+		this.add(binSpacingLabel);
 
 		bpmLabel.setFont(new Font(bpmLabel.getFont().getName(), Font.PLAIN, 42));
 		bpmLabel.setHorizontalAlignment(JLabel.CENTER);
 		bpmLabel.setVerticalAlignment(JLabel.CENTER);
-		bpmLabel.setBounds(10, 70, 400, 60);
+		bpmLabel.setBounds(10, 100, 400, 60);
 		this.add(bpmLabel);
 
 		previwewAndroidDataButton.setBounds(10, 230, 195, 20);
@@ -104,6 +109,28 @@ public class RespiratoryUI extends UIComponentWindow {
 		frequencyGeneratorButton.setBounds(215, 230, 195, 20);
 		frequencyGeneratorButton.addActionListener(a -> frequencyGeneratorUI.getFrame().setVisible(frequencyGeneratorButton.isSelected()));
 		this.add(frequencyGeneratorButton);
+	}
+
+	public void rebuild(Station station, double samplingFrequency, Duration slidingWindowSize) {
+		this.station = station;
+		DataClient client = DataClient.getClient(station);
+
+		typeLabel.setText(station.getDataType() == AndroidInfo.class ? "Type: Android" : "Type: CSI");
+		client.getPacketsReceived().addListener((oldValue, newValue) -> invokeLater(
+				() -> packetsReceivedLabel.setText("Packets: " + newValue)
+		), false);
+
+		periodicityDetector = new PeriodicityDetector(samplingFrequency, slidingWindowSize);
+		periodicityDetector.getCurrentFrequency().addListener((oldValue, newValue) -> {
+			invokeLater(() -> bpmLabel.setText(String.format("%.1f bpm", newValue * 60.0f)));
+		}, false);
+
+		samplingFrequencyLabel.setText(String.format("Sampl. freq.: %.1f Hz", periodicityDetector.getSamplingFrequency()));
+		slidingWindowSizeLabel.setText(String.format("Sliding window: %.1f s", periodicityDetector.getSlidingWindowDuration().toMillis() / 1000.0f));
+		double binSpacing = Periodicity.getBinSpacing(periodicityDetector.getSamplingFrequency(), periodicityDetector.getSlidingWindowSize());
+		binSpacingLabel.setText(String.format("Freq. resolution:  %.2f Hz   %.1f bpm", binSpacing, binSpacing * 60.0));
+		//TODO: show frequency in Hz previews
+		//TODO: fourier transform preview
 	}
 
 	@Override
@@ -124,25 +151,6 @@ public class RespiratoryUI extends UIComponentWindow {
 		} else {
 			rebuild(station, DEFAULT_SAMPLING_FREQUENCY, DEFAULT_SLIDING_WINDOW);
 		}
-	}
-
-	public void rebuild(Station station, double samplingFrequency, Duration slidingWindowSize) {
-		this.station = station;
-		DataClient client = DataClient.getClient(station);
-
-		typeLabel.setText(station.getDataType() == AndroidInfo.class ? "Type: Android" : "Type: CSI");
-		client.getPacketsReceived().addListener((oldValue, newValue) -> invokeLater(
-				() -> packetsReceivedLabel.setText("Packets: " + newValue)
-		), false);
-
-		periodicityDetector = new PeriodicityDetector(samplingFrequency, slidingWindowSize);
-		periodicityDetector.getCurrentFrequency().addListener((oldValue, newValue) -> {
-			invokeLater(() -> bpmLabel.setText(String.format("%.1f bpm", newValue * 60.0f)));
-		}, false);
-
-		samplingFrequencyLabel.setText(String.format("Sampl. freq.: %.1f Hz", periodicityDetector.getSamplingFrequency()));
-		slidingWindowSizeLabel.setText(String.format("Sliding window: %.1f s", periodicityDetector.getSlidingWindowDuration().toMillis() / 1000.0f));
-		//TODO: show frequency in Hz, bucket spacing, previews
 	}
 
 	private void samplingThread() {

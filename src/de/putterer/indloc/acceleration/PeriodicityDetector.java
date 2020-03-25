@@ -12,7 +12,9 @@ import java.util.List;
 public class PeriodicityDetector {
     //TODO: also support non android
     @Getter
-    private Observable<Double> currentFrequency = new Observable<>(0.0);
+    private final Observable<Double> currentFrequency = new Observable<>(0.0);
+    @Getter
+    private final Observable<Periodicity.FrequencySpectrum> freqSpectrum = new Observable<>(null);
 
     @Getter
     private final double samplingFrequency;
@@ -30,12 +32,14 @@ public class PeriodicityDetector {
     }
 
     public void onData(AndroidInfo info) {
-        //TODO: TODO: TODO: I AM TESTING CODE REMOVE ME
-        info.getData()[1] = (float) Math.sin(System.currentTimeMillis() / 1000.0 * 2.0 * Math.PI / 60.0 * 15.0) + (float)Math.random() * 1f - 0.5f;
+//        TODO: TODO: TODO: I AM TESTING CODE REMOVE ME
+//        info.getData()[1] = (float) Math.sin(System.currentTimeMillis() / 1000.0 * 2.0 * Math.PI / 60.0 * 8.5) + (float)Math.random() * 1f - 0.5f;
 
-        history.add(info);
-        while(history.size() > slidingWindowSize) {
-            history.remove(0);
+        synchronized (history) {
+            history.add(info);
+            while(history.size() > slidingWindowSize) {
+                history.remove(0);
+            }
         }
 
         if(history.size() != slidingWindowSize) {
@@ -46,7 +50,8 @@ public class PeriodicityDetector {
         // process sliding window
         //TODO: how to deal with X, Y? parameter? Max?
         double[] values = history.stream().mapToDouble(e -> e.getData()[1]).toArray();
-        currentFrequency.set(Periodicity.detectSmoothedMLPeriodicity(values, samplingFrequency, 0.0, 10.0));
-//        System.out.printf("%.1f%n", Periodicity.detectSmoothedMLPeriodicity(values, samplingFrequency, 0.0, 10.0) * 60.0);
+        Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
+        currentFrequency.set(spectrum.filter(0.0, 10.0).detectSmoothedMLPeriodicity());//TODO: filter parameters
+        freqSpectrum.set(spectrum);
     }
 }
