@@ -7,6 +7,7 @@ import de.putterer.indloc.csi.DataPreview.AndroidEvolutionPreview.AndroidDataTyp
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
+import de.putterer.indloc.ui.DFTPreview;
 import de.putterer.indloc.ui.FrequencyGeneratorUI;
 import de.putterer.indloc.ui.UIComponentWindow;
 
@@ -30,10 +31,12 @@ public class RespiratoryUI extends UIComponentWindow {
 	private final JButton slidingWindowSizeLabel = new JButton("Sliding window:");
 	private final JLabel binSpacingLabel = new JLabel("");
 	private final JLabel bpmLabel = new JLabel("");
+	private final JToggleButton dftPreviewButton = new JToggleButton("Show spectrum", false);
 	private final JToggleButton frequencyGeneratorButton = new JToggleButton("Frequency generator", false);
-	private final JToggleButton previwewAndroidDataButton = new JToggleButton("Android data preview", false);
+	private final JToggleButton previewAndroidDataButton = new JToggleButton("Android data preview", false);
 
 	private final DataPreview rawAndroidDataPreview;
+	private final DFTPreview dftPreview;
 
 	private final FrequencyGeneratorUI frequencyGeneratorUI;
 
@@ -59,11 +62,14 @@ public class RespiratoryUI extends UIComponentWindow {
 				AndroidDataType.Z
 		));
 		rawAndroidDataPreview.getFrame().setBounds(500, 450, 1200, 600);
+		dftPreview = new DFTPreview();
+		dftPreview.getFrame().setBounds(500, 450, 1200, 600);
 	}
 
 	@Override
 	public void postConstruct() {
 		rawAndroidDataPreview.getFrame().setVisible(false);
+		dftPreview.getFrame().setVisible(false);
 		samplingThread = new Thread(this::samplingThread);
 		samplingThread.start();
 	}
@@ -102,9 +108,20 @@ public class RespiratoryUI extends UIComponentWindow {
 		bpmLabel.setBounds(10, 100, 400, 60);
 		this.add(bpmLabel);
 
-		previwewAndroidDataButton.setBounds(10, 230, 195, 20);
-		previwewAndroidDataButton.addActionListener(a -> rawAndroidDataPreview.getFrame().setVisible(previwewAndroidDataButton.isSelected()));
-		this.add(previwewAndroidDataButton);
+		dftPreviewButton.setBounds(10, 200, 400, 20);
+		dftPreviewButton.addActionListener(a -> {
+			if(dftPreviewButton.isSelected()) {
+				double maxMagnitude = Double.parseDouble(JOptionPane.showInputDialog(this,
+						"Maximum magnitude?", 100.0));
+				dftPreview.setMaxMagnitude(maxMagnitude);
+			}
+			dftPreview.getFrame().setVisible(dftPreviewButton.isSelected());
+		});
+		this.add(dftPreviewButton);
+
+		previewAndroidDataButton.setBounds(10, 230, 195, 20);
+		previewAndroidDataButton.addActionListener(a -> rawAndroidDataPreview.getFrame().setVisible(previewAndroidDataButton.isSelected()));
+		this.add(previewAndroidDataButton);
 
 		frequencyGeneratorButton.setBounds(215, 230, 195, 20);
 		frequencyGeneratorButton.addActionListener(a -> frequencyGeneratorUI.getFrame().setVisible(frequencyGeneratorButton.isSelected()));
@@ -124,6 +141,9 @@ public class RespiratoryUI extends UIComponentWindow {
 		periodicityDetector.getCurrentFrequency().addListener((oldValue, newValue) -> {
 			invokeLater(() -> bpmLabel.setText(String.format("%.1f bpm", newValue * 60.0f)));
 		}, false);
+		periodicityDetector.getFreqSpectrum().addListener((_void, newSpectrum) -> {
+			dftPreview.setFreqSpectrum(newSpectrum);
+		}, true);
 
 		samplingFrequencyLabel.setText(String.format("Sampl. freq.: %.1f Hz", periodicityDetector.getSamplingFrequency()));
 		slidingWindowSizeLabel.setText(String.format("Sliding window: %.1f s", periodicityDetector.getSlidingWindowDuration().toMillis() / 1000.0f));
