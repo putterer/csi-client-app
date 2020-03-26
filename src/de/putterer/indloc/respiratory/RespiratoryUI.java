@@ -139,7 +139,7 @@ public class RespiratoryUI extends UIComponentWindow {
 
 		periodicityDetector = new PeriodicityDetector(samplingFrequency, slidingWindowSize);
 		periodicityDetector.getCurrentFrequency().addListener((oldValue, newValue) -> {
-			invokeLater(() -> bpmLabel.setText(String.format("%.1f bpm", newValue * 60.0f)));
+			invokeLater(() -> bpmLabel.setText(periodicityDetector.isIdle() ? "-" : String.format("%.1f bpm", newValue * 60.0f)));
 		}, false);
 		periodicityDetector.getFreqSpectrum().addListener((_void, newSpectrum) -> {
 			dftPreview.setFreqSpectrum(newSpectrum);
@@ -149,8 +149,6 @@ public class RespiratoryUI extends UIComponentWindow {
 		slidingWindowSizeLabel.setText(String.format("Sliding window: %.1f s", periodicityDetector.getSlidingWindowDuration().toMillis() / 1000.0f));
 		double binSpacing = Periodicity.getBinSpacing(periodicityDetector.getSamplingFrequency(), periodicityDetector.getSlidingWindowSize());
 		binSpacingLabel.setText(String.format("Freq. resolution:  %.2f Hz   %.1f bpm", binSpacing, binSpacing * 60.0));
-		//TODO: show frequency in Hz previews
-		//TODO: fourier transform preview
 	}
 
 	@Override

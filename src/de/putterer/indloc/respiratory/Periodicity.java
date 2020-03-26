@@ -43,30 +43,41 @@ public class Periodicity {
             magnitudeByFrequency.put((i + 1) * binSpacing, magnitudeByBin[i]);
         }
 
-        return new FrequencySpectrum(magnitudeByFrequency);
+        return new FrequencySpectrum(magnitudeByFrequency, binSpacing);
     }
 
     @Data
     public static class FrequencySpectrum {
         private final Map<Double, Double> magnitudesByFrequency;
+        private final double binSpacing;
 
         public FrequencySpectrum filter(double minFreq, double maxFreq) {
             Map<Double, Double> filteredMagnitudes = new HashMap<>();
             magnitudesByFrequency.entrySet().stream()
                     .filter(e -> e.getKey() >= minFreq && e.getKey() <= maxFreq)
                     .forEach(e -> filteredMagnitudes.put(e.getKey(), e.getValue()));
-            return new FrequencySpectrum(filteredMagnitudes);
+            return new FrequencySpectrum(filteredMagnitudes, binSpacing);
         }
 
         public double getMLFreq() {
             return magnitudesByFrequency.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue)).get().getKey();
         }
 
-        public double detectSmoothedMLPeriodicity() {
+        // https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html
+        public double getQuadraticMLPeriodicity() {
+            var maxEntry = magnitudesByFrequency.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue)).get();
+            var lowerEntry = magnitudesByFrequency.entrySet().stream().filter(e -> e.getKey() < maxEntry.getKey()).max(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
+            var upperEntry = magnitudesByFrequency.entrySet().stream().filter(e -> e.getKey() > maxEntry.getKey()).min(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
+
+            double offset = (upperEntry.getValue() - lowerEntry.getValue()) / (2.0 * (maxEntry.getValue() * 2.0 - lowerEntry.getValue() - upperEntry.getValue()));
+            return maxEntry.getKey() + offset * binSpacing;
+        }
+
+        //TODO: https://dspguru.com/dsp/howtos/how-to-interpolate-fft-peak/
+
+        public double getLinearMLPeriodicity() {
             var maxEntry = magnitudesByFrequency.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue)).get();
 
-            //TODO
-            //TODO line break
             //this is inefficient, should have stored the entire transform
             var lowerEntry = magnitudesByFrequency.entrySet().stream().filter(e -> e.getKey() < maxEntry.getKey()).max(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);
             var upperEntry = magnitudesByFrequency.entrySet().stream().filter(e -> e.getKey() > maxEntry.getKey()).min(Comparator.comparingDouble(Map.Entry::getKey)).orElse(maxEntry);

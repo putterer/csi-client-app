@@ -8,6 +8,8 @@ import lombok.Getter;
 import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class PeriodicityDetector {
     //TODO: also support non android
@@ -51,7 +53,14 @@ public class PeriodicityDetector {
         //TODO: how to deal with X, Y? parameter? Max?
         double[] values = history.stream().mapToDouble(e -> e.getData()[1]).toArray();
         Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
-        currentFrequency.set(spectrum.filter(0.0, 10.0).detectSmoothedMLPeriodicity());//TODO: filter parameters
+        currentFrequency.set(spectrum.filter(0.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
         freqSpectrum.set(spectrum);
+    }
+
+    public boolean isIdle() {
+        return Optional.ofNullable(freqSpectrum.get())
+                .map(s -> s.getMagnitudesByFrequency().entrySet().stream().mapToDouble(Map.Entry::getValue).max().getAsDouble())
+                .map(m -> m < 2.0)
+                .orElse(true);
     }
 }
