@@ -27,7 +27,7 @@ public class CsiUserInterface implements KeyListener {
 	private static final Point TOP_LEFT_OFFSET = new Point(30, 50);
 
 	private static final SubscriptionMessage.SubscriptionOptions SUBSCRIPTION_OPTIONS = new SubscriptionMessage.SubscriptionOptions(
-			new SubscriptionMessage.FilterOptions(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
+			new SubscriptionMessage.FilterOptions(0)
 	);
 
 	private final ExecutorService executorService = Executors.newFixedThreadPool(4);

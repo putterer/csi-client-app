@@ -103,11 +103,31 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame())
 			)), station);
 		}, previewNames);
-		addPreviewOption("PhaseDiffVariance", station -> {}, previewNames);
-		addPreviewOption("PhaseDiffPreview", station -> {}, previewNames);
-		addPreviewOption("AndroidEvolution", station -> {}, previewNames);
+		addPreviewOption("PhaseDiffVariance", station -> {
+			//TODO: no detector!!!
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffVariancePreview(
+					station,
+					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame())
+			)), station);
+		}, previewNames);
+		addPreviewOption("PhaseDiffPreview", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffPreview(
+					openIntDialog("rxAntenna1", 0, this.getFrame()),
+					openIntDialog("rxAntenna2", 1, this.getFrame())
+			)), station);
+		}, previewNames);
+		addPreviewOption("AndroidEvolution", station -> {
+			//TODO
+		}, previewNames);
 		addPreviewOption("SubcarrierProperty", station -> {}, previewNames);
-		addPreviewOption("CSIPlot", station -> {}, previewNames);
+		addPreviewOption("CSIPlot", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.CSIPlotPreview(
+					openIntDialog("rxAntennaCount", 3, this.getFrame()),
+					openIntDialog("txAntennaCount", 1, this.getFrame())
+			)), station);
+		}, previewNames);
+
+		//TODO add configurations of multiple previews with location
 
 		previewSelector = new JComboBox<>(previewNames.toArray(new String[0]));
 		previewSelector.addActionListener(a -> {
