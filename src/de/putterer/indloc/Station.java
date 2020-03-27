@@ -31,6 +31,8 @@ public class Station implements Serializable {
 	private Vector location = new Vector();
 	private transient final RSSIDistanceEstimator estimator;
 	private transient final ActivityDetector activityDetector;
+
+	private String name;
 	
 	{
 		getRSSI().setStation(this);
@@ -49,6 +51,11 @@ public class Station implements Serializable {
 		);
 		newRSSI.setStation(this);
 		setRSSI(newRSSI);
+	}
+
+	public Station setName(String name) {
+		this.name = name;
+		return this;
 	}
 	
 	public RSSI getRSSI() {
