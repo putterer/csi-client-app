@@ -10,6 +10,7 @@ import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.ui.DFTPreview;
 import de.putterer.indloc.ui.FrequencyGeneratorUI;
 import de.putterer.indloc.ui.UIComponentWindow;
+import de.putterer.indloc.util.Observable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,6 +45,7 @@ public class RespiratoryUI extends UIComponentWindow {
 	private PeriodicityDetector periodicityDetector;
 	private Thread samplingThread;
 	private DataInfo lastSeenDataInfo = null;
+	private Observable.ChangeListener<Integer> packetsReceivedListener;
 
 	public RespiratoryUI(FrequencyGeneratorUI frequencyGeneratorUI) {
 		super("Respiratory Detection", 420, 300);
@@ -129,13 +131,18 @@ public class RespiratoryUI extends UIComponentWindow {
 	}
 
 	public void rebuild(Station station, double samplingFrequency, Duration slidingWindowSize) {
+		if(packetsReceivedListener != null) {
+			DataClient.getClient(station).getPacketsReceived().removeListener(packetsReceivedListener);
+		}
+
 		this.station = station;
 		DataClient client = DataClient.getClient(station);
 
 		typeLabel.setText(station.getDataType() == AndroidInfo.class ? "Type: Android" : "Type: CSI");
-		client.getPacketsReceived().addListener((oldValue, newValue) -> invokeLater(
+		packetsReceivedListener = (oldValue, newValue) -> invokeLater(
 				() -> packetsReceivedLabel.setText("Packets: " + newValue)
-		), false);
+		);
+		client.getPacketsReceived().addListener(packetsReceivedListener, false);
 
 		periodicityDetector = new PeriodicityDetector(samplingFrequency, slidingWindowSize);
 		periodicityDetector.getCurrentFrequency().addListener((oldValue, newValue) -> {
@@ -164,6 +171,7 @@ public class RespiratoryUI extends UIComponentWindow {
 	}
 
 	public void setStation(Station station) {
+		//TODO: remove packet listener
 		if(periodicityDetector != null) {
 			rebuild(station, periodicityDetector.getSamplingFrequency(), periodicityDetector.getSlidingWindowDuration());
 		} else {

@@ -64,6 +64,14 @@ public class Observable<T> {
 	public void addListener(ChangeListener<T> listener, boolean async) {
 		changeListener.put(listener, async);
 	}
+
+	public void removeListener(InvalidationListener<T> listener) {
+		invalidationListener.remove(listener);
+	}
+
+	public void removeListener(ChangeListener<T> listener) {
+		changeListener.remove(listener);
+	}
 	
 	@FunctionalInterface
 	public static interface InvalidationListener<T> {

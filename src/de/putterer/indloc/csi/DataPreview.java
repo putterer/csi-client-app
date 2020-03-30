@@ -393,8 +393,8 @@ public class DataPreview {
 			
 			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
 			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
-			chart.getStyler().setYAxisMin(-2.0 * Math.PI);
-			chart.getStyler().setYAxisMax(2.0 * Math.PI);
+			chart.getStyler().setYAxisMin(-1.0 * Math.PI);
+			chart.getStyler().setYAxisMax(1.0 * Math.PI);
 			chart.getStyler().setXAxisMin(0.0);
 			chart.getStyler().setXAxisMax(56.0);
 			

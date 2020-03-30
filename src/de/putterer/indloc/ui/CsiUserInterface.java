@@ -2,6 +2,7 @@ package de.putterer.indloc.ui;
 
 import de.putterer.indloc.Station;
 import de.putterer.indloc.activity.ActivityUI;
+import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.data.DataClient;
@@ -53,6 +54,10 @@ public class CsiUserInterface implements KeyListener {
 
 		for(int i = 0;i < ROOM.getStations().length;i++) {
 			Station station = ROOM.getStations()[i];
+			if(station.getDataType() != CSIInfo.class) {
+				continue;
+			}
+
 			ActivityUI activityUI = new ActivityUI(station, SUBSCRIPTION_OPTIONS);
 			activityUIs.add(activityUI);
 			activityUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth() + respiratoryUI.getWindowWidth(),
@@ -65,6 +70,7 @@ public class CsiUserInterface implements KeyListener {
 
 		try { Thread.sleep(200); } catch(InterruptedException e) { e.printStackTrace(); }
 		componentWindows.forEach(UIComponentWindow::postConstruct);
+		activityUIs.forEach(au -> au.getFrame().setVisible(false));
 
 		initComplete = true;
 	}
@@ -116,6 +122,10 @@ public class CsiUserInterface implements KeyListener {
 //		} else if (info instanceof AndroidInfo) {
 //			AndroidInfo androidInfo = (AndroidInfo) info;
 //		}
+	}
+
+	public void setActivityUIsVisible(boolean visible) {
+		activityUIs.forEach(au -> au.getFrame().setVisible(visible));
 	}
 
 	public static void main(String[] args) {

@@ -8,13 +8,12 @@ import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.respiratory.RespiratoryUI;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static de.putterer.indloc.Config.ROOM;
+import static de.putterer.indloc.csi.DataPreview.PhaseDiffVariancePreview.SUBCARRIER_AVG;
+import static de.putterer.indloc.csi.DataPreview.PhaseDiffVariancePreview.SUBCARRIER_MAX;
 import static de.putterer.indloc.util.SwingUtil.openIntDialog;
 import static de.putterer.indloc.util.SwingUtil.openIntListDialog;
 
@@ -29,8 +28,10 @@ public class GenericStatusUI extends UIComponentWindow {
 	private final JButton resubscribeButton = new JButton("Subs.");
 	private final JButton unsubscribeButton = new JButton("Unsubs.");
 	private JComboBox<String> previewSelector;
+	private final JButton showPreviewButton = new JButton("Show");
+	private final JCheckBox showActivityUICheckbox = new JCheckBox("Show activity UI", false);
 
-	private final List<Consumer<Station>> previewSelectedCallbacks = new ArrayList<>();
+	private final List<Consumer<Station>> showPreviewCallbacks = new ArrayList<>();
 
 	public GenericStatusUI(CsiUserInterface csiUserInterface, RespiratoryUI respiratoryUI) {
 		super("CSI toolbox - Fabian Putterer - TUM", 420, 300);
@@ -85,8 +86,16 @@ public class GenericStatusUI extends UIComponentWindow {
 		this.add(unsubscribeButton);
 
 		initPreviewSelector();
-		previewSelector.setBounds(10, 170, 400, 20);
+		previewSelector.setBounds(10, 170, 300, 20);
 		this.add(previewSelector);
+		showPreviewButton.setEnabled(false);
+		showPreviewButton.setBounds(320, 170, 90, 20);
+		this.add(showPreviewButton);
+		stationsList.addListSelectionListener(e -> showPreviewButton.setEnabled(true));
+
+		showActivityUICheckbox.addItemListener(e -> csiUserInterface.setActivityUIsVisible(showActivityUICheckbox.isSelected()));
+		showActivityUICheckbox.setBounds(10, 230, 200, 20);
+		this.add(showActivityUICheckbox);
 
 		onStationUpdated(null);
 
@@ -99,25 +108,27 @@ public class GenericStatusUI extends UIComponentWindow {
 		addPreviewOption("PhaseDiffEvolution", station -> {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame()),
-					openIntDialog("rxAntenna2", 1, this.getFrame()),
+					openIntDialog("rxAntenna2", 2, this.getFrame()),
 					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame())
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffVariance", station -> {
-			//TODO: no detector!!!
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffVariancePreview(
 					station,
-					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame())
+					openIntListDialog("subcarriers", new int[]{SUBCARRIER_AVG, SUBCARRIER_MAX},
+							Map.of(SUBCARRIER_MAX, "MAX", SUBCARRIER_AVG, "AVG"),
+							this.getFrame())
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffPreview", station -> {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame()),
-					openIntDialog("rxAntenna2", 1, this.getFrame())
+					openIntDialog("rxAntenna2", 2, this.getFrame())
 			)), station);
 		}, previewNames);
 		addPreviewOption("AndroidEvolution", station -> {
 			//TODO
+			//TODO: convert list option to mapper for generic objects instead of string
 		}, previewNames);
 		addPreviewOption("SubcarrierProperty", station -> {}, previewNames);
 		addPreviewOption("CSIPlot", station -> {
@@ -130,16 +141,17 @@ public class GenericStatusUI extends UIComponentWindow {
 		//TODO add configurations of multiple previews with location
 
 		previewSelector = new JComboBox<>(previewNames.toArray(new String[0]));
-		previewSelector.addActionListener(a -> {
+
+		showPreviewButton.addActionListener(a -> {
 			new Thread(() -> {
-				previewSelectedCallbacks.get(previewSelector.getSelectedIndex()).accept(getSelectedStation());
+				showPreviewCallbacks.get(previewSelector.getSelectedIndex()).accept(getSelectedStation());
 			}).start();
 		});
 	}
 
 	private void addPreviewOption(String name, Consumer<Station> runnable, List<String> previewNames) {
 		previewNames.add(name);
-		previewSelectedCallbacks.add(runnable);
+		showPreviewCallbacks.add(runnable);
 	}
 
 	private DataClient getCurrentlySelectedClient() {
