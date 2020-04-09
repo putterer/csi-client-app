@@ -2,9 +2,9 @@ package de.putterer.indloc.acceleration;
 
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.respiratory.Periodicity;
-import de.putterer.indloc.util.CSIUtil;
 import de.putterer.indloc.util.Observable;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,7 +30,7 @@ public class PeriodicityDetector {
     private final Duration slidingWindowDuration; // not used internally, just for external queries
 
     @Getter @Setter
-    private int subcarrier = 30;
+    private int subcarrier = 10;
 
     private final List<DataInfo> history = new LinkedList<>();
 
@@ -64,9 +64,7 @@ public class PeriodicityDetector {
             currentFrequency.set(spectrum.filter(0.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
             freqSpectrum.set(spectrum);
         } else if(info instanceof CSIInfo) {
-            double[] values = history.stream().mapToDouble(e ->
-                    ((CSIInfo)e).getCsi_matrix()[0][0][subcarrier].getPhase() - ((CSIInfo)e).getCsi_matrix()[2][0][subcarrier].getPhase()).toArray(); //TODO:
-            CSIUtil.unwrapPhase(values);  //TODO: the data looks really off after this due to jumps
+            double[] values = RespiratoryPhaseProcessor.selectCarrier(RespiratoryPhaseProcessor.process(0, 2, 0, history), subcarrier);
             Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
             currentFrequency.set(spectrum.filter(0.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
             freqSpectrum.set(spectrum);

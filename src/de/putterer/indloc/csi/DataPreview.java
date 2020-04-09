@@ -2,6 +2,7 @@ package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import org.knowm.xchart.style.Styler.LegendPosition;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
@@ -516,22 +518,7 @@ public class DataPreview {
 			int subcarriers = csi.getCsi_status().getNum_tones();
 
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
-			double[] diffs = new double[subcarriers];
-
-			double[] rx1Phase = Arrays.stream(csi.getCsi_matrix()[rxAntenna1][0]).mapToDouble(CSIInfo.Complex::getPhase).toArray();
-			double[] rx2Phase = Arrays.stream(csi.getCsi_matrix()[rxAntenna2][0]).mapToDouble(CSIInfo.Complex::getPhase).toArray();
-			unwrapPhase(rx1Phase);
-			unwrapPhase(rx2Phase);
-			previousPhaseMean[0] = timeUnwrapped(rx1Phase, previousPhaseMean[0]);
-			previousPhaseMean[1] = timeUnwrapped(rx2Phase, previousPhaseMean[1]);
-
-			for(int i = 0;i < subcarriers;i++) {
-				double diff = rx1Phase[i] - rx2Phase[i];
-				diffs[i] = diff;
-			}
-
-			unwrapPhase(diffs);
-			shift(diffs, -mean(diffs));
+			double[] diffs = RespiratoryPhaseProcessor.process(rxAntenna1, rxAntenna2, 0, Collections.singletonList(csi))[0];
 
 			for (int subcarrierIndex = 0;subcarrierIndex < this.subcarriers.length;subcarrierIndex++) {
 				List<Double> previousList = this.previousDataPoints[subcarrierIndex];
