@@ -160,9 +160,15 @@ public class RespiratoryUI extends UIComponentWindow {
 
 	@Override
 	public void onDataInfo(Station station, DataInfo info) {
+		if(station != this.station) {
+			return;
+		}
+
+
+		lastSeenDataInfo = info;
+
 		if (info instanceof AndroidInfo) {
 			AndroidInfo androidInfo = (AndroidInfo) info;
-			lastSeenDataInfo = androidInfo;
 
 			if(rawAndroidDataPreview.getFrame().isVisible()) {
 				rawAndroidDataPreview.setData(androidInfo);
@@ -183,7 +189,7 @@ public class RespiratoryUI extends UIComponentWindow {
 		long nextTime = System.currentTimeMillis();
 		while(true) {
 			if(periodicityDetector != null && lastSeenDataInfo != null) {
-				periodicityDetector.onData((AndroidInfo) lastSeenDataInfo);
+				periodicityDetector.onData(lastSeenDataInfo);
 			}
 
 			long desiredDelta = (long) (1.0 / periodicityDetector.getSamplingFrequency() * 1000.0);

@@ -1,9 +1,13 @@
 package de.putterer.indloc.acceleration;
 
+import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.respiratory.Periodicity;
+import de.putterer.indloc.util.CSIUtil;
 import de.putterer.indloc.util.Observable;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Duration;
 import java.util.LinkedList;
@@ -25,7 +29,10 @@ public class PeriodicityDetector {
     @Getter
     private final Duration slidingWindowDuration; // not used internally, just for external queries
 
-    private final List<AndroidInfo> history = new LinkedList<>();
+    @Getter @Setter
+    private int subcarrier = 30;
+
+    private final List<DataInfo> history = new LinkedList<>();
 
     public PeriodicityDetector(double samplingFrequency, Duration slidingWindowDuration) {
         this.samplingFrequency = samplingFrequency;
@@ -33,10 +40,10 @@ public class PeriodicityDetector {
         this.slidingWindowDuration = slidingWindowDuration;
     }
 
-    public void onData(AndroidInfo info) {
-//        TODO: TODO: TODO: I AM TESTING CODE REMOVE ME
-//        info.getData()[1] = (float) Math.sin(System.currentTimeMillis() / 1000.0 * 2.0 * Math.PI / 60.0 * 8.5) + (float)Math.random() * 1f - 0.5f;
-
+    public void onData(DataInfo info) {
+        if(! history.stream().allMatch(i -> i.getClass() == info.getClass())) {
+            throw new RuntimeException("Received data info of wrong type");
+        }
         synchronized (history) {
             history.add(info);
             while(history.size() > slidingWindowSize) {
@@ -50,11 +57,20 @@ public class PeriodicityDetector {
 
         // TODO: maybe don't run that on each info, processing time?
         // process sliding window
-        //TODO: how to deal with X, Y? parameter? Max?
-        double[] values = history.stream().mapToDouble(e -> e.getData()[1]).toArray();
-        Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
-        currentFrequency.set(spectrum.filter(0.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
-        freqSpectrum.set(spectrum);
+        if(info instanceof AndroidInfo) {
+            //TODO: how to deal with X, Y? parameter? Max?
+            double[] values = history.stream().mapToDouble(e -> ((AndroidInfo)e).getData()[1]).toArray();
+            Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
+            currentFrequency.set(spectrum.filter(0.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
+            freqSpectrum.set(spectrum);
+        } else if(info instanceof CSIInfo) {
+            double[] values = history.stream().mapToDouble(e ->
+                    ((CSIInfo)e).getCsi_matrix()[0][0][subcarrier].getPhase() - ((CSIInfo)e).getCsi_matrix()[2][0][subcarrier].getPhase()).toArray(); //TODO:
+            CSIUtil.unwrapPhase(values);  //TODO: the data looks really off after this due to jumps
+            Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
+            currentFrequency.set(spectrum.filter(0.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
+            freqSpectrum.set(spectrum);
+        }
     }
 
     public boolean isIdle() {
