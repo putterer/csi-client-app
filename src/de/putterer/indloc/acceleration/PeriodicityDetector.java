@@ -30,7 +30,7 @@ public class PeriodicityDetector {
     private final Duration slidingWindowDuration; // not used internally, just for external queries
 
     @Getter @Setter
-    private int subcarrier = 10;
+    private int subcarrier = 50;
 
     private final List<DataInfo> history = new LinkedList<>();
 
@@ -74,7 +74,7 @@ public class PeriodicityDetector {
     public boolean isIdle() {
         return Optional.ofNullable(freqSpectrum.get())
                 .map(s -> s.getMagnitudesByFrequency().entrySet().stream().mapToDouble(Map.Entry::getValue).max().getAsDouble())
-                .map(m -> m < 2.0)
+                .map(m -> m < 1.0)
                 .orElse(true);
     }
 }

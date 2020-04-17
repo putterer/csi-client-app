@@ -39,8 +39,11 @@ public class Config {
 			1300, 1150, 
 			new Station[] {
 //					new Station(STATION_10_MAC, "10.10.0.10", AndroidInfo.class, new Vector(0, 0), null, new ActivityDetector())
-					new Station("", "192.168.178.28", AndroidInfo.class, null, null).setName("Phone"),
-					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class, null, new ActivityDetector()).setName("Router 10"),
+					new Station("", "192.168.178.28", AndroidInfo.class, null, null)
+							.setName("Phone"),
+					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class, null, new ActivityDetector())
+							.setName("Router 10")
+							.enableRespiratoryUI(),
 					new Station(STATION_6_MAC, "192.168.178.206", CSIInfo.class, null, new ActivityDetector()).setName("Router 6")
 			},
 			new RoomObject[] {

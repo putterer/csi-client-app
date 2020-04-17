@@ -88,7 +88,7 @@ public class ActivityUI extends UIComponentWindow {
         );
 
         previews.add(new DataPreview(new DataPreview.PhaseDiffVariancePreview(station, DataPreview.PhaseDiffVariancePreview.SUBCARRIER_AVG, DataPreview.PhaseDiffVariancePreview.SUBCARRIER_MAX)));
-        previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, 10, 30, 50)));
+        previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, -1,10, 30, 50)));
 
         ActivityUI activityUI = new ActivityUI(station, subscriptionOptions);
 

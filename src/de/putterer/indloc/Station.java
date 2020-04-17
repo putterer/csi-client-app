@@ -32,6 +32,9 @@ public class Station implements Serializable {
 	private transient final RSSIDistanceEstimator estimator;
 	private transient final ActivityDetector activityDetector;
 
+	//display
+	private boolean displayRespiratoryDetector = false; // will cause csi interface to run and display the respiratory detection UI
+
 	private String name;
 	
 	{
@@ -55,6 +58,16 @@ public class Station implements Serializable {
 
 	public Station setName(String name) {
 		this.name = name;
+		return this;
+	}
+
+	public Station enableRespiratoryUI() {
+		displayRespiratoryDetector = true;
+		return this;
+	}
+
+	public Station disableRespiratoryUI() {
+		displayRespiratoryDetector = false;
 		return this;
 	}
 	

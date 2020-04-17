@@ -37,7 +37,7 @@ public class CsiUserInterface implements KeyListener {
 	private final Map<DataPreview, Station> previews = new HashMap<>();
 
 	private final GenericStatusUI genericStatusUI;
-	private final RespiratoryUI respiratoryUI;
+	private final List<RespiratoryUI> respiratoryUIs = new ArrayList<>();
 	private final FrequencyGeneratorUI frequencyGeneratorUI;
 	private final List<ActivityUI> activityUIs = new ArrayList<>();
 
@@ -45,12 +45,19 @@ public class CsiUserInterface implements KeyListener {
 		startClients();
 
 		frequencyGeneratorUI = new FrequencyGeneratorUI();
-		respiratoryUI = new RespiratoryUI(frequencyGeneratorUI);
-		genericStatusUI = new GenericStatusUI(this, respiratoryUI);
+		genericStatusUI = new GenericStatusUI(this);
 		genericStatusUI.setPosition(TOP_LEFT_OFFSET.x, TOP_LEFT_OFFSET.y);
-		respiratoryUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y);
-		frequencyGeneratorUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y + respiratoryUI.getWindowHeight());
-		componentWindows.addAll(Arrays.asList(genericStatusUI, respiratoryUI, frequencyGeneratorUI));
+		Iterator<Station> stationIter = Arrays.stream(ROOM.getStations()).filter(Station::isDisplayRespiratoryDetector).iterator();
+		for(int i = 0;stationIter.hasNext();i++) {
+			RespiratoryUI rui = new RespiratoryUI(frequencyGeneratorUI).setStation(stationIter.next());
+			rui.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), i * rui.getWindowHeight() + TOP_LEFT_OFFSET.y);
+			respiratoryUIs.add(rui);
+		}
+		componentWindows.addAll(respiratoryUIs);
+
+		int respiratoryUIWidth = respiratoryUIs.isEmpty() ? 0 : respiratoryUIs.get(0).getWindowWidth();
+		frequencyGeneratorUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y + respiratoryUIWidth);
+		componentWindows.addAll(Arrays.asList(genericStatusUI, frequencyGeneratorUI));
 
 		for(int i = 0;i < ROOM.getStations().length;i++) {
 			Station station = ROOM.getStations()[i];
@@ -60,7 +67,7 @@ public class CsiUserInterface implements KeyListener {
 
 			ActivityUI activityUI = new ActivityUI(station, SUBSCRIPTION_OPTIONS);
 			activityUIs.add(activityUI);
-			activityUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth() + respiratoryUI.getWindowWidth(),
+			activityUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth() + respiratoryUIWidth,
 					TOP_LEFT_OFFSET.y + activityUI.getWindowHeight() * i);
 		}
 		componentWindows.addAll(activityUIs);
@@ -70,6 +77,7 @@ public class CsiUserInterface implements KeyListener {
 
 		try { Thread.sleep(200); } catch(InterruptedException e) { e.printStackTrace(); }
 		componentWindows.forEach(UIComponentWindow::postConstruct);
+		try { Thread.sleep(200); } catch(InterruptedException e) { e.printStackTrace(); }
 		activityUIs.forEach(au -> au.getFrame().setVisible(false));
 
 		initComplete = true;

@@ -462,26 +462,34 @@ public class DataPreview {
 		private final int[] subcarriers;
 
 		private final List<Double>[] previousDataPoints;
-		private final double[] previousPhaseMean;
+
+		private final int shortTermLength;
+		private final List<Double>[] shortTermHistory;
 
 		/**
 		 * @param rxAntenna1 the first antenna to compare
 		 * @param rxAntenna2 the second antenna to compare
 		 * @param subcarriers the subcarriers to display
 		 */
-		public PhaseDiffEvolutionPreview(int rxAntenna1, int rxAntenna2, int... subcarriers) {
+		public PhaseDiffEvolutionPreview(int rxAntenna1, int rxAntenna2, int shortTermHistoryLength, int... subcarriers) {
 			this.rxAntenna1 = rxAntenna1;
 			this.rxAntenna2 = rxAntenna2;
+			this.shortTermLength = shortTermHistoryLength;
 			this.subcarriers = subcarriers;
 			previousDataPoints = new List[subcarriers.length];
+			shortTermHistory = new List[subcarriers.length];
 			for (int i = 0;i < subcarriers.length;i++) {
 				previousDataPoints[i] = new LinkedList<>();
 				for(int j = 0;j < dataWidth;j++) {
 					previousDataPoints[i].add(0.0);
 				}
+
+				if(shortTermLength != -1) {
+					shortTermHistory[i] = new LinkedList<>();
+					DoubleStream.generate(() -> 0.0).limit(shortTermLength).forEach(shortTermHistory[i]::add);
+				}
 			}
 
-			previousPhaseMean = new double[2];
 		}
 
 		@Override
@@ -521,6 +529,14 @@ public class DataPreview {
 			double[] diffs = RespiratoryPhaseProcessor.process(rxAntenna1, rxAntenna2, 0, Collections.singletonList(csi))[0];
 
 			for (int subcarrierIndex = 0;subcarrierIndex < this.subcarriers.length;subcarrierIndex++) {
+				if(shortTermLength != -1) {
+					double historyOffset = shortTermHistory[subcarrierIndex].stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+					shortTermHistory[subcarrierIndex].add(diffs[this.subcarriers[subcarrierIndex]]);
+					shortTermHistory[subcarrierIndex].remove(0);
+
+					diffs[this.subcarriers[subcarrierIndex]] -= historyOffset;
+				}
+
 				List<Double> previousList = this.previousDataPoints[subcarrierIndex];
 				if(previousList.size() == dataWidth) {
 					previousList.remove(previousList.size() - 1);

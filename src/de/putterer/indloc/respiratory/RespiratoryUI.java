@@ -16,6 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Optional;
 
 import static de.putterer.indloc.Config.ROOM;
 import static javax.swing.SwingUtilities.invokeLater;
@@ -28,6 +29,7 @@ public class RespiratoryUI extends UIComponentWindow {
 
 	private final JLabel typeLabel = new JLabel("Type:");
 	private final JLabel packetsReceivedLabel = new JLabel("Packets:");
+	private final JLabel stationNameLabel = new JLabel("Station: ");
 	private final JButton samplingFrequencyLabel = new JButton("Sampl. freq.:");
 	private final JButton slidingWindowSizeLabel = new JButton("Sliding window:");
 	private final JLabel binSpacingLabel = new JLabel("");
@@ -79,8 +81,10 @@ public class RespiratoryUI extends UIComponentWindow {
 	private void initUI() {
 		typeLabel.setBounds(10, 10, 120, 20);
 		this.add(typeLabel);
-		packetsReceivedLabel.setBounds(140, 10, 130, 20);
+		packetsReceivedLabel.setBounds(140, 10, 110, 20);
 		this.add(packetsReceivedLabel);
+		stationNameLabel.setBounds(260, 10, 130, 20);
+		this.add(stationNameLabel);
 		samplingFrequencyLabel.setBounds(10, 40, 195, 20);
 		this.add(samplingFrequencyLabel);
 		slidingWindowSizeLabel.setBounds(215, 40, 195, 20);
@@ -114,7 +118,7 @@ public class RespiratoryUI extends UIComponentWindow {
 		dftPreviewButton.addActionListener(a -> {
 			if(dftPreviewButton.isSelected()) {
 				double maxMagnitude = Double.parseDouble(JOptionPane.showInputDialog(this,
-						"Maximum magnitude?", 100.0));
+						"Maximum magnitude?", 10.0));
 				dftPreview.setMaxMagnitude(maxMagnitude);
 			}
 			dftPreview.getFrame().setVisible(dftPreviewButton.isSelected());
@@ -143,6 +147,7 @@ public class RespiratoryUI extends UIComponentWindow {
 				() -> packetsReceivedLabel.setText("Packets: " + newValue)
 		);
 		client.getPacketsReceived().addListener(packetsReceivedListener, false);
+		stationNameLabel.setText("Station: " + Optional.ofNullable(station.getName()).orElse(station.getIP_ADDRESS()));
 
 		periodicityDetector = new PeriodicityDetector(samplingFrequency, slidingWindowSize);
 		periodicityDetector.getCurrentFrequency().addListener((oldValue, newValue) -> {
@@ -176,13 +181,14 @@ public class RespiratoryUI extends UIComponentWindow {
 		}
 	}
 
-	public void setStation(Station station) {
-		//TODO: remove packet listener
+	public RespiratoryUI setStation(Station station) {
 		if(periodicityDetector != null) {
 			rebuild(station, periodicityDetector.getSamplingFrequency(), periodicityDetector.getSlidingWindowDuration());
 		} else {
 			rebuild(station, DEFAULT_SAMPLING_FREQUENCY, DEFAULT_SLIDING_WINDOW);
 		}
+
+		return this;
 	}
 
 	private void samplingThread() {

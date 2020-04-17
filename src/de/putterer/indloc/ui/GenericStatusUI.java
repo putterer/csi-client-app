@@ -5,7 +5,6 @@ import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
-import de.putterer.indloc.respiratory.RespiratoryUI;
 
 import javax.swing.*;
 import java.util.*;
@@ -20,7 +19,6 @@ import static de.putterer.indloc.util.SwingUtil.openIntListDialog;
 public class GenericStatusUI extends UIComponentWindow {
 
 	private CsiUserInterface csiUserInterface;
-	private final RespiratoryUI respiratoryUI;
 
 	private final JLabel stationsLabel = new JLabel("Stations:");
 	private final JList<String> stationsList = new JList<>();
@@ -33,10 +31,9 @@ public class GenericStatusUI extends UIComponentWindow {
 
 	private final List<Consumer<Station>> showPreviewCallbacks = new ArrayList<>();
 
-	public GenericStatusUI(CsiUserInterface csiUserInterface, RespiratoryUI respiratoryUI) {
+	public GenericStatusUI(CsiUserInterface csiUserInterface) {
 		super("CSI toolbox - Fabian Putterer - TUM", 420, 300);
 		this.csiUserInterface = csiUserInterface;
-		this.respiratoryUI = respiratoryUI;
 
 		this.setLayout(null);
 		initUI();
@@ -71,7 +68,6 @@ public class GenericStatusUI extends UIComponentWindow {
 		this.add(stationsList);
 
 		selectRespiratoryButton.setBounds(10, 140, 380/3, 20);
-		selectRespiratoryButton.addActionListener(a -> respiratoryUI.setStation(getSelectedStation()));
 		this.add(selectRespiratoryButton);
 		resubscribeButton.setBounds(20 + 380/3, 140, 380/3, 20);
 		resubscribeButton.addActionListener(a -> new Thread(() -> {
@@ -109,6 +105,7 @@ public class GenericStatusUI extends UIComponentWindow {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame()),
 					openIntDialog("rxAntenna2", 2, this.getFrame()),
+					openIntDialog("shortTermHistoryLength", -1, this.getFrame()),
 					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame())
 			)), station);
 		}, previewNames);
