@@ -13,8 +13,7 @@ import java.util.function.Consumer;
 import static de.putterer.indloc.Config.ROOM;
 import static de.putterer.indloc.csi.DataPreview.PhaseDiffVariancePreview.SUBCARRIER_AVG;
 import static de.putterer.indloc.csi.DataPreview.PhaseDiffVariancePreview.SUBCARRIER_MAX;
-import static de.putterer.indloc.util.SwingUtil.openIntDialog;
-import static de.putterer.indloc.util.SwingUtil.openIntListDialog;
+import static de.putterer.indloc.util.SwingUtil.*;
 
 public class GenericStatusUI extends UIComponentWindow {
 
@@ -106,6 +105,7 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("rxAntenna1", 0, this.getFrame()),
 					openIntDialog("rxAntenna2", 2, this.getFrame()),
 					openIntDialog("shortTermHistoryLength", -1, this.getFrame()),
+					openDoubleDialog("jumpThreshold", 10, this.getFrame()),
 					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame())
 			)), station);
 		}, previewNames);

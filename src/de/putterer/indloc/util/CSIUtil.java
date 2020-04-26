@@ -11,23 +11,23 @@ public class CSIUtil {
      * unwrap the CSI
      * @param data the data to be unwrapped
      */
-    public static void unwrapPhase(double data[]) {
-        unwrap(data, 2.0 * Math.PI);
+    public static double[] unwrapPhase(double data[]) {
+        return unwrap(data, 2.0 * Math.PI);
     }
 
     /**
      * unwrap the CSI, limited to half a phase
      * @param data the data to be unwrapped
      */
-    public static void unwrapHalfPhase(double data[]) {
-        unwrap(data, Math.PI);
+    public static double[] unwrapHalfPhase(double data[]) {
+        return unwrap(data, Math.PI);
     }
 
     /**
      * unwrap the CSI, limited to the given interval
      * @param data the data to be unwrapped
      */
-    private static void unwrap(double data[], double interval) {
+    private static double[] unwrap(double data[], double interval) {
         for(int i = 1;i < data.length;i++) {
             while(data[i] - data[i - 1] > interval / 2.0) {
                 data[i] -= interval;
@@ -36,6 +36,7 @@ public class CSIUtil {
                 data[i] += interval;
             }
         }
+        return data;
     }
 
     /**

@@ -34,7 +34,7 @@ public class CSITesting {
 //		previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(DataPreview.SubcarrierPropertyPreview.PropertyType.PHASE, 3, 1)));
 //		previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 1)));
 //      previews.add(new DataPreview(new DataPreview.PhaseDiffPreview(0, 2)));
-		previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, -1, new int[] {10, 20, 30, 40, 50})));
+		previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, -1, 0, new int[] {10, 20, 30, 40, 50})));
 //		previews.add(new DataPreview(new DataPreview.PhaseDiffVariancePreview(Config.ROOM.getStations()[0], new int[] {SUBCARRIER_AVG, SUBCARRIER_MAX})));
 
 		SubscriptionOptions subscriptionOptions = new SubscriptionOptions(

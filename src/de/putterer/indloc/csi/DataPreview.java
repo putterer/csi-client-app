@@ -462,26 +462,35 @@ public class DataPreview {
 		private final int[] subcarriers;
 
 		private final List<Double>[] previousDataPoints;
+		private final List<Double>[] previousUnprocessed;
 
 		private final int shortTermLength;
+		private final double jumpThreshold;
 		private final List<Double>[] shortTermHistory;
+		private double[] currentOffset;
 
 		/**
 		 * @param rxAntenna1 the first antenna to compare
 		 * @param rxAntenna2 the second antenna to compare
 		 * @param subcarriers the subcarriers to display
 		 */
-		public PhaseDiffEvolutionPreview(int rxAntenna1, int rxAntenna2, int shortTermHistoryLength, int... subcarriers) {
+		public PhaseDiffEvolutionPreview(int rxAntenna1, int rxAntenna2, int shortTermHistoryLength, double jumpThreshold, int... subcarriers) {
 			this.rxAntenna1 = rxAntenna1;
 			this.rxAntenna2 = rxAntenna2;
 			this.shortTermLength = shortTermHistoryLength;
+			this.jumpThreshold = jumpThreshold;
 			this.subcarriers = subcarriers;
 			previousDataPoints = new List[subcarriers.length];
+			previousUnprocessed = new List[subcarriers.length];
 			shortTermHistory = new List[subcarriers.length];
+			currentOffset = new double[subcarriers.length];
+			Arrays.fill(currentOffset, 0.0);
 			for (int i = 0;i < subcarriers.length;i++) {
 				previousDataPoints[i] = new LinkedList<>();
+				previousUnprocessed[i] = new LinkedList<>();
 				for(int j = 0;j < dataWidth;j++) {
 					previousDataPoints[i].add(0.0);
+					previousUnprocessed[i].add(0.0);
 				}
 
 				if(shortTermLength != -1) {
@@ -523,18 +532,53 @@ public class DataPreview {
 			}
 			CSIInfo csi = (CSIInfo)dataInfo;
 
-			int subcarriers = csi.getCsi_status().getNum_tones();
 
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
 			double[] diffs = RespiratoryPhaseProcessor.process(rxAntenna1, rxAntenna2, 0, Collections.singletonList(csi))[0];
 
 			for (int subcarrierIndex = 0;subcarrierIndex < this.subcarriers.length;subcarrierIndex++) {
+				// Jump removal
+				diffs[this.subcarriers[subcarrierIndex]] -= currentOffset[subcarrierIndex];
+				if(Math.abs(diffs[this.subcarriers[subcarrierIndex]] - this.previousDataPoints[subcarrierIndex].get(0)) > jumpThreshold) {
+					currentOffset[subcarrierIndex] -= diffs[this.subcarriers[subcarrierIndex]] - this.previousDataPoints[subcarrierIndex].get(0);
+					diffs[this.subcarriers[subcarrierIndex]] = this.previousDataPoints[subcarrierIndex].get(0);
+					currentOffset[subcarrierIndex] = bound(currentOffset[subcarrierIndex]);
+				}
+
+				// Short term mean removal / moving average
 				if(shortTermLength != -1) {
 					double historyOffset = shortTermHistory[subcarrierIndex].stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
 					shortTermHistory[subcarrierIndex].add(diffs[this.subcarriers[subcarrierIndex]]);
 					shortTermHistory[subcarrierIndex].remove(0);
 
 					diffs[this.subcarriers[subcarrierIndex]] -= historyOffset;
+				}
+
+				// Store for truncated mean
+				List<Double> previousUnprocessedList = this.previousUnprocessed[subcarrierIndex];
+				if(previousUnprocessedList.size() == dataWidth) {
+					previousUnprocessedList.remove(previousUnprocessedList.size() - 1);
+				}
+				previousUnprocessedList.add(0, diffs[this.subcarriers[subcarrierIndex]]);
+
+				// Truncated mean
+				if("enableTruncatedMean".equals("enableTruncatedMean")) { // TODO extract parameters
+					int truncatedMeanLength = 10;
+					double truncatedMeanUsage = 0.8;
+
+					int truncatedCount = (int) Math.ceil(truncatedMeanLength * truncatedMeanUsage);
+					double alphaTrimmedMean =
+							Arrays.stream(
+									unwrapPhase(Arrays.copyOfRange(previousUnprocessedList.stream().mapToDouble(Double::doubleValue).toArray(), 0, truncatedMeanLength))
+							)
+							.sorted()
+							.skip((int) Math.ceil(truncatedCount / 2.0))
+							.limit(truncatedMeanLength - truncatedCount)
+							.average()
+							.orElse(0.0);
+					alphaTrimmedMean = bound(alphaTrimmedMean);
+
+					diffs[this.subcarriers[subcarrierIndex]] = alphaTrimmedMean;
 				}
 
 				List<Double> previousList = this.previousDataPoints[subcarrierIndex];
