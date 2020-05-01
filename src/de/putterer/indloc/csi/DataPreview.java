@@ -466,19 +466,26 @@ public class DataPreview {
 
 		private final int shortTermLength;
 		private final double jumpThreshold;
+		private final int truncatedMeanLength;
+		private final double truncatedMeanPct;
+
 		private final List<Double>[] shortTermHistory;
 		private double[] currentOffset;
 
 		/**
 		 * @param rxAntenna1 the first antenna to compare
 		 * @param rxAntenna2 the second antenna to compare
+		 * @param truncatedMeanLength
+		 * @param truncatedMeanPct
 		 * @param subcarriers the subcarriers to display
 		 */
-		public PhaseDiffEvolutionPreview(int rxAntenna1, int rxAntenna2, int shortTermHistoryLength, double jumpThreshold, int... subcarriers) {
+		public PhaseDiffEvolutionPreview(int rxAntenna1, int rxAntenna2, int shortTermHistoryLength, double jumpThreshold, int truncatedMeanLength, double truncatedMeanPct, int... subcarriers) {
 			this.rxAntenna1 = rxAntenna1;
 			this.rxAntenna2 = rxAntenna2;
 			this.shortTermLength = shortTermHistoryLength;
 			this.jumpThreshold = jumpThreshold;
+			this.truncatedMeanLength = truncatedMeanLength;
+			this.truncatedMeanPct = truncatedMeanPct;
 			this.subcarriers = subcarriers;
 			previousDataPoints = new List[subcarriers.length];
 			previousUnprocessed = new List[subcarriers.length];
@@ -554,11 +561,8 @@ public class DataPreview {
 				previousUnprocessedList.add(0, diffs[this.subcarriers[subcarrierIndex]]);
 
 				// Truncated mean
-				if("enableTruncatedMean".equals("enableTruncatedMean")) { // TODO extract parameters
-					int truncatedMeanLength = 10;
-					double truncatedMeanUsage = 0.8;
-
-					int truncatedCount = (int) Math.ceil(truncatedMeanLength * truncatedMeanUsage);
+				if(truncatedMeanLength >= 2) {
+					int truncatedCount = (int) Math.ceil(truncatedMeanLength * truncatedMeanPct);
 					double alphaTrimmedMean =
 							Arrays.stream(
 									unwrapPhase(Arrays.copyOfRange(previousUnprocessedList.stream().mapToDouble(Double::doubleValue).toArray(), 0, truncatedMeanLength))

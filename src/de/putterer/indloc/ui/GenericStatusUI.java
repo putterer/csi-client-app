@@ -106,6 +106,8 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("rxAntenna2", 2, this.getFrame()),
 					openIntDialog("shortTermHistoryLength", -1, this.getFrame()),
 					openDoubleDialog("jumpThreshold", 10, this.getFrame()),
+					openIntDialog("truncated mean length", 10, this.getFrame()),
+					openDoubleDialog("truncated mean pct", 0.8, this.getFrame()),
 					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame())
 			)), station);
 		}, previewNames);
