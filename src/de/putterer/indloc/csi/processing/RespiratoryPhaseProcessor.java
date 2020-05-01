@@ -16,13 +16,18 @@ public class RespiratoryPhaseProcessor {
 
 		Arrays.stream(phase).forEach(phaseOverSubcarriers -> {
 //			unwrapPhase(diffs);  BS
-			shift(phaseOverSubcarriers, -mean(phaseOverSubcarriers));
+			shift(phaseOverSubcarriers, -mean(phaseOverSubcarriers)); // TODO: this causes a shift in other subcarriers as well, why do that???
 		});
 
 //		unwrapPhase(result);
 
 
-		//TODO: unwrap over time
+		// Over time processing
+
+		// TODO: alpha trimmed mean
+
+
+		// TODO: jump removal
 
 
 

@@ -537,14 +537,6 @@ public class DataPreview {
 			double[] diffs = RespiratoryPhaseProcessor.process(rxAntenna1, rxAntenna2, 0, Collections.singletonList(csi))[0];
 
 			for (int subcarrierIndex = 0;subcarrierIndex < this.subcarriers.length;subcarrierIndex++) {
-				// Jump removal
-				diffs[this.subcarriers[subcarrierIndex]] -= currentOffset[subcarrierIndex];
-				if(Math.abs(diffs[this.subcarriers[subcarrierIndex]] - this.previousDataPoints[subcarrierIndex].get(0)) > jumpThreshold) {
-					currentOffset[subcarrierIndex] -= diffs[this.subcarriers[subcarrierIndex]] - this.previousDataPoints[subcarrierIndex].get(0);
-					diffs[this.subcarriers[subcarrierIndex]] = this.previousDataPoints[subcarrierIndex].get(0);
-					currentOffset[subcarrierIndex] = bound(currentOffset[subcarrierIndex]);
-				}
-
 				// Short term mean removal / moving average
 				if(shortTermLength != -1) {
 					double historyOffset = shortTermHistory[subcarrierIndex].stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
@@ -579,6 +571,15 @@ public class DataPreview {
 					alphaTrimmedMean = bound(alphaTrimmedMean);
 
 					diffs[this.subcarriers[subcarrierIndex]] = alphaTrimmedMean;
+				}
+
+
+				// Jump removal AFTER truncated mean
+				diffs[this.subcarriers[subcarrierIndex]] -= currentOffset[subcarrierIndex];
+				if(Math.abs(diffs[this.subcarriers[subcarrierIndex]] - this.previousDataPoints[subcarrierIndex].get(0)) > jumpThreshold) {
+					currentOffset[subcarrierIndex] -= diffs[this.subcarriers[subcarrierIndex]] - this.previousDataPoints[subcarrierIndex].get(0);
+					diffs[this.subcarriers[subcarrierIndex]] = this.previousDataPoints[subcarrierIndex].get(0);
+					currentOffset[subcarrierIndex] = bound(currentOffset[subcarrierIndex]);
 				}
 
 				List<Double> previousList = this.previousDataPoints[subcarrierIndex];
