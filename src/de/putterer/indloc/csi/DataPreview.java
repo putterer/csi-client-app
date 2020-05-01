@@ -534,7 +534,7 @@ public class DataPreview {
 
 
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
-			double[] diffs = RespiratoryPhaseProcessor.process(rxAntenna1, rxAntenna2, 0, Collections.singletonList(csi))[0];
+			double[] diffs = RespiratoryPhaseProcessor.process(rxAntenna1, rxAntenna2, 0, Collections.singletonList(csi), -1, -1.0)[0];
 
 			for (int subcarrierIndex = 0;subcarrierIndex < this.subcarriers.length;subcarrierIndex++) {
 				// Short term mean removal / moving average

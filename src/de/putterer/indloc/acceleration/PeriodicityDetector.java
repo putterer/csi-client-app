@@ -28,16 +28,25 @@ public class PeriodicityDetector {
     private final int slidingWindowSize;
     @Getter
     private final Duration slidingWindowDuration; // not used internally, just for external queries
+    @Getter
+    private final int truncatedMeanWindowSize;
+    @Getter
+    private final Duration truncatedMeanWindowDuration;
+    @Getter
+    private final double truncatedMeanWindowPct;
 
     @Getter @Setter
     private int subcarrier = 50;
 
     private final List<DataInfo> history = new LinkedList<>();
 
-    public PeriodicityDetector(double samplingFrequency, Duration slidingWindowDuration) {
+    public PeriodicityDetector(double samplingFrequency, Duration slidingWindowDuration, Duration truncatedMeanWindowDuration, double truncatedMeanWindowPct) {
         this.samplingFrequency = samplingFrequency;
-        this.slidingWindowSize = (int) ((double)slidingWindowDuration.toSeconds() * samplingFrequency);
+        this.slidingWindowSize = (int) ((double)slidingWindowDuration.toMillis() / 1000.0 * samplingFrequency);
         this.slidingWindowDuration = slidingWindowDuration;
+        this.truncatedMeanWindowSize = (int) ((double)truncatedMeanWindowDuration.toMillis() / 1000.0 * samplingFrequency);
+        this.truncatedMeanWindowDuration = truncatedMeanWindowDuration;
+        this.truncatedMeanWindowPct = truncatedMeanWindowPct;
     }
 
     public void onData(DataInfo info) {
@@ -61,12 +70,12 @@ public class PeriodicityDetector {
             //TODO: how to deal with X, Y? parameter? Max?
             double[] values = history.stream().mapToDouble(e -> ((AndroidInfo)e).getData()[1]).toArray();
             Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
-            currentFrequency.set(spectrum.filter(0.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
+            currentFrequency.set(spectrum.filter(7.0 / 60.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
             freqSpectrum.set(spectrum);
         } else if(info instanceof CSIInfo) {
-            double[] values = RespiratoryPhaseProcessor.selectCarrier(RespiratoryPhaseProcessor.process(0, 2, 0, history), subcarrier);
+            double[] values = RespiratoryPhaseProcessor.selectCarrier(RespiratoryPhaseProcessor.process(0, 2, 0, history, truncatedMeanWindowSize, truncatedMeanWindowPct), subcarrier);
             Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
-            currentFrequency.set(spectrum.filter(0.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
+            currentFrequency.set(spectrum.filter(7.0 / 60.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
             freqSpectrum.set(spectrum);
         }
     }
