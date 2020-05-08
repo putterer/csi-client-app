@@ -5,18 +5,23 @@ import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.respiratory.Periodicity;
+import de.putterer.indloc.respiratory.SubcarrierSelector;
 import de.putterer.indloc.util.Observable;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class PeriodicityDetector {
-    //TODO: also support non android
+
+    private static final Duration SUBCARRIER_SELECTION_INTERVAL = Duration.ofSeconds(5);
+
     @Getter
     private final Observable<Double> currentFrequency = new Observable<>(0.0);
     @Getter
@@ -37,6 +42,7 @@ public class PeriodicityDetector {
 
     @Getter @Setter
     private int subcarrier = 50;
+    private Instant lastSubcarrierSelection = Instant.now().minus(SUBCARRIER_SELECTION_INTERVAL);
 
     private final List<DataInfo> history = new LinkedList<>();
 
@@ -64,17 +70,35 @@ public class PeriodicityDetector {
             return;
         }
 
-        // TODO: maybe don't run that on each info, processing time?
         // process sliding window
         if(info instanceof AndroidInfo) {
-            //TODO: how to deal with X, Y? parameter? Max?
             double[] values = history.stream().mapToDouble(e -> ((AndroidInfo)e).getData()[1]).toArray();
             Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
             currentFrequency.set(spectrum.filter(7.0 / 60.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
             freqSpectrum.set(spectrum);
         } else if(info instanceof CSIInfo) {
-            double[] values = RespiratoryPhaseProcessor.selectCarrier(RespiratoryPhaseProcessor.process(0, 2, 0, history, truncatedMeanWindowSize, truncatedMeanWindowPct), subcarrier);
-            Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
+
+            // Calculates and supplies the respiratory processed phase for one subcarrier when called, may be called in parallel
+            Function<Integer, double[]> respiratoryPhaseSupplier = carrier ->
+                    RespiratoryPhaseProcessor.selectCarrier(
+                            RespiratoryPhaseProcessor.process(
+                                    0, 2, 0,
+                                    history,
+                                    truncatedMeanWindowSize,
+                                    truncatedMeanWindowPct
+                            ),
+                            carrier);
+
+            SubcarrierSelector subcarrierSelector = new SubcarrierSelector(subcarrier, ((CSIInfo) info).getCsi_status().getNum_tones(), respiratoryPhaseSupplier);
+
+            if(Instant.now().isAfter(lastSubcarrierSelection.plus(SUBCARRIER_SELECTION_INTERVAL))) {
+                subcarrierSelector.runSelection();
+                subcarrier = subcarrierSelector.getSelectedCarrier();
+
+                lastSubcarrierSelection = Instant.now();
+            }
+
+            Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(subcarrierSelector.getProcessedPhaseForCarrier(subcarrier), samplingFrequency);
             currentFrequency.set(spectrum.filter(7.0 / 60.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
             freqSpectrum.set(spectrum);
         }
