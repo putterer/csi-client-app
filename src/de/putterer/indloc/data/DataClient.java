@@ -1,14 +1,14 @@
 package de.putterer.indloc.data;
 
 import de.putterer.indloc.Station;
-import de.putterer.indloc.csi.CSIInfo;
+import de.putterer.indloc.csi.atheros.AthCSIInfo;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.Observable;
 import lombok.Getter;
-import lombok.var;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -33,7 +33,9 @@ public class DataClient {
 	public static final byte TYPE_UNSUBSCRIBE = 11;
 	public static final byte TYPE_CONFIRM_SUBSCRIPTION = 12;
 	public static final byte TYPE_CONFIRM_UNSUBSCRIPTION = 13;
-	public static final byte TYPE_CSI_INFO = 14;
+	@Deprecated public static final byte TYPE_CSI_INFO = 14;
+	public static final byte TYPE_ATH_CSI_INFO = 14;
+	public static final byte TYPE_INT_CSI_INFO = 15;
 	public static final byte TYPE_ACCELERATION_INFO = 20;
 	
 	public static final int MAX_MESSAGE_LENGTH = 65507;
@@ -198,16 +200,30 @@ public class DataClient {
 			break;
 		}
 		
-		case TYPE_CSI_INFO: {
-			Logger.trace("Got csi from station %s", station.getIP_ADDRESS());
+		case TYPE_ATH_CSI_INFO: {
+			Logger.trace("Got atheros csi from station %s", station.getIP_ADDRESS());
 			packetsReceived.set(packetsReceived.get() + 1);
-			CSIInfo info = new CSIInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1));
+			AthCSIInfo info = new AthCSIInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1));
 
 			if(station.getActivityDetector() != null) {
 				station.getActivityDetector().onCsiInfo(info);
 			}
 
-			getApplicableConsumers(CSIInfo.class).forEach(c -> c.accept(info));
+			getApplicableConsumers(AthCSIInfo.class).forEach(c -> c.accept(info));
+			break;
+		}
+
+		case TYPE_INT_CSI_INFO: {
+			Logger.trace("Got intel csi from station %s", station.getIP_ADDRESS());
+			packetsReceived.set(packetsReceived.get() + 1);
+			IntCSIInfo info = new IntCSIInfo(ByteBuffer.wrap(packet.getData(), 1, packet.getLength() - 1));
+
+
+			if(station.getActivityDetector() != null) {
+				station.getActivityDetector().onCsiInfo(info);
+			}
+
+			getApplicableConsumers(IntCSIInfo.class).forEach(c -> c.accept(info));
 			break;
 		}
 
@@ -242,7 +258,7 @@ public class DataClient {
 	}
 
 	private <T> Stream<Consumer<T>> getApplicableConsumers(Class<T> type) {
-		return Arrays.stream(consumers).filter(c -> c.getType().getCanonicalName().equals(type.getCanonicalName()))
+		return Arrays.stream(consumers).filter(c -> c.getType().isAssignableFrom(type))
 				.map(c -> (Consumer<T>) c.getConsumer());
 	}
 }

@@ -100,6 +100,17 @@ public class GenericStatusUI extends UIComponentWindow {
 	private void initPreviewSelector() {
 		List<String> previewNames = new LinkedList<>();
 
+		addPreviewOption("PhaseDiffEvolution Default", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(
+					0,
+					2,
+					-1,
+					10,
+					10,
+					0.8,
+					new int[]{10,30,50}
+			)), station);
+		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame()),

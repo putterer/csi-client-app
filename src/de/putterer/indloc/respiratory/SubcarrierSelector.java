@@ -6,13 +6,10 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -48,7 +45,7 @@ public class SubcarrierSelector {
 	}
 
 	public void runSelection() {
-		long t = System.currentTimeMillis();
+		long time = System.currentTimeMillis();
 
 		List<CompletableFuture<double[]>> futures =
 				IntStream.range(0, totalSubcarriers).mapToObj(carrier ->
@@ -66,15 +63,19 @@ public class SubcarrierSelector {
 		//TODO: recurrence plot resolution
 		int samples = processedPhaseByCarrier[0].length;
 		double epsilon = 0.05;
-		for(int carrier = 50;carrier < 51;carrier++) {
 
+		double maxSingularPct = 0.0;
+		int maxCarrier = selectedCarrier;
+		BufferedImage maxRecurrencePlot = null;
+
+		for(int carrier = 0;carrier < processedPhaseByCarrier.length;carrier++) {
 			//Render recurrence plot
 			BufferedImage image = new BufferedImage(samples, samples, BufferedImage.TYPE_INT_ARGB);
 			Graphics g = image.createGraphics();
 			for(int x = 0;x < samples;x++) {
 				for(int y = 0;y < samples;y++) {
 					double diff = Math.abs(processedPhaseByCarrier[carrier][x] - processedPhaseByCarrier[carrier][y]);
-//					diff = Math.abs(Math.sin(0.01 * x)- Math.sin(0.01 * y));
+					//diff = Math.abs(Math.sin(0.1 * x)- Math.sin(0.1 * y));
 //					recurrencePlot[x][y] = diff <= epsilon ? 1.0 : 0.0;
 
 					float val = (float) Math.min(1.0, diff / epsilon); //lower is better
@@ -98,17 +99,11 @@ public class SubcarrierSelector {
 			);
 
 
-			recurrencePlotPreview.setImage(rotatedImage);
-			try {
-				ImageIO.write(rotatedImage, "PNG", Paths.get("recurrencePlot.png").toFile());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
+			//TODO: test selecting the most recurrent
 			double[][] recurrencePlot = new double[rotatedImage.getWidth()][rotatedImage.getHeight()];
 			for(int x = 0;x < rotatedImage.getWidth();x++) {
 				for(int y = 0;y < rotatedImage.getHeight();y++) {
-					recurrencePlot[x][y] = 1.0f - (new Color(rotatedImage.getRGB(x, y)).getRed()/ 255.0f);
+					recurrencePlot[x][y] = 1.0f - (new Color(rotatedImage.getRGB(x, y)).getRed()/ 255.0f) > 0.5 ? 1 : 0;
 				}
 			}
 			RealMatrix matrix = new Array2DRowRealMatrix(recurrencePlot);
@@ -116,11 +111,24 @@ public class SubcarrierSelector {
 			double maxSingularValue = Arrays.stream(svd.getSingularValues()).max().getAsDouble();
 			double singularPct = maxSingularValue / (Arrays.stream(svd.getSingularValues()).sum());
 
-			Logger.warn("Carrier: %d, SingularPct: %.2f", carrier, singularPct);
+			if(singularPct > maxSingularPct) {
+				maxSingularPct = singularPct;
+				maxCarrier = carrier;
+				maxRecurrencePlot = rotatedImage;
+			}
 		}
 
-		//TODO: selectedCarrier =
-		Logger.debug("SubcarrierSelector ran in %d ms, selected carrier: %d", System.currentTimeMillis() - t, selectedCarrier);
+		if(maxRecurrencePlot != null) {
+			recurrencePlotPreview.setImage(maxRecurrencePlot);
+//			try {
+//				ImageIO.write(maxRecurrencePlot, "PNG", Paths.get("recurrencePlot.png").toFile());
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+		}
+
+		this.selectedCarrier = maxCarrier;
+		Logger.debug("SubcarrierSelector ran in %d ms, selected carrier: %d, singularPct: %.3f", System.currentTimeMillis() - time, selectedCarrier, maxSingularPct);
 	}
 
 	public double[] getProcessedPhaseForCarrier(int subcarrier) {

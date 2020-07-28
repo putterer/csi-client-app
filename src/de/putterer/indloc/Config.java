@@ -1,8 +1,6 @@
 package de.putterer.indloc;
 
-import de.putterer.indloc.activity.ActivityDetector;
-import de.putterer.indloc.csi.CSIInfo;
-import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.atheros.AthCSIInfo;
 import de.putterer.indloc.trilateration.SimpleTrilaterator;
 import de.putterer.indloc.trilateration.Trilaterator;
 import de.putterer.indloc.util.Vector;
@@ -39,12 +37,13 @@ public class Config {
 			1300, 1150, 
 			new Station[] {
 //					new Station(STATION_10_MAC, "10.10.0.10", AndroidInfo.class, new Vector(0, 0), null, new ActivityDetector())
-					new Station("", "192.168.178.28", AndroidInfo.class, null, null)
-							.setName("Phone"),
-					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class, null, new ActivityDetector())
-							.setName("Router 10")
-							.enableRespiratoryUI(),
-					new Station(STATION_6_MAC, "192.168.178.206", CSIInfo.class, null, new ActivityDetector()).setName("Router 6")
+//					new Station("", "192.168.178.28", AndroidInfo.class, null, null)
+//							.setName("Phone"),
+//					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class, null, new ActivityDetector())
+//							.setName("Router 10")
+//							.enableRespiratoryUI(),
+//					new Station(STATION_6_MAC, "192.168.178.206", CSIInfo.class, null, new ActivityDetector()).setName("Router 6")
+					new Station(", ", "127.0.0.1", AthCSIInfo.class, null, null)
 			},
 			new RoomObject[] {
 

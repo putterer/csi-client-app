@@ -1,7 +1,6 @@
 package de.putterer.indloc.respiratory;
 
 import lombok.Data;
-import lombok.var;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;

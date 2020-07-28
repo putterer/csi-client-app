@@ -61,7 +61,7 @@ public class CsiUserInterface implements KeyListener {
 
 		for(int i = 0;i < ROOM.getStations().length;i++) {
 			Station station = ROOM.getStations()[i];
-			if(station.getDataType() != CSIInfo.class) {
+			if(! CSIInfo.class.isAssignableFrom(station.getDataType())) {
 				continue;
 			}
 

@@ -5,6 +5,7 @@ import de.putterer.indloc.acceleration.PeriodicityDetector;
 import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.DataPreview.AndroidEvolutionPreview.AndroidDataType;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.ui.DFTPreview;
@@ -186,7 +187,7 @@ public class RespiratoryUI extends UIComponentWindow {
 		this.station = station;
 		DataClient client = DataClient.getClient(station);
 
-		typeLabel.setText(station.getDataType() == AndroidInfo.class ? "Type: Android" : "Type: CSI");
+		typeLabel.setText(station.getDataType() == AndroidInfo.class ? "Type: Android" : (station.getDataType() == IntCSIInfo.class ? "Type: CSI (int)" : "Type: CSI (ath)"));
 		packetsReceivedListener = (oldValue, newValue) -> invokeLater(
 				() -> packetsReceivedLabel.setText("Packets: " + newValue)
 		);

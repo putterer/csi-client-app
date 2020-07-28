@@ -168,11 +168,9 @@ public class CSIReplay {
                 for(int i = 1;i <= 4/*TODO*/;i++) {
                     final int finalI = i;
                     CompletableFuture instance = CompletableFuture.runAsync(() -> {
-                        CSIInfo[] shiftedCsi = Arrays.stream(csi).map(c -> new CSIInfo(
-                                c.getClientTimestamp(),
-                                c.getMessageId(),
-                                c.getCsi_status(),
-                                PhaseOffset.getByMac(station.getHW_ADDRESS()).shiftMatrix(c.getCsi_matrix(), PhaseOffset.PhaseOffsetType.CROSSED, finalI)))
+                        CSIInfo[] shiftedCsi = Arrays.stream(csi).map(c -> c.clone(
+                                    PhaseOffset.getByMac(station.getHW_ADDRESS()).shiftMatrix(c.getCsi_matrix(), PhaseOffset.PhaseOffsetType.CROSSED, finalI)
+                                ))
                                 .toArray(CSIInfo[]::new);
 
                         if(spotfi) {
