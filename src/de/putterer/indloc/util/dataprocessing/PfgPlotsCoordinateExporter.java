@@ -31,7 +31,7 @@ public class PfgPlotsCoordinateExporter {
         for(CSIInfo info : csi) {
             for(int rx = 0;rx < 3;rx++) {
                 for(int tx = 0;tx < 3;tx++) {
-//                    for(int subcarrier = 0;subcarrier < info.getCsi_status().getNum_tones();subcarrier++) {
+//                    for(int subcarrier = 0;subcarrier < info.getNumTones();subcarrier++) {
 //                        System.out.printf("(%d,%d) ",
 //                                info.getCsi_matrix()[rx][tx][subcarrier].getReal(),
 //                                info.getCsi_matrix()[rx][tx][subcarrier].getImag()
@@ -41,10 +41,10 @@ public class PfgPlotsCoordinateExporter {
 
                     int finalRx = rx;
                     int finalTx = tx;
-                    double[] phase = IntStream.range(0, info.getCsi_status().getNum_tones()).mapToDouble(i -> info.getCsi_matrix()[finalRx][finalTx][i].getPhase()).toArray();
+                    double[] phase = IntStream.range(0, info.getNumTones()).mapToDouble(i -> info.getCsi_matrix()[finalRx][finalTx][i].getPhase()).toArray();
                     CSIUtil.unwrapPhase(phase);
                     System.out.print("Phase: ");
-                    for(int subcarrier = 0;subcarrier < info.getCsi_status().getNum_tones();subcarrier++) {
+                    for(int subcarrier = 0;subcarrier < info.getNumTones();subcarrier++) {
                         System.out.printf("(%d,%f) ",
                                 subcarrier + 1,
                                 phase[subcarrier]
@@ -56,7 +56,7 @@ public class PfgPlotsCoordinateExporter {
 
 //            System.out.println("Phase difference 01:");
 //            double phaseDiff[] = PhaseOffsetCalibration.getPhaseDiff(info, 0, 0, 1);
-//            for(int i = 0;i < info.getCsi_status().getNum_tones();i++) {
+//            for(int i = 0;i < info.getNumTones();i++) {
 //                System.out.printf("(%d,%f) ", i + 1, phaseDiff[i]);
 //            }
 

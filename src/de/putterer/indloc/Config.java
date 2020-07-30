@@ -43,7 +43,7 @@ public class Config {
 //							.setName("Router 10")
 //							.enableRespiratoryUI(),
 //					new Station(STATION_6_MAC, "192.168.178.206", CSIInfo.class, null, new ActivityDetector()).setName("Router 6")
-					new Station(", ", "127.0.0.1", AthCSIInfo.class, null, null)
+					new Station(null, "127.0.0.1", AthCSIInfo.class, null, null).setName("localhost")
 			},
 			new RoomObject[] {
 

@@ -15,7 +15,7 @@ public class PhaseExtractor {
 
 	public static double[][] extractFromCSI(int rx1, int rx2, int tx, List<CSIInfo> info) {
 		return info.stream().map(csi -> {
-			double[] diffs = new double[csi.getCsi_status().getNum_tones()];
+			double[] diffs = new double[csi.getNumTones()];
 
 			double[] rx1Phase = Arrays.stream(csi.getCsi_matrix()[rx1][0]).mapToDouble(CSIInfo.Complex::getPhase).toArray();
 			double[] rx2Phase = Arrays.stream(csi.getCsi_matrix()[rx2][0]).mapToDouble(CSIInfo.Complex::getPhase).toArray();

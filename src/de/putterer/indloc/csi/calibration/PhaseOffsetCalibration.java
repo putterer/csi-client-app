@@ -51,7 +51,7 @@ public class PhaseOffsetCalibration {
     public static double[] getPhaseDiff(CSIInfo csi, int txAntenna, int rxAntenna0, int rxAntenna1) {
         CSIInfo.Complex[] ant0 = csi.getCsi_matrix()[rxAntenna0][txAntenna];
         CSIInfo.Complex[] ant1 = csi.getCsi_matrix()[rxAntenna1][txAntenna];
-        int subcarriers = csi.getCsi_status().getNum_tones();
+        int subcarriers = csi.getNumTones();
 
         //TODO: unwrap, stack
 

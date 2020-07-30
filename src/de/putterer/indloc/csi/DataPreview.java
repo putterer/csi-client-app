@@ -145,7 +145,7 @@ public class DataPreview {
 			}
 			CSIInfo csi = (CSIInfo)dataInfo;
 
-			int subcarriers = csi.getCsi_status().getNum_tones();
+			int subcarriers = csi.getNumTones();
 			var detector = station.getActivityDetector();
 
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
@@ -330,7 +330,7 @@ public class DataPreview {
 			}
 			CSIInfo csi = (CSIInfo)dataInfo;
 
-			int subcarriers = csi.getCsi_status().getNum_tones();
+			int subcarriers = csi.getNumTones();
 			
 			for(int rx = 0;rx < rxAntennas;rx++) {
 				for(int tx = 0;tx < txAntennas;tx++) {
@@ -411,7 +411,7 @@ public class DataPreview {
 			}
 			CSIInfo csi = (CSIInfo)dataInfo;
 
-			int subcarriers = csi.getCsi_status().getNum_tones();
+			int subcarriers = csi.getNumTones();
 			if(subcarriers > 56) {
 				chart.getStyler().setXAxisMax((double) subcarriers);
 			}
@@ -647,7 +647,7 @@ public class DataPreview {
 			}
 			CSIInfo csi = (CSIInfo)dataInfo;
 
-			int subcarriers = csi.getCsi_status().getNum_tones();
+			int subcarriers = csi.getNumTones();
 			
 			for(int rx = 0;rx < rxAntennas;rx++) {
 				for(int tx = 0;tx < txAntennas;tx++) {

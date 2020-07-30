@@ -31,7 +31,7 @@ public class ActivityDetector {
             csiHistory.remove(0);
         }
 
-        int subcarriers = csi.getCsi_status().getNum_tones();
+        int subcarriers = csi.getNumTones();
         variancePerSubcarrier = new double[subcarriers];
 
         for(int i = 0;i < subcarriers;i++) {

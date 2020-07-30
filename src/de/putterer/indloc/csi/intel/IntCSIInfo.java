@@ -20,7 +20,7 @@ public class IntCSIInfo extends CSIInfo {
 
 		var notification = intelCsiNotification;
 		notification.timestamp_low = buffer.getInt();
-		notification.bfee_count = buffer.getInt();
+		notification.bfee_count = buffer.getShort();
 		notification.Nrx = buffer.get();
 		notification.Ntx = buffer.get();
 		notification.rssi_a = buffer.getShort();
@@ -42,13 +42,15 @@ public class IntCSIInfo extends CSIInfo {
 			double real = buffer.getDouble();
 			double imag = buffer.getDouble();
 
-			System.out.printf("R%dI%d ", csi_matrix[tx][rx][i].real, csi_matrix[csi_status->nc][csi_status->nr][i].imag); // TODO: atm: gets sent by csi-server before subscriber is registered
+			System.out.printf("R%.0fI%.0f ", real, imag);
+			// atheros 10 bit -> 512
+			// intel 8 bit * 4? --> 512
 
 
 //			putDouble(buffer, &index, notification->csi_matrix[i].real);
 //			putDouble(buffer, &index, notification->csi_matrix[i].imag);
 		}
-		System.out.print(System.lineSeparator());
+		System.out.println("\n\n");
 
 		//TODO: decrypt AND PERMUTE matrix
 		//TODO: scale CSI according to https://dhalperi.github.io/linux-80211n-csitool/faq.html -> section 2

@@ -89,7 +89,7 @@ public class PeriodicityDetector {
                             ),
                             carrier);
 
-            SubcarrierSelector subcarrierSelector = new SubcarrierSelector(subcarrier, ((CSIInfo) info).getCsi_status().getNum_tones(), respiratoryPhaseSupplier);
+            SubcarrierSelector subcarrierSelector = new SubcarrierSelector(subcarrier, ((CSIInfo) info).getNumTones(), respiratoryPhaseSupplier);
 
             if(Instant.now().isAfter(lastSubcarrierSelection.plus(SUBCARRIER_SELECTION_INTERVAL))) {
                 subcarrierSelector.runSelection();

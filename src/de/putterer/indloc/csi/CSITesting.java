@@ -2,6 +2,7 @@ package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Config;
 import de.putterer.indloc.Station;
+import de.putterer.indloc.csi.atheros.AthCSIInfo;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.FilterOptions;
 import de.putterer.indloc.csi.messages.SubscriptionMessage.SubscriptionOptions;
 import de.putterer.indloc.data.DataClient;
@@ -47,7 +48,11 @@ public class CSITesting {
 		for(Station station : Config.ROOM.getStations()) {
 			DataClient.addClient(new DataClient(station, subscriptionOptions, new DataConsumer<>(CSIInfo.class, csiInfo -> {
 				previews.forEach(p -> p.setData(csiInfo));
-				Logger.info("Received message with payload length: %d", csiInfo.getCsi_status().getPayload_len());
+				if(csiInfo instanceof AthCSIInfo) {
+					Logger.info("Received atheros csi message with payload length: %d", ((AthCSIInfo)csiInfo).getAtherosCsiStatus().getPayload_len());
+				} else {
+					Logger.info("Received intel csi message");
+				}
 //				Logger.warn("Antenna signal strenght: 0: %d., 1: %d, 2: %d",
 //						csiInfo.getCsi_status().getRssi_0(),
 //						csiInfo.getCsi_status().getRssi_1(),
