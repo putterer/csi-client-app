@@ -2,11 +2,15 @@ package de.putterer.indloc.csi.intel;
 
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.util.Logger;
+import de.putterer.indloc.util.Util;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
 
 @Data
 public class IntCSIInfo extends CSIInfo {
@@ -52,9 +56,9 @@ public class IntCSIInfo extends CSIInfo {
 					// atheros 10 bit -> 512
 					// intel 8 bit * 4? --> 512
 					this.csi_matrix[targetRXAntenna][tx][sc] = new Complex(
-							(int)Math.round(real * 4.0),
-							(int)Math.round(imag * 4.0)
-					);
+							(int)real,
+							(int)imag
+					); // TODO: does this discard data?
 
 //					System.out.printf("R%.0fI%.0f ", real, imag);
 				}
@@ -62,11 +66,65 @@ public class IntCSIInfo extends CSIInfo {
 		}
 //		System.out.println("\n\n");
 
+		scaleCsiToChannelMatrix();
+
 		//TODO: decrypt AND PERMUTE matrix
 		//TODO: scale CSI according to https://dhalperi.github.io/linux-80211n-csitool/faq.html -> section 2
 
 		if(buffer.hasRemaining()) {
 			Logger.warn("Intel CSI info buffer hasn't been consumed fully");
+		}
+	}
+
+	// based on https://github.com/dhalperi/linux-80211n-csitool-supplementary/blob/master/matlab/get_scaled_csi.m
+	private void scaleCsiToChannelMatrix() {
+		var notification = intelCsiNotification;
+
+		double csi_pwr = 0.0;
+
+		for(int rx = 0;rx < notification.getNrx();rx++) {
+			for(int tx = 0;tx < notification.getNtx();tx++) {
+				for(int sc = 0;sc < NUM_TONES;sc++) {
+					var val = csi_matrix[rx][tx][sc];
+					csi_pwr += pow(val.getReal(), 2) + pow(val.getImag(), 2);
+				}
+			}
+		}
+
+		double total_rss = 0.0;
+		if(notification.getRssi_a() != 0.0) total_rss += Util.dbinv(notification.getRssi_a());
+		if(notification.getRssi_b() != 0.0) total_rss += Util.dbinv(notification.getRssi_b());
+		if(notification.getRssi_c() != 0.0) total_rss += Util.dbinv(notification.getRssi_c());
+		total_rss = Util.db(total_rss) - 44 - notification.agc;
+		double rss_pwr = Util.dbinv(total_rss);
+
+		double scale = rss_pwr / (csi_pwr / NUM_TONES);
+		double noise_db = notification.noise == -127 ? -92 : notification.noise;
+		double thermal_noise_pwr = Util.dbinv(noise_db);
+
+		double quant_error_pwr = scale * (notification.getNrx() * notification.getNtx());
+		double total_noise_pwr = thermal_noise_pwr + quant_error_pwr;
+
+		for(int rx = 0;rx < notification.getNrx();rx++) {
+			for(int tx = 0;tx < notification.getNtx();tx++) {
+				for(int sc = 0;sc < NUM_TONES;sc++) {
+					var ret = csi_matrix[rx][tx][sc];
+
+					ret = ret.scale(Math.sqrt(scale / total_noise_pwr));
+
+					if(notification.getNtx() == 2) {
+						ret = ret.scale(sqrt(2));
+					}
+					if(notification.getNtx() == 3) {
+						ret = ret.scale(sqrt(Util.dbinv(4.5)));
+					}
+
+					//TODO: is this a good idea? (scale by 4 (2^2bits))
+					ret = ret.scale(4.0);
+
+					csi_matrix[rx][tx][sc] = ret;
+				}
+			}
 		}
 	}
 

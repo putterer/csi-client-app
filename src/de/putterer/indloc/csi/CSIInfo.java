@@ -65,6 +65,14 @@ public abstract class CSIInfo extends DataInfo implements Serializable {
 			return new Complex((int) Math.round(Math.cos(phase) * amplitude), (int) Math.round(Math.sin(phase) * amplitude));
 		}
 
+		// I want operator overloading :(
+		public Complex scale(double s) {
+			return new Complex(
+					(int)Math.round(this.real * s),
+					(int)Math.round(this.imag * s)
+			);
+		}
+
 		@Override
 		public String toString() {
 			return "R:" + real + " I:" + imag;

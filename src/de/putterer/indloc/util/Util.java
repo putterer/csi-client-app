@@ -38,4 +38,13 @@ public class Util {
 				(int)(c1.getBlue() * w_i + c2.getBlue() * w)
 		);
 	}
+
+
+	public static double db(double x) {
+		return 10.0 * Math.log10(x);
+	}
+
+	public static double dbinv(double x) {
+		return Math.pow(10.0, x / 10.0);
+	}
 }
