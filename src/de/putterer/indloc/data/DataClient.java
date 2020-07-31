@@ -258,7 +258,7 @@ public class DataClient {
 	}
 
 	private <T> Stream<Consumer<T>> getApplicableConsumers(Class<T> type) {
-		return Arrays.stream(consumers).filter(c -> c.getType().isAssignableFrom(type))
+		return Arrays.stream(consumers).filter(c -> type.isAssignableFrom(c.getType()))
 				.map(c -> (Consumer<T>) c.getConsumer());
 	}
 }

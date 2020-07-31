@@ -13,7 +13,7 @@ import java.io.Serializable;
 public abstract class CSIInfo extends DataInfo implements Serializable {
 	private static final transient long serialVersionUID = 979206976253508405L;
 
-	protected Complex[][][] csi_matrix = new Complex[3][3][114];
+	protected Complex[][][] csi_matrix = new Complex[3][3][114]; // [rx][tx][sc]
 
 	public CSIInfo(long clientTimestamp, int messageId) {
 		super(clientTimestamp, messageId);

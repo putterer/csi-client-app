@@ -35,22 +35,32 @@ public class IntCSIInfo extends CSIInfo {
 		notification.len = buffer.getShort();
 		notification.fake_rate_n_flags = buffer.getShort();
 
-		int csi_mat_entries = notification.Ntx * notification.Nrx * 30;
+		int csi_mat_entries = notification.Ntx * notification.Nrx * NUM_TONES;
 
-		for(int i = 0;i < csi_mat_entries;i++) {
-			buffer.order(ByteOrder.LITTLE_ENDIAN);
-			double real = buffer.getDouble();
-			double imag = buffer.getDouble();
+		// dimensions of matrix as received from csi-server:
+		// TX x RX x SC
+		for(int tx = 0;tx < notification.Ntx;tx++) {
+			for(int rx = 0;rx < notification.Nrx;rx++) {
+				for(int sc = 0;sc < NUM_TONES;sc++) {
+					buffer.order(ByteOrder.LITTLE_ENDIAN);
+					double real = buffer.getDouble();
+					double imag = buffer.getDouble();
 
-			System.out.printf("R%.0fI%.0f ", real, imag);
-			// atheros 10 bit -> 512
-			// intel 8 bit * 4? --> 512
+					// permute csi matrix according to antenna selection
+					int targetRXAntenna = notification.perm[rx];
 
+					// atheros 10 bit -> 512
+					// intel 8 bit * 4? --> 512
+					this.csi_matrix[targetRXAntenna][tx][sc] = new Complex(
+							(int)Math.round(real * 4.0),
+							(int)Math.round(imag * 4.0)
+					);
 
-//			putDouble(buffer, &index, notification->csi_matrix[i].real);
-//			putDouble(buffer, &index, notification->csi_matrix[i].imag);
+//					System.out.printf("R%.0fI%.0f ", real, imag);
+				}
+			}
 		}
-		System.out.println("\n\n");
+//		System.out.println("\n\n");
 
 		//TODO: decrypt AND PERMUTE matrix
 		//TODO: scale CSI according to https://dhalperi.github.io/linux-80211n-csitool/faq.html -> section 2

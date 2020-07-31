@@ -1,6 +1,6 @@
 package de.putterer.indloc;
 
-import de.putterer.indloc.csi.atheros.AthCSIInfo;
+import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.trilateration.SimpleTrilaterator;
 import de.putterer.indloc.trilateration.Trilaterator;
 import de.putterer.indloc.util.Vector;
@@ -43,7 +43,7 @@ public class Config {
 //							.setName("Router 10")
 //							.enableRespiratoryUI(),
 //					new Station(STATION_6_MAC, "192.168.178.206", CSIInfo.class, null, new ActivityDetector()).setName("Router 6")
-					new Station(null, "127.0.0.1", AthCSIInfo.class, null, null).setName("localhost")
+					new Station(null, "127.0.0.1", IntCSIInfo.class, null, null).setName("localhost")
 			},
 			new RoomObject[] {
 
