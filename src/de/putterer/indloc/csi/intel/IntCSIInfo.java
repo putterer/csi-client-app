@@ -15,6 +15,7 @@ import static java.lang.Math.sqrt;
 @Data
 public class IntCSIInfo extends CSIInfo {
 
+	private static final double INT_CSI_SCALE_FACTOR = 4.0;
 	private static final int NUM_TONES = 30;
 
 	private IntCSINotification intelCsiNotification = new IntCSINotification();
@@ -43,33 +44,49 @@ public class IntCSIInfo extends CSIInfo {
 
 		// dimensions of matrix as received from csi-server:
 		// TX x RX x SC
-		for(int tx = 0;tx < notification.Ntx;tx++) {
-			for(int rx = 0;rx < notification.Nrx;rx++) {
+//		for(int tx = 0;tx < notification.Ntx;tx++) {
+//			for(int rx = 0;rx < notification.Nrx;rx++) {
+//				for(int sc = 0;sc < NUM_TONES;sc++) {
+//					buffer.order(ByteOrder.LITTLE_ENDIAN);
+//					double real = buffer.getDouble();
+//					double imag = buffer.getDouble();
+//
+//					// permute csi matrix according to antenna selection
+//					int targetRXAntenna = notification.perm[rx];
+//
+//					// atheros 10 bit -> 512
+//					// intel 8 bit * 4? --> 512
+//					this.csi_matrix[targetRXAntenna][tx][sc] = new Complex(
+//							(int)real,
+//							(int)imag
+//					); // TODO: does this discard data?
+//
+////					System.out.printf("R%.0fI%.0f ", real, imag);
+//				}
+//			}
+//		}
+
+		for(int rx = 0;rx < notification.Nrx;rx++) {
+			for(int tx = 0;tx < notification.Ntx;tx++) {
 				for(int sc = 0;sc < NUM_TONES;sc++) {
 					buffer.order(ByteOrder.LITTLE_ENDIAN);
 					double real = buffer.getDouble();
 					double imag = buffer.getDouble();
 
-					// permute csi matrix according to antenna selection
-					int targetRXAntenna = notification.perm[rx];
-
 					// atheros 10 bit -> 512
 					// intel 8 bit * 4? --> 512
-					this.csi_matrix[targetRXAntenna][tx][sc] = new Complex(
+					this.csi_matrix[rx][tx][sc] = new Complex(
 							(int)real,
 							(int)imag
-					); // TODO: does this discard data?
+					);
 
 //					System.out.printf("R%.0fI%.0f ", real, imag);
 				}
 			}
 		}
-//		System.out.println("\n\n");
 
+		//TODO: scale according to https://dhalperi.github.io/linux-80211n-csitool/faq.html -> section 2
 		scaleCsiToChannelMatrix();
-
-		//TODO: decrypt AND PERMUTE matrix
-		//TODO: scale CSI according to https://dhalperi.github.io/linux-80211n-csitool/faq.html -> section 2
 
 		if(buffer.hasRemaining()) {
 			Logger.warn("Intel CSI info buffer hasn't been consumed fully");
@@ -96,9 +113,9 @@ public class IntCSIInfo extends CSIInfo {
 		if(notification.getRssi_b() != 0.0) total_rss += Util.dbinv(notification.getRssi_b());
 		if(notification.getRssi_c() != 0.0) total_rss += Util.dbinv(notification.getRssi_c());
 		total_rss = Util.db(total_rss) - 44 - notification.agc;
-		double rss_pwr = Util.dbinv(total_rss);
+		double rssi_pwr = Util.dbinv(total_rss);
 
-		double scale = rss_pwr / (csi_pwr / NUM_TONES);
+		double scale = rssi_pwr / (csi_pwr / NUM_TONES);
 		double noise_db = notification.noise == -127 ? -92 : notification.noise;
 		double thermal_noise_pwr = Util.dbinv(noise_db);
 
@@ -120,7 +137,7 @@ public class IntCSIInfo extends CSIInfo {
 					}
 
 					//TODO: is this a good idea? (scale by 4 (2^2bits))
-					ret = ret.scale(4.0);
+					ret = ret.scale(INT_CSI_SCALE_FACTOR);
 
 					csi_matrix[rx][tx][sc] = ret;
 				}
