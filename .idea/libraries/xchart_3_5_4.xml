@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="xchart-3.5.4">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../eclipse/xchart-3.5.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/xchart-3.5.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

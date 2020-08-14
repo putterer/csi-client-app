@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="lombok">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../eclipse/lombok.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/lombok.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

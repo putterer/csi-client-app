@@ -140,7 +140,13 @@ public class GenericStatusUI extends UIComponentWindow {
 			//TODO
 			//TODO: convert list option to mapper for generic objects instead of string
 		}, previewNames);
-		addPreviewOption("SubcarrierProperty", station -> {}, previewNames);
+		addPreviewOption("SubcarrierProperty Amplitude", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.SubcarrierPropertyPreview(
+					DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE,
+					openIntDialog("rxAntennaCount", 3, this.getFrame()),
+					openIntDialog("txAntennaCount", 1, this.getFrame())
+			)), station);
+		}, previewNames);
 		addPreviewOption("CSIPlot", station -> {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.CSIPlotPreview(
 					openIntDialog("rxAntennaCount", 3, this.getFrame()),
