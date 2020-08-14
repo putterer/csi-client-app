@@ -85,6 +85,16 @@ public class IntCSIInfo extends CSIInfo {
 			}
 		}
 
+        for(int rx = 0;rx < 3;rx++) {
+            for (int tx = 0; tx < 3; tx++) {
+                for (int sc = 0; sc < 114; sc++) {
+                    if(csi_matrix[rx][tx][sc] == null) {
+                        csi_matrix[rx][tx][sc] = new Complex(0, 0);
+                    }
+                }
+            }
+        }
+
 		//TODO: scale according to https://dhalperi.github.io/linux-80211n-csitool/faq.html -> section 2
 		scaleCsiToChannelMatrix();
 
