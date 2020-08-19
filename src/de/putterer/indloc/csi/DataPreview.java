@@ -2,6 +2,7 @@ package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
@@ -330,6 +331,12 @@ public class DataPreview {
 			}
 			CSIInfo csi = (CSIInfo)dataInfo;
 
+			if(csi instanceof IntCSIInfo) {
+				chart.getStyler().setXAxisMax(30.0);
+			} else {
+				chart.getStyler().setXAxisMax(114.0);
+			}
+
 			int subcarriers = csi.getNumTones();
 			
 			for(int rx = 0;rx < rxAntennas;rx++) {
@@ -339,16 +346,17 @@ public class DataPreview {
 					for(int i = 0;i < subcarriers;i++) {
 						xData[i] = i;
 						switch(type) {
-						case AMPLITUDE: yData[i] = csi.getCsi_matrix()[rx][tx][i].getAmplitude();break;
+						case AMPLITUDE: yData[i] = csi.getCsi_matrix()[rx][tx][i].getAmplitude()/* - csi.getCsi_matrix()[rx][tx][0].getAmplitude()*/;break;
 						case PHASE: yData[i] = csi.getCsi_matrix()[rx][tx][i].getPhase() - csi.getCsi_matrix()[0][0][0].getPhase();break;
 						}
 					}
 
 					if(type == PropertyType.PHASE) {
 						unwrapPhase(yData);
+						previousMeanPhase[rx][tx] = timeUnwrapped(yData, previousMeanPhase[rx][tx]);
 					}
 
-					previousMeanPhase[rx][tx] = timeUnwrapped(yData, previousMeanPhase[rx][tx]);
+					//TODO smooth
 
 					// move antennas above each other
 //					while(yData[0] < csi.getCsi_matrix()[0][0][0].getPhase()) {

@@ -15,7 +15,7 @@ import static java.lang.Math.sqrt;
 @Data
 public class IntCSIInfo extends CSIInfo {
 
-	private static final double INT_CSI_SCALE_FACTOR = 4.0;
+	private static final double INT_CSI_SCALE_FACTOR = 16.0;
 	private static final int NUM_TONES = 30;
 
 	private IntCSINotification intelCsiNotification = new IntCSINotification();

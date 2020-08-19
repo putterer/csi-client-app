@@ -136,8 +136,10 @@ public class CsiUserInterface implements KeyListener {
 		activityUIs.forEach(au -> au.getFrame().setVisible(visible));
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
 		Logger.setLogLevel(Logger.Level.DEBUG);
+
+		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		new CsiUserInterface();
 	}
 
