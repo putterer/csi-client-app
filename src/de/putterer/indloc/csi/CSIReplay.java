@@ -147,10 +147,10 @@ public class CSIReplay {
             int rxAntennas = Integer.parseInt(args[4]);
             int txAntennas = Integer.parseInt(args[5]);
             if(args[3].toLowerCase().contains("a")) {
-                previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(AMPLITUDE, rxAntennas, txAntennas)));
+                previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(AMPLITUDE, rxAntennas, txAntennas, 1)));
             }
             if(args[3].toLowerCase().contains("p")) {
-                previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(PHASE, rxAntennas, txAntennas)));
+                previews.add(new DataPreview(new DataPreview.SubcarrierPropertyPreview(PHASE, rxAntennas, txAntennas, 1)));
             }
             if(args[3].toLowerCase().contains("c")) {
                 previews.add(new DataPreview(new DataPreview.CSIPlotPreview(rxAntennas, txAntennas)));

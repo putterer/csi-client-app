@@ -144,7 +144,8 @@ public class GenericStatusUI extends UIComponentWindow {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.SubcarrierPropertyPreview(
 					DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE,
 					openIntDialog("rxAntennaCount", 3, this.getFrame()),
-					openIntDialog("txAntennaCount", 1, this.getFrame())
+					openIntDialog("txAntennaCount", 1, this.getFrame()),
+					openIntDialog("smoothingPacketCount", 10, this.getFrame())
 			)), station);
 		}, previewNames);
 		addPreviewOption("CSIPlot", station -> {

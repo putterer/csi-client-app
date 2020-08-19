@@ -280,6 +280,9 @@ public class DataPreview {
 		private final PropertyType type;
 		private final int rxAntennas; // number of rx antennas to display
 		private final int txAntennas; // number of tx antennas to display
+		private final int smoothingPacketCount;
+
+		private final List<Double> previousData[][][];
 		private final double previousMeanPhase[][];
 
 		/**
@@ -287,11 +290,20 @@ public class DataPreview {
 		 * @param rxAntennas the number of rx antennas to display
 		 * @param txAntennas the number of tx antennas to display
 		 */
-		public SubcarrierPropertyPreview(PropertyType type, int rxAntennas, int txAntennas) {
+		public SubcarrierPropertyPreview(PropertyType type, int rxAntennas, int txAntennas, int smoothingPacketCount) {
 			this.type = type;
 			this.rxAntennas = rxAntennas;
 			this.txAntennas = txAntennas;
+			this.smoothingPacketCount = smoothingPacketCount;
 
+			previousData = new List[rxAntennas][txAntennas][114];
+			for(int rx = 0;rx < rxAntennas;rx++) {
+				for(int tx = 0;tx < txAntennas;tx++) {
+					for(int c = 0;c < 114;c++) {
+						previousData[rx][tx][c] = new LinkedList<>();
+					}
+				}
+			}
 			previousMeanPhase = new double[rxAntennas][txAntennas];
 		}
 		
@@ -356,7 +368,17 @@ public class DataPreview {
 						previousMeanPhase[rx][tx] = timeUnwrapped(yData, previousMeanPhase[rx][tx]);
 					}
 
-					//TODO smooth
+					if(smoothingPacketCount >= 2) {
+						for (int i = 0; i < subcarriers; i++) {
+							List<Double> l = previousData[rx][tx][i];
+							l.add(yData[i]);
+							while (l.size() > smoothingPacketCount) {
+								l.remove(0);
+							}
+
+							yData[i] = l.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+						}
+					}
 
 					// move antennas above each other
 //					while(yData[0] < csi.getCsi_matrix()[0][0][0].getPhase()) {
