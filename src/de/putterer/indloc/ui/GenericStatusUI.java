@@ -1,12 +1,23 @@
 package de.putterer.indloc.ui;
 
+import de.putterer.indloc.Config;
 import de.putterer.indloc.Station;
+import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
+import de.putterer.indloc.util.Logger;
+import de.putterer.indloc.util.Serialization;
 
 import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -26,10 +37,10 @@ public class GenericStatusUI extends UIComponentWindow {
 	private final JButton unsubscribeButton = new JButton("Unsubs.");
 	private JComboBox<String> previewSelector;
 	private final JButton showPreviewButton = new JButton("Show");
+	private final JToggleButton recordButton = new JToggleButton("Record");
 	private final JCheckBox showActivityUICheckbox = new JCheckBox("Show activity UI", false);
 
 	private final List<Consumer<Station>> showPreviewCallbacks = new ArrayList<>();
-
 	public GenericStatusUI(CsiUserInterface csiUserInterface) {
 		super("CSI toolbox - Fabian Putterer - TUM", 420, 300);
 		this.csiUserInterface = csiUserInterface;
@@ -88,6 +99,16 @@ public class GenericStatusUI extends UIComponentWindow {
 		this.add(showPreviewButton);
 		stationsList.addListSelectionListener(e -> showPreviewButton.setEnabled(true));
 
+		recordButton.setBounds(10, 200, 400, 20);
+		this.add(recordButton);
+		recordButton.addActionListener(e -> {
+			if(recordingFolder.isPresent()) {
+				stopRecording();
+			} else {
+				startRecording();
+			}
+		});
+
 		showActivityUICheckbox.addItemListener(e -> csiUserInterface.setActivityUIsVisible(showActivityUICheckbox.isSelected()));
 		showActivityUICheckbox.setBounds(10, 230, 200, 20);
 		this.add(showActivityUICheckbox);
@@ -96,6 +117,69 @@ public class GenericStatusUI extends UIComponentWindow {
 
 		getFrame().repaint();
 	}
+
+
+	private Color backgroundColor;
+	private final Color recordingColor = new Color(195, 0, 0);
+	private Optional<Path> recordingFolder = Optional.empty();
+	private void startRecording() {
+		synchronized (recordingColor) {
+			String recordingName = openStringDialog(
+					"Recording directory",
+					"csi-recording_" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()),
+					this);
+
+			if(recordingName == null) {
+				return;
+			}
+
+			Path recordingPath = Paths.get(recordingName);
+			try {
+				Files.createDirectory(recordingPath);
+			} catch(IOException e) {
+				Logger.error("Could not create recording directory", e);
+				return;
+			}
+
+			recordingFolder = Optional.of(recordingPath);
+		}
+
+		try {
+			Serialization.serialize(recordingFolder.get().resolve("room.cfg"), Config.ROOM);
+		} catch (IOException e) {
+			Logger.error("Could not serialize room configuration", e);
+		}
+
+		recordButton.setSelected(true);
+
+		backgroundColor = this.getBackground();
+		this.setBackground(recordingColor);
+	}
+
+	private void stopRecording() {
+		recordButton.setSelected(false);
+
+		this.setBackground(backgroundColor);
+
+		synchronized (recordingColor) {
+			recordingFolder = Optional.empty();
+		}
+	}
+
+	@Override
+	public void onDataInfo(Station station, DataInfo dataInfo) {
+		if(dataInfo instanceof CSIInfo) {
+			recordingFolder.ifPresent(folder -> {
+				try {
+					// looses type information, dataInfo type is present in station inside room config
+					Serialization.save(folder.resolve(station.getHW_ADDRESS() + "-" + dataInfo.getMessageId() + ".csi"), (CSIInfo)dataInfo);
+				} catch (IOException e) {
+					Logger.error("Could not serialize csi", e);
+				}
+			});
+		}
+	}
+
 
 	private void initPreviewSelector() {
 		List<String> previewNames = new LinkedList<>();
@@ -108,7 +192,7 @@ public class GenericStatusUI extends UIComponentWindow {
 					10,
 					10,
 					0.8,
-					new int[]{10,30,50}
+					10,30,50
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {
@@ -177,11 +261,5 @@ public class GenericStatusUI extends UIComponentWindow {
 
 	private Station getSelectedStation() {
 		return ROOM.getStations()[stationsList.getSelectedIndex()];
-	}
-
-
-	@Override
-	public void onDataInfo(Station station, DataInfo dataInfo) {
-
 	}
 }

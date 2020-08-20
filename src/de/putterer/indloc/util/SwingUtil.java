@@ -49,6 +49,11 @@ public class SwingUtil {
 			return defaultValue;
 		}
 	}
+
+	public static String openStringDialog(String message, String defaultValue, Component component) {
+		return JOptionPane.showInputDialog(component, message, defaultValue);
+	}
+
 	public static int[] openIntListDialog(String message, int[] defaultValue, Component component) {
 		return openIntListDialog(message, defaultValue, Collections.emptyMap(), component);
 	}
