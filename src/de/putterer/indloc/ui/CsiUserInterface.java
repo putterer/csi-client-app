@@ -1,8 +1,10 @@
 package de.putterer.indloc.ui;
 
+import de.putterer.indloc.Config;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.activity.ActivityUI;
 import de.putterer.indloc.csi.CSIInfo;
+import de.putterer.indloc.csi.CSIReplay;
 import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.data.DataClient;
@@ -17,6 +19,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -36,17 +40,30 @@ public class CsiUserInterface implements KeyListener {
 	private volatile boolean initComplete = false;
 	private final Map<DataPreview, Station> previews = new HashMap<>();
 
-	private final GenericStatusUI genericStatusUI;
+	private GenericStatusUI genericStatusUI;
 	private final List<RespiratoryUI> respiratoryUIs = new ArrayList<>();
-	private final FrequencyGeneratorUI frequencyGeneratorUI;
+	private FrequencyGeneratorUI frequencyGeneratorUI;
 	private final List<ActivityUI> activityUIs = new ArrayList<>();
+	private ReplayUI replayUI;
+
+	private CSIReplay replay = null;
 
 	public CsiUserInterface() {
 		startClients();
 
+		buildUI();
+	}
+
+
+	private void buildUI() {
 		frequencyGeneratorUI = new FrequencyGeneratorUI();
 		genericStatusUI = new GenericStatusUI(this);
 		genericStatusUI.setPosition(TOP_LEFT_OFFSET.x, TOP_LEFT_OFFSET.y);
+
+		replayUI = new ReplayUI(this, replay != null);
+		replayUI.setPosition(TOP_LEFT_OFFSET.x, TOP_LEFT_OFFSET.y + genericStatusUI.getWindowHeight());
+		componentWindows.add(replayUI);
+
 		Iterator<Station> stationIter = Arrays.stream(ROOM.getStations()).filter(Station::isDisplayRespiratoryDetector).iterator();
 		for(int i = 0;stationIter.hasNext();i++) {
 			RespiratoryUI rui = new RespiratoryUI(frequencyGeneratorUI).setStation(stationIter.next());
@@ -81,6 +98,30 @@ public class CsiUserInterface implements KeyListener {
 		activityUIs.forEach(au -> au.getFrame().setVisible(false));
 
 		initComplete = true;
+	}
+
+	private void rebuildUI() {
+		if(genericStatusUI != null) {
+			genericStatusUI.destroy();
+		}
+		if(frequencyGeneratorUI != null) {
+			frequencyGeneratorUI.destroy();
+		}
+
+		componentWindows.forEach(UIComponentWindow::destroy);
+		componentWindows.clear();
+		respiratoryUIs.clear();
+		activityUIs.clear();
+
+		previews.keySet().forEach(DataPreview::destroy);
+		previews.clear();
+
+
+		if(replay != null) {
+			//TODO
+		}
+
+		buildUI();
 	}
 
 	private void startClients() {
@@ -130,6 +171,26 @@ public class CsiUserInterface implements KeyListener {
 //		} else if (info instanceof AndroidInfo) {
 //			AndroidInfo androidInfo = (AndroidInfo) info;
 //		}
+	}
+
+	public void loadReplay(Path replayPath) {
+		initComplete = false;
+		stopClients();
+
+		try {
+			replay = new CSIReplay(replayPath, 1, false);
+		} catch(IOException e) {
+			Logger.error("Couldn't load replay file: %d", replayPath.toAbsolutePath().toString());
+		}
+
+		Config.ROOM = replay.getRoom();
+		// manually add replay clients
+
+		rebuildUI();
+	}
+
+	public void stopClients() {
+		DataClient.getClients().forEach(DataClient::removeClient);
 	}
 
 	public void setActivityUIsVisible(boolean visible) {

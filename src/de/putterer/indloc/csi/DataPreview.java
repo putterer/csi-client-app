@@ -72,6 +72,10 @@ public class DataPreview {
 		});
 	}
 
+	public void destroy() {
+		frame.dispose();
+	}
+
 	@Getter
 	public static abstract class PreviewMode {
 		protected int width;
