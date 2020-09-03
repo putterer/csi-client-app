@@ -1,11 +1,13 @@
 package de.putterer.indloc.ui;
 
 import de.putterer.indloc.Station;
+import de.putterer.indloc.csi.CSIReplay;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.time.Duration;
 
 public class ReplayUI extends UIComponentWindow {
 
@@ -14,13 +16,17 @@ public class ReplayUI extends UIComponentWindow {
     private final boolean isReplayLoaded;
 
     private final JButton loadReplayButton = new JButton("Load replay");
-    private final JLabel progressLabel = new JLabel("0 / 0 packets, 0.0s / 0.0s");
+    private final JLabel replayInfoLabel = new JLabel("filename");
+    private final JLabel progressLabel = new JLabel("Packets: 0 / 0");
+    private final JLabel timeProgressLabel = new JLabel("Time: 0.0s / 0.0s");
     private final JProgressBar progressBar = new JProgressBar();
     private final JButton toStartButton = new JButton("|<<");
     private final JButton stepBackwardButton = new JButton("<<");
     private final JToggleButton playToggleButton = new JToggleButton("Play");
     private final JButton stepForwardButton = new JButton(">>");
     private final JButton toEndButton = new JButton(">>|");
+
+
 
 
 
@@ -44,26 +50,48 @@ public class ReplayUI extends UIComponentWindow {
             return;
         }
 
-        progressLabel.setBounds(10, 70, 400, 30);
+        replayInfoLabel.setBounds(10, 50, 400, 20);
+        this.add(replayInfoLabel);
+        replayInfoLabel.setText(csiUserInterface.getReplay().getFolder().getFileName().toString());
+
+        progressLabel.setBounds(10, 90, 200, 30);
         this.add(progressLabel);
-        progressBar.setBounds(10, 110, 400, 30);
+        timeProgressLabel.setBounds(220, 90, 200, 30);
+        this.add(timeProgressLabel);
+
+
+        progressBar.setBounds(10, 130, 400, 30);
         this.add(progressBar);
 
         int controlButtonCount = 5;
         int controlButtonWidth = (getWindowWidth() - (10 * (controlButtonCount + 1))) / controlButtonCount;
         int controlButtonDist = controlButtonWidth + 10;
-        toStartButton.setBounds(10, 150, controlButtonWidth, 30);
+        toStartButton.setBounds(10, 170, controlButtonWidth, 30);
         this.add(toStartButton);
-        stepBackwardButton.setBounds(10 + controlButtonDist, 150, controlButtonWidth, 30);
+        stepBackwardButton.setBounds(10 + controlButtonDist, 170, controlButtonWidth, 30);
         this.add(stepBackwardButton);
-        playToggleButton.setBounds(10 + controlButtonDist * 2, 150, controlButtonWidth, 30);
+        playToggleButton.setBounds(10 + controlButtonDist * 2, 170, controlButtonWidth, 30);
         this.add(playToggleButton);
-        stepForwardButton.setBounds(10 + controlButtonDist * 3, 150, controlButtonWidth, 30);
+        stepForwardButton.setBounds(10 + controlButtonDist * 3, 170, controlButtonWidth, 30);
         this.add(stepForwardButton);
-        toEndButton.setBounds(10 + controlButtonDist * 4, 150, controlButtonWidth, 30);
+        toEndButton.setBounds(10 + controlButtonDist * 4, 170, controlButtonWidth, 30);
         this.add(toEndButton);
 
+        //TODO: run replay
+        //TODO: add controlability to replay
+        //TODO: control replay via UI
 
+        updateStatus();
+    }
+
+    private void updateStatus() {
+        CSIReplay replay = csiUserInterface.getReplay();
+        progressLabel.setText(String.format("Packets:   %d / %d",
+                replay.getNumberOfPastPackets(),
+                replay.getTotalNumberOfPackets()));
+        timeProgressLabel.setText(String.format("Time:   %.1f s / %.1f s",
+                Duration.between(replay.getStartTime(), replay.getCurrentReplayTime()).toMillis() / 1000.0f,
+                replay.getTotalRuntime().toMillis() / 1000.0f));
     }
 
     private void pickAndLoadReplayFile(ActionEvent e) {
@@ -90,7 +118,7 @@ public class ReplayUI extends UIComponentWindow {
 
         Logger.info("Loading replay %s", chooser.getSelectedFile().toPath().toAbsolutePath().toString());
 
-        csiUserInterface.loadReplay(chooser.getSelectedFile().toPath());// TODO: actually do something
+        csiUserInterface.loadReplay(chooser.getSelectedFile().toPath());
     }
 
     @Override

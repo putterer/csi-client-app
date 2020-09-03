@@ -3,6 +3,7 @@ package de.putterer.indloc.csi;
 import de.putterer.indloc.Config;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.PhaseOffset;
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.spotfi.Spotfi;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.serialization.Serialization;
@@ -13,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -32,16 +35,29 @@ public class CSIReplay {
     private static final String RECORDED_CSI_PATTERN = "%s-\\d+.csi";
     private static final ExecutorService pool = Executors.newFixedThreadPool(4);
 
-    private final LinkedList<CSIInfo> csi = new LinkedList<>();//TODO: sort csi into lists by station during loading
     @Getter
     private final CompletableFuture<?> completedFuture = new CompletableFuture<>();
     private final Map<CSIInfo, String> stationByCSI = new HashMap<>();
-    private final long startTimeDiff;
+
     private final Map<Station, Consumer<CSIInfo[]>> callbacks = new HashMap<>();
     @Getter
     private final Config.RoomConfig room;
+
+    private final List<CSIInfo> csi;//TODO: sort csi into lists by station during loading
+    private final long startTimeDiff;
     private final int groupThreshold; // the number of CSIInfos to group before releasing them combined
 
+    @Getter
+    private final Instant startTime;
+    @Getter
+    private final Instant endTime;
+    @Getter
+    private Instant currentReplayTime;
+    @Getter
+    private final Duration totalRuntime;
+
+
+    @Getter
     private final Path folder;
 
     /**
@@ -57,6 +73,7 @@ public class CSIReplay {
 
         room = Serialization.deserialize(folder.resolve("room.cfg"), Config.RoomConfig.class);
 
+        final ArrayList<CSIInfo> allCsi = new ArrayList<>();
         for(Station station : room.getStations()) {
             Files.list(folder)
                     .filter(p -> Pattern.compile(String.format(RECORDED_CSI_PATTERN, station.getHW_ADDRESS())).matcher(p.toFile().getName()).matches())
@@ -71,12 +88,19 @@ public class CSIReplay {
                     .filter(Objects::nonNull)
                     .flatMap(Arrays::stream)
                     .forEach(csi -> {
-                        CSIReplay.this.csi.add(csi);
+                        allCsi.add(csi);
                         stationByCSI.put(csi, station.getHW_ADDRESS());
                     });
         }
+        this.csi = Collections.unmodifiableList(allCsi);
 
         startTimeDiff = System.currentTimeMillis() - csi.stream().mapToLong(CSIInfo::getClientTimestamp).min().orElse(0) + 500;
+
+        startTime = Instant.ofEpochMilli(csi.stream().mapToLong(CSIInfo::getClientTimestamp).min().orElse(0));
+        endTime = Instant.ofEpochMilli(csi.stream().mapToLong(CSIInfo::getClientTimestamp).max().orElse(0));
+        totalRuntime = Duration.between(startTime, endTime);
+
+        currentReplayTime = startTime;
 
         if(startReplay) {
             Logger.debug("Replay loaded, starting playback of %d packets...", csi.size());
@@ -99,6 +123,7 @@ public class CSIReplay {
     private void replayThread() {
         List<CSIInfo> groupingList = new LinkedList<>();
 
+        //TODO: rewrite, maybe not removing
         while(! csi.isEmpty()) {
             Iterator<CSIInfo> iter = csi.iterator();
             while(iter.hasNext()) {
@@ -113,7 +138,7 @@ public class CSIReplay {
                         groupingList.clear();
                     }
                     stationByCSI.remove(csi);
-                    iter.remove();
+//                    iter.remove(); // TODO: broken
 
                     Logger.trace("Replay: %d packets left", this.csi.size());
                 }
@@ -125,12 +150,25 @@ public class CSIReplay {
         Logger.info("Replay finished.");
     }
 
+
     public int isAvailable() {
         return csi.size();
     }
 
     public boolean isEmpty() {
         return csi.isEmpty();
+    }
+
+    public int getNumberOfPastPackets() {
+        return (int) csi.stream()
+                .mapToLong(DataInfo::getClientTimestamp)
+                .mapToObj(Instant::ofEpochMilli)
+                .filter(t -> t.isBefore(currentReplayTime))
+                .count();
+    }
+
+    public int getTotalNumberOfPackets() {
+        return csi.size();
     }
 
     public static CompletableFuture mainProxy(String args[]) throws IOException {

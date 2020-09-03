@@ -120,7 +120,9 @@ public class CsiUserInterface implements KeyListener {
 
 
 		if(replay != null) {
-			//TODO
+			Arrays.stream(ROOM.getStations()).forEach(station ->
+				replay.addCallback(station, csiInfos -> Arrays.stream(csiInfos).forEach(c -> onData(station, c)))
+			);
 		}
 
 		buildUI();

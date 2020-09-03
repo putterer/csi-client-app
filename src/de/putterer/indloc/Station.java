@@ -85,6 +85,6 @@ public class Station implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return HW_ADDRESS.hashCode();
+		return System.identityHashCode(this);
 	}
 }
