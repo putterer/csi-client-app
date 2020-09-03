@@ -1,23 +1,29 @@
-package de.putterer.indloc.util;
+package de.putterer.indloc.util.serialization;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.CSIInfo;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Utility code for (de-)serializing objects
  */
 public class Serialization {
 
-	private static final Gson gson = new Gson();
+	private static final Gson gson;
+
+	static {
+		// StationSerializationAdapter internally USES ITS OWN GSON
+		gson = new GsonBuilder()
+				.registerTypeAdapter(CSIInfo.class, new CSIInfoInterfaceAdapter())
+				.registerTypeAdapter(Station.class, new StationSerializationAdapter())
+				.create();
+	}
 
 	public static void save(Path path, CSIInfo... csi) throws FileNotFoundException, IOException {
 		serialize(path, csi);
@@ -57,20 +63,6 @@ public class Serialization {
 		Object o = in.readObject();
 		in.close();
 		return (T)o;
-	}
-
-	/**
-	 * Get all fields of a class (including ones declared by superclasses) using reflection
-	 * @param clazz the class to analyze
-	 * @return the discovered fields
-	 */
-	private static List<Field> getFields(Class clazz) {
-		List<Field> res = new ArrayList<>();
-		res.addAll(Arrays.asList(clazz.getDeclaredFields()));
-		if(clazz != Object.class) {
-			res.addAll(getFields(clazz.getSuperclass()));
-		}
-		return res;
 	}
 	
 }

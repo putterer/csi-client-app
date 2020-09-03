@@ -8,7 +8,7 @@ import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.util.FileUtils;
 import de.putterer.indloc.util.Logger;
-import de.putterer.indloc.util.Serialization;
+import de.putterer.indloc.util.serialization.Serialization;
 
 import java.io.IOException;
 import java.nio.file.Files;

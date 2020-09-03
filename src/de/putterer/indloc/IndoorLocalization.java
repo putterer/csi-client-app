@@ -6,7 +6,7 @@ import de.putterer.indloc.csi.CSITesting;
 import de.putterer.indloc.rssi.RSSITrilateration;
 import de.putterer.indloc.util.ArgumentParser;
 import de.putterer.indloc.util.Logger;
-import de.putterer.indloc.util.Serialization;
+import de.putterer.indloc.util.serialization.Serialization;
 
 import java.io.IOException;
 import java.nio.file.Paths;

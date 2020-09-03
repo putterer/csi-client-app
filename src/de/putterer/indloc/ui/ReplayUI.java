@@ -14,10 +14,18 @@ public class ReplayUI extends UIComponentWindow {
     private final boolean isReplayLoaded;
 
     private final JButton loadReplayButton = new JButton("Load replay");
+    private final JLabel progressLabel = new JLabel("0 / 0 packets, 0.0s / 0.0s");
+    private final JProgressBar progressBar = new JProgressBar();
+    private final JButton toStartButton = new JButton("|<<");
+    private final JButton stepBackwardButton = new JButton("<<");
+    private final JToggleButton playToggleButton = new JToggleButton("Play");
+    private final JButton stepForwardButton = new JButton(">>");
+    private final JButton toEndButton = new JButton(">>|");
+
 
 
     public ReplayUI(CsiUserInterface csiUserInterface, boolean isReplayLoaded) {
-        super("Replay", 420, 200);
+        super("Replay", 420, 300);
         this.csiUserInterface = csiUserInterface;
         this.isReplayLoaded = isReplayLoaded;
 
@@ -28,7 +36,7 @@ public class ReplayUI extends UIComponentWindow {
     }
 
     private void initUI() {
-        loadReplayButton.setBounds(10, 10, 400, 20);
+        loadReplayButton.setBounds(10, 10, 400, 30);
         this.add(loadReplayButton);
         loadReplayButton.addActionListener(this::pickAndLoadReplayFile);
 
@@ -36,10 +44,26 @@ public class ReplayUI extends UIComponentWindow {
             return;
         }
 
-        //TODO:
-        // play, pause, step button
-        // time label
-        // current csi out of total label
+        progressLabel.setBounds(10, 70, 400, 30);
+        this.add(progressLabel);
+        progressBar.setBounds(10, 110, 400, 30);
+        this.add(progressBar);
+
+        int controlButtonCount = 5;
+        int controlButtonWidth = (getWindowWidth() - (10 * (controlButtonCount + 1))) / controlButtonCount;
+        int controlButtonDist = controlButtonWidth + 10;
+        toStartButton.setBounds(10, 150, controlButtonWidth, 30);
+        this.add(toStartButton);
+        stepBackwardButton.setBounds(10 + controlButtonDist, 150, controlButtonWidth, 30);
+        this.add(stepBackwardButton);
+        playToggleButton.setBounds(10 + controlButtonDist * 2, 150, controlButtonWidth, 30);
+        this.add(playToggleButton);
+        stepForwardButton.setBounds(10 + controlButtonDist * 3, 150, controlButtonWidth, 30);
+        this.add(stepForwardButton);
+        toEndButton.setBounds(10 + controlButtonDist * 4, 150, controlButtonWidth, 30);
+        this.add(toEndButton);
+
+
     }
 
     private void pickAndLoadReplayFile(ActionEvent e) {
@@ -64,7 +88,9 @@ public class ReplayUI extends UIComponentWindow {
             return;
         }
 
-        Logger.info("Loading replay %s", chooser.getSelectedFile().toPath().toAbsolutePath().toString()); // TODO: actually do something
+        Logger.info("Loading replay %s", chooser.getSelectedFile().toPath().toAbsolutePath().toString());
+
+        csiUserInterface.loadReplay(chooser.getSelectedFile().toPath());// TODO: actually do something
     }
 
     @Override

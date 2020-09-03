@@ -12,6 +12,7 @@ import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.respiratory.RespiratoryUI;
 import de.putterer.indloc.util.Logger;
+import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,6 +47,7 @@ public class CsiUserInterface implements KeyListener {
 	private final List<ActivityUI> activityUIs = new ArrayList<>();
 	private ReplayUI replayUI;
 
+	@Getter
 	private CSIReplay replay = null;
 
 	public CsiUserInterface() {
@@ -180,7 +182,7 @@ public class CsiUserInterface implements KeyListener {
 		try {
 			replay = new CSIReplay(replayPath, 1, false);
 		} catch(IOException e) {
-			Logger.error("Couldn't load replay file: %d", replayPath.toAbsolutePath().toString());
+			Logger.error("Couldn't load replay file: %s", replayPath.toAbsolutePath().toString());
 		}
 
 		Config.ROOM = replay.getRoom();

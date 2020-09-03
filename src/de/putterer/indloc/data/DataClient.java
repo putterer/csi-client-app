@@ -15,7 +15,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -102,7 +105,7 @@ public class DataClient {
 	}
 
 	public static List<DataClient> getClients() {
-		return Collections.unmodifiableList(clients);
+		return List.copyOf(clients);
 	}
 	public static DataClient getClient(Station station) {
 		return clients.stream().filter(c -> c.getStation() == station).findFirst().orElse(null);

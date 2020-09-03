@@ -8,7 +8,7 @@ import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
-import de.putterer.indloc.util.Serialization;
+import de.putterer.indloc.util.serialization.Serialization;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,9 +77,9 @@ public class GenericStatusUI extends UIComponentWindow {
 		stationsList.setLayoutOrientation(JList.VERTICAL);
 		this.add(stationsList);
 
-		selectRespiratoryButton.setBounds(10, 140, 380/3, 20);
+		selectRespiratoryButton.setBounds(10, 140, 380/3, 30);
 		this.add(selectRespiratoryButton);
-		resubscribeButton.setBounds(20 + 380/3, 140, 380/3, 20);
+		resubscribeButton.setBounds(20 + 380/3, 140, 380/3, 30);
 		resubscribeButton.addActionListener(a -> new Thread(() -> {
 			DataClient client = getCurrentlySelectedClient();
 			client.unsubscribe();
@@ -87,19 +87,19 @@ public class GenericStatusUI extends UIComponentWindow {
 			client.subscribe();
 		}).start());
 		this.add(resubscribeButton);
-		unsubscribeButton.setBounds(30 + 380/3*2, 140, 380/3, 20);
+		unsubscribeButton.setBounds(30 + 380/3*2, 140, 380/3, 30);
 		unsubscribeButton.addActionListener(a -> getCurrentlySelectedClient().unsubscribe());
 		this.add(unsubscribeButton);
 
 		initPreviewSelector();
-		previewSelector.setBounds(10, 170, 300, 20);
+		previewSelector.setBounds(10, 180, 300, 30);
 		this.add(previewSelector);
 		showPreviewButton.setEnabled(false);
-		showPreviewButton.setBounds(320, 170, 90, 20);
+		showPreviewButton.setBounds(320, 180, 90, 30);
 		this.add(showPreviewButton);
 		stationsList.addListSelectionListener(e -> showPreviewButton.setEnabled(true));
 
-		recordButton.setBounds(10, 200, 400, 20);
+		recordButton.setBounds(10, 220, 200, 30);
 		this.add(recordButton);
 		recordButton.addActionListener(e -> {
 			if(recordingFolder.isPresent()) {
@@ -110,7 +110,7 @@ public class GenericStatusUI extends UIComponentWindow {
 		});
 
 		showActivityUICheckbox.addItemListener(e -> csiUserInterface.setActivityUIsVisible(showActivityUICheckbox.isSelected()));
-		showActivityUICheckbox.setBounds(10, 230, 200, 20);
+		showActivityUICheckbox.setBounds(220, 220, 200, 30);
 		this.add(showActivityUICheckbox);
 
 		onStationUpdated(null);

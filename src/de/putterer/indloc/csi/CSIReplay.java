@@ -5,7 +5,7 @@ import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.PhaseOffset;
 import de.putterer.indloc.spotfi.Spotfi;
 import de.putterer.indloc.util.Logger;
-import de.putterer.indloc.util.Serialization;
+import de.putterer.indloc.util.serialization.Serialization;
 import lombok.Getter;
 import lombok.val;
 
@@ -34,7 +34,7 @@ public class CSIReplay {
 
     private final LinkedList<CSIInfo> csi = new LinkedList<>();//TODO: sort csi into lists by station during loading
     @Getter
-    private final CompletableFuture completedFuture = new CompletableFuture();
+    private final CompletableFuture<?> completedFuture = new CompletableFuture<>();
     private final Map<CSIInfo, String> stationByCSI = new HashMap<>();
     private final long startTimeDiff;
     private final Map<Station, Consumer<CSIInfo[]>> callbacks = new HashMap<>();
