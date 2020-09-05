@@ -26,7 +26,7 @@ public class PfgPlotsCoordinateExporter {
         Path path = Paths.get(args[0]);
 
         System.out.println("RX0 TX1->3, RX1 TX1->3, RX2 TX1->3");
-        CSIReplay replay = new CSIReplay(path, 1, false);
+        CSIReplay replay = new CSIReplay(path, 1, false, null);
         List<CSIInfo> csi = new ArrayList<>(replay.getCSI());
         for(CSIInfo info : csi) {
             for(int rx = 0;rx < 3;rx++) {

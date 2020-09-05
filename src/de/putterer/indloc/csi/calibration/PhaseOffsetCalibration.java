@@ -19,7 +19,7 @@ public class PhaseOffsetCalibration {
             throw new IllegalArgumentException("Not enough arguments");
         }
 
-        CSIReplay replay = new CSIReplay(Paths.get(args[0]), 1, false);
+        CSIReplay replay = new CSIReplay(Paths.get(args[0]), 1, false, null);
         int txAntenna = Integer.parseInt(args[1]);
         int rxAntenna0 = Integer.parseInt(args[2]);
         int rxAntenna1 = Integer.parseInt(args[3]);

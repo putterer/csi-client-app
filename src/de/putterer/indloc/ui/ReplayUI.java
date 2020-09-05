@@ -16,6 +16,8 @@ public class ReplayUI extends UIComponentWindow {
     private final boolean isReplayLoaded;
 
     private final JButton loadReplayButton = new JButton("Load replay");
+    private final JProgressBar loadingProgressBar = new JProgressBar(0, 1000);
+
     private final JLabel replayInfoLabel = new JLabel("filename");
     private final JLabel progressLabel = new JLabel("Packets: 0 / 0");
     private final JLabel timeProgressLabel = new JLabel("Time: 0.0s / 0.0s");
@@ -43,6 +45,9 @@ public class ReplayUI extends UIComponentWindow {
     }
 
     private void initUI() {
+        loadingProgressBar.setBounds(10, 10, 400, 30);
+        this.add(loadingProgressBar);
+        loadingProgressBar.setVisible(false);
         loadReplayButton.setBounds(10, 10, 400, 30);
         this.add(loadReplayButton);
         loadReplayButton.addActionListener(this::pickAndLoadReplayFile);
@@ -153,7 +158,14 @@ public class ReplayUI extends UIComponentWindow {
 
         Logger.info("Loading replay %s", chooser.getSelectedFile().toPath().toAbsolutePath().toString());
 
-        csiUserInterface.loadReplay(chooser.getSelectedFile().toPath());
+        loadReplayButton.setEnabled(false);
+        loadReplayButton.setVisible(false);
+        loadingProgressBar.setVisible(true);
+
+        new Thread(() ->
+                csiUserInterface.loadReplay(chooser.getSelectedFile().toPath(), progress ->
+                        SwingUtilities.invokeLater(() -> loadingProgressBar.setValue((int) Math.round(progress * 1000)))
+        )).start();
     }
 
     @Override

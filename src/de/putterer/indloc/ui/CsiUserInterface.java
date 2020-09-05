@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 import static de.putterer.indloc.Config.ROOM;
 
@@ -178,12 +179,12 @@ public class CsiUserInterface implements KeyListener {
 //		}
 	}
 
-	public void loadReplay(Path replayPath) {
+	public void loadReplay(Path replayPath, Consumer<Double> progressCallback) {
 		initComplete = false;
 		stopClients();
 
 		try {
-			replay = new CSIReplay(replayPath, 1, false);
+			replay = new CSIReplay(replayPath, 1, false, progressCallback);
 		} catch(IOException e) {
 			Logger.error("Couldn't load replay file: %s", replayPath.toAbsolutePath().toString());
 		}
