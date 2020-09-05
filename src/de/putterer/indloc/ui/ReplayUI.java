@@ -100,6 +100,8 @@ public class ReplayUI extends UIComponentWindow {
         });
         toStartButton.addActionListener(a -> replay.setReplayPosition(replay.getStartTime()));
         toEndButton.addActionListener(a -> replay.setReplayPosition(replay.getEndTime()));
+        stepForwardButton.addActionListener(a -> replay.stepForward());
+        stepBackwardButton.addActionListener(a -> replay.stepBackward());
 
         progressSlider.addChangeListener(a -> {
             if(replay.isReplayPaused()) {
@@ -109,8 +111,6 @@ public class ReplayUI extends UIComponentWindow {
 
 
         // TODO: replay loading takes really long, loading bar
-        // TODO: step control
-        // TODO:
 
         replay.addStatusUpdateCallback(this::updateStatus);
         updateStatus();

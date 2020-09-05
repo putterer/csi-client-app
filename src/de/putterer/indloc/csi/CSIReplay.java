@@ -133,16 +133,31 @@ public class CSIReplay {
                     .forEach(nextCsi::add);
         }
 
-        // release nearest csi
-        csi.stream().min(Comparator.comparingLong(
-                c -> Duration.between(time, c.getClientInstant()).abs().toMillis()
-        )).ifPresent(nearestCsi -> postCsi(new CSIInfo[] { nearestCsi }));
+        postNearestCsi(time);
 
         statusUpdateCallbacks.forEach(Runnable::run);
 
         if(! replayPaused) {
             new Thread(this::replayThread).start();
         }
+    }
+
+    public void stepBackward() {
+        setReplayPosition(csi.stream()
+                .filter(c -> c.getClientInstant().isBefore(currentReplayTime))
+                .max(Comparator.comparingLong(CSIInfo::getClientTimestamp))
+                .map(DataInfo::getClientInstant)
+                .orElse(startTime)
+        );
+    }
+
+    public void stepForward() {
+        setReplayPosition(csi.stream()
+                .filter(c -> c.getClientInstant().isAfter(currentReplayTime))
+                .min(Comparator.comparingLong(CSIInfo::getClientTimestamp))
+                .map(DataInfo::getClientInstant)
+                .orElse(endTime)
+        );
     }
 
     public void setReplayPaused(boolean replayPaused) {
@@ -203,6 +218,12 @@ public class CSIReplay {
         callbacks.entrySet().stream()
                 .filter(e -> Objects.equals(e.getKey().getHW_ADDRESS(), stationByCSI.get(csi[0])))
                 .forEach(c -> c.getValue().accept(csi));
+    }
+
+    private void postNearestCsi(Instant time) {
+        csi.stream().min(Comparator.comparingLong(
+                c -> Duration.between(time, c.getClientInstant()).abs().toMillis()
+        )).ifPresent(nearestCsi -> postCsi(new CSIInfo[] { nearestCsi }));
     }
 
     public void addStatusUpdateCallback(Runnable callback) {
