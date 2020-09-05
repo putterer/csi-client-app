@@ -1,5 +1,6 @@
 package de.putterer.indloc.ui;
 
+import com.formdev.flatlaf.FlatDarkLaf;
 import de.putterer.indloc.Config;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.activity.ActivityUI;
@@ -204,7 +205,8 @@ public class CsiUserInterface implements KeyListener {
 	public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
 		Logger.setLogLevel(Logger.Level.DEBUG);
 
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//		FlatDarculaLaf.install();
+		FlatDarkLaf.install();
 		new CsiUserInterface();
 	}
 

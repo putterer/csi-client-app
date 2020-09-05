@@ -2,6 +2,8 @@ package de.putterer.indloc.data;
 
 import lombok.Data;
 
+import java.time.Instant;
+
 /**
  * represents a data object received from any data server (e.g. csi server or acceleration server)
  */
@@ -14,5 +16,9 @@ public class DataInfo {
 	public DataInfo(long clientTimestamp, int messageId) {
 		this.clientTimestamp = clientTimestamp;
 		this.messageId = messageId;
+	}
+
+	public Instant getClientInstant() {
+		return Instant.ofEpochMilli(clientTimestamp);
 	}
 }

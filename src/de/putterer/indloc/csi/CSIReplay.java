@@ -128,12 +128,21 @@ public class CSIReplay {
         synchronized (nextCsi) {
             nextCsi.clear();
             csi.stream()
-                    .filter(c -> ! Instant.ofEpochMilli(c.getClientTimestamp()).isBefore(time))
+                    .filter(c -> ! c.getClientInstant().isBefore(time))
                     .sorted(Comparator.comparingLong(CSIInfo::getClientTimestamp))
                     .forEach(nextCsi::add);
         }
 
-        new Thread(this::replayThread).start();
+        // release nearest csi
+        csi.stream().min(Comparator.comparingLong(
+                c -> Duration.between(time, c.getClientInstant()).abs().toMillis()
+        )).ifPresent(nearestCsi -> postCsi(new CSIInfo[] { nearestCsi }));
+
+        statusUpdateCallbacks.forEach(Runnable::run);
+
+        if(! replayPaused) {
+            new Thread(this::replayThread).start();
+        }
     }
 
     public void setReplayPaused(boolean replayPaused) {
@@ -171,9 +180,7 @@ public class CSIReplay {
                         groupingList.add(csi);
                         if(groupingList.size() >= groupThreshold || this.nextCsi.size() == 1) {
                             CSIInfo[] group = groupingList.toArray(new CSIInfo[0]);
-                            callbacks.entrySet().stream()
-                                    .filter(e -> Objects.equals(e.getKey().getHW_ADDRESS(), stationByCSI.get(csi)))
-                                    .forEach(c -> c.getValue().accept(group));
+                            postCsi(group);
                             groupingList.clear();
                         }
 
@@ -190,6 +197,12 @@ public class CSIReplay {
 
         completedFuture.complete(null);
         Logger.debug("Replay thread terminating. Paused: %s, Packets left: %d", replayPaused, nextCsi.size());
+    }
+
+    private void postCsi(CSIInfo[] csi) {
+        callbacks.entrySet().stream()
+                .filter(e -> Objects.equals(e.getKey().getHW_ADDRESS(), stationByCSI.get(csi[0])))
+                .forEach(c -> c.getValue().accept(csi));
     }
 
     public void addStatusUpdateCallback(Runnable callback) {

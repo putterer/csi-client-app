@@ -19,7 +19,8 @@ public class ReplayUI extends UIComponentWindow {
     private final JLabel replayInfoLabel = new JLabel("filename");
     private final JLabel progressLabel = new JLabel("Packets: 0 / 0");
     private final JLabel timeProgressLabel = new JLabel("Time: 0.0s / 0.0s");
-    private final JProgressBar progressBar = new JProgressBar();
+//    private final JProgressBar progressBar = new JProgressBar();
+    private final JSlider progressSlider = new JSlider();
     private final JButton toStartButton = new JButton("|<<");
     private final JButton stepBackwardButton = new JButton("<<");
     private final JToggleButton playToggleButton = new JToggleButton("Play");
@@ -60,8 +61,18 @@ public class ReplayUI extends UIComponentWindow {
         this.add(timeProgressLabel);
 
 
-        progressBar.setBounds(10, 130, 400, 30);
-        this.add(progressBar);
+//        progressBar.setBounds(10, 130, 400, 30);
+//        this.add(progressBar);
+//        progressBar.setMinimum(0);
+//        progressBar.setMaximum((int) csiUserInterface.getReplay().getTotalRuntime().toMillis());
+
+        progressSlider.setBounds(10, 130, 400, 30);
+        this.add(progressSlider);
+        progressSlider.setMinimum(0);
+        progressSlider.setMaximum((int) csiUserInterface.getReplay().getTotalRuntime().toMillis());
+        progressSlider.setPaintTicks(false);
+        progressSlider.setPaintLabels(false);
+
 
         int controlButtonCount = 5;
         int controlButtonWidth = (getWindowWidth() - (10 * (controlButtonCount + 1))) / controlButtonCount;
@@ -77,10 +88,29 @@ public class ReplayUI extends UIComponentWindow {
         toEndButton.setBounds(10 + controlButtonDist * 4, 170, controlButtonWidth, 30);
         this.add(toEndButton);
 
-
-        //TODO: control replay via UI
         CSIReplay replay = csiUserInterface.getReplay();
         playToggleButton.addActionListener(a -> replay.setReplayPaused(! playToggleButton.isSelected()));
+
+        playToggleButton.addActionListener(a -> {
+            toStartButton.setEnabled(! playToggleButton.isSelected());
+            toEndButton.setEnabled(! playToggleButton.isSelected());
+            stepForwardButton.setEnabled(! playToggleButton.isSelected());
+            stepBackwardButton.setEnabled(! playToggleButton.isSelected());
+            progressSlider.setEnabled(! playToggleButton.isSelected());
+        });
+        toStartButton.addActionListener(a -> replay.setReplayPosition(replay.getStartTime()));
+        toEndButton.addActionListener(a -> replay.setReplayPosition(replay.getEndTime()));
+
+        progressSlider.addChangeListener(a -> {
+            if(replay.isReplayPaused()) {
+                replay.setReplayPosition(replay.getStartTime().plus(Duration.ofMillis(progressSlider.getValue())));
+            }
+        });
+
+
+        // TODO: replay loading takes really long, loading bar
+        // TODO: step control
+        // TODO:
 
         replay.addStatusUpdateCallback(this::updateStatus);
         updateStatus();
@@ -95,6 +125,7 @@ public class ReplayUI extends UIComponentWindow {
             timeProgressLabel.setText(String.format("Time:   %.1f s / %.1f s",
                     Duration.between(replay.getStartTime(), replay.getCurrentReplayTime()).toMillis() / 1000.0f,
                     replay.getTotalRuntime().toMillis() / 1000.0f));
+            progressSlider.setValue((int) Duration.between(replay.getStartTime(), replay.getCurrentReplayTime()).toMillis());
         });
     }
 
