@@ -77,21 +77,25 @@ public class ReplayUI extends UIComponentWindow {
         toEndButton.setBounds(10 + controlButtonDist * 4, 170, controlButtonWidth, 30);
         this.add(toEndButton);
 
-        //TODO: run replay
-        //TODO: add controlability to replay
-        //TODO: control replay via UI
 
+        //TODO: control replay via UI
+        CSIReplay replay = csiUserInterface.getReplay();
+        playToggleButton.addActionListener(a -> replay.setReplayPaused(! playToggleButton.isSelected()));
+
+        replay.addStatusUpdateCallback(this::updateStatus);
         updateStatus();
     }
 
     private void updateStatus() {
         CSIReplay replay = csiUserInterface.getReplay();
-        progressLabel.setText(String.format("Packets:   %d / %d",
-                replay.getNumberOfPastPackets(),
-                replay.getTotalNumberOfPackets()));
-        timeProgressLabel.setText(String.format("Time:   %.1f s / %.1f s",
-                Duration.between(replay.getStartTime(), replay.getCurrentReplayTime()).toMillis() / 1000.0f,
-                replay.getTotalRuntime().toMillis() / 1000.0f));
+        SwingUtilities.invokeLater(() -> {
+            progressLabel.setText(String.format("Packets:   %d / %d",
+                    replay.getNumberOfPastPackets(),
+                    replay.getTotalNumberOfPackets()));
+            timeProgressLabel.setText(String.format("Time:   %.1f s / %.1f s",
+                    Duration.between(replay.getStartTime(), replay.getCurrentReplayTime()).toMillis() / 1000.0f,
+                    replay.getTotalRuntime().toMillis() / 1000.0f));
+        });
     }
 
     private void pickAndLoadReplayFile(ActionEvent e) {
