@@ -36,9 +36,12 @@ public class GenericStatusUI extends UIComponentWindow {
 	private final JButton resubscribeButton = new JButton("Subs.");
 	private final JButton unsubscribeButton = new JButton("Unsubs.");
 	private JComboBox<String> previewSelector;
+	private final JButton showDefaultPreviewButton = new JButton("Default");
 	private final JButton showPreviewButton = new JButton("Show");
 	private final JToggleButton recordButton = new JToggleButton("Record");
 	private final JCheckBox showActivityUICheckbox = new JCheckBox("Show activity UI", false);
+
+	private boolean useDefaultSettingsForPreview = false;
 
 	private final List<Consumer<Station>> showPreviewCallbacks = new ArrayList<>();
 	public GenericStatusUI(CsiUserInterface csiUserInterface) {
@@ -92,10 +95,14 @@ public class GenericStatusUI extends UIComponentWindow {
 		this.add(unsubscribeButton);
 
 		initPreviewSelector();
-		previewSelector.setBounds(10, 180, 300, 30);
+		previewSelector.setBounds(10, 180, 220, 30);
 		this.add(previewSelector);
+		showDefaultPreviewButton.setEnabled(false);
+		showDefaultPreviewButton.setBounds(240, 180, 80, 30);
+		this.add(showDefaultPreviewButton);
+		stationsList.addListSelectionListener(e -> showDefaultPreviewButton.setEnabled(true));
 		showPreviewButton.setEnabled(false);
-		showPreviewButton.setBounds(320, 180, 90, 30);
+		showPreviewButton.setBounds(330, 180, 80, 30);
 		this.add(showPreviewButton);
 		stationsList.addListSelectionListener(e -> showPreviewButton.setEnabled(true));
 
@@ -114,6 +121,8 @@ public class GenericStatusUI extends UIComponentWindow {
 		this.add(showActivityUICheckbox);
 
 		onStationUpdated(null);
+
+		stationsList.setSelectedIndex(0);
 
 		getFrame().repaint();
 	}
@@ -184,26 +193,43 @@ public class GenericStatusUI extends UIComponentWindow {
 	private void initPreviewSelector() {
 		List<String> previewNames = new LinkedList<>();
 
-		addPreviewOption("PhaseDiffEvolution Default", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(
-					0,
-					2,
-					-1,
-					10,
-					10,
-					0.8,
-					10,30,50
+		addPreviewOption("Amplitude", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.SubcarrierPropertyPreview(
+					DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE,
+					openIntDialog("rxAntennaCount", 3, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntennaCount", 1, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("smoothingPacketCount", 10, this.getFrame(), useDefaultSettingsForPreview)
+			)), station);
+		}, previewNames);
+		addPreviewOption("AmplitudeEvolution", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.AmplitudeEvolutionPreview(
+					openIntDialog("rxAntenna", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("smoothingPacketCount", 10, this.getFrame(), useDefaultSettingsForPreview),
+					openIntListDialog("subcarriers", new int[]{5,15,25}, this.getFrame(), useDefaultSettingsForPreview)
+			)), station);
+		}, previewNames);
+		addPreviewOption("AmplitudeDiff", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.AmplitudeDiffPreview(
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 1, this.getFrame(), useDefaultSettingsForPreview)
+			)), station);
+		}, previewNames);
+		addPreviewOption("CSIPlot", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.CSIPlotPreview(
+					openIntDialog("rxAntennaCount", 3, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntennaCount", 1, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(
-					openIntDialog("rxAntenna1", 0, this.getFrame()),
-					openIntDialog("rxAntenna2", 2, this.getFrame()),
-					openIntDialog("shortTermHistoryLength", -1, this.getFrame()),
-					openDoubleDialog("jumpThreshold", 10, this.getFrame()),
-					openIntDialog("truncated mean length", 10, this.getFrame()),
-					openDoubleDialog("truncated mean pct", 0.8, this.getFrame()),
-					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame())
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("shortTermHistoryLength", -1, this.getFrame(), useDefaultSettingsForPreview),
+					openDoubleDialog("jumpThreshold", 10, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("truncated mean length", 10, this.getFrame(), useDefaultSettingsForPreview),
+					openDoubleDialog("truncated mean pct", 0.8, this.getFrame(), useDefaultSettingsForPreview),
+					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffVariance", station -> {
@@ -211,32 +237,18 @@ public class GenericStatusUI extends UIComponentWindow {
 					station,
 					openIntListDialog("subcarriers", new int[]{SUBCARRIER_AVG, SUBCARRIER_MAX},
 							Map.of(SUBCARRIER_MAX, "MAX", SUBCARRIER_AVG, "AVG"),
-							this.getFrame())
+							this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
-		addPreviewOption("PhaseDiffPreview", station -> {
+		addPreviewOption("PhaseDiff", station -> {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffPreview(
-					openIntDialog("rxAntenna1", 0, this.getFrame()),
-					openIntDialog("rxAntenna2", 2, this.getFrame())
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("AndroidEvolution", station -> {
 			//TODO
 			//TODO: convert list option to mapper for generic objects instead of string
-		}, previewNames);
-		addPreviewOption("SubcarrierProperty Amplitude", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.SubcarrierPropertyPreview(
-					DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE,
-					openIntDialog("rxAntennaCount", 3, this.getFrame()),
-					openIntDialog("txAntennaCount", 1, this.getFrame()),
-					openIntDialog("smoothingPacketCount", 10, this.getFrame())
-			)), station);
-		}, previewNames);
-		addPreviewOption("CSIPlot", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.CSIPlotPreview(
-					openIntDialog("rxAntennaCount", 3, this.getFrame()),
-					openIntDialog("txAntennaCount", 1, this.getFrame())
-			)), station);
 		}, previewNames);
 
 		//TODO add configurations of multiple previews with location
@@ -244,6 +256,13 @@ public class GenericStatusUI extends UIComponentWindow {
 		previewSelector = new JComboBox<>(previewNames.toArray(new String[0]));
 
 		showPreviewButton.addActionListener(a -> {
+			useDefaultSettingsForPreview = false;
+			new Thread(() -> {
+				showPreviewCallbacks.get(previewSelector.getSelectedIndex()).accept(getSelectedStation());
+			}).start();
+		});
+		showDefaultPreviewButton.addActionListener(a -> {
+			useDefaultSettingsForPreview = true;
 			new Thread(() -> {
 				showPreviewCallbacks.get(previewSelector.getSelectedIndex()).accept(getSelectedStation());
 			}).start();

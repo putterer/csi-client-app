@@ -398,6 +398,165 @@ public class DataPreview {
 	}
 
 	/**
+	 * Displays the amplitude difference between 2 antennas
+	 * data is unwrapped and shifted by mean before displaying
+	 */
+	public static class AmplitudeDiffPreview extends PreviewMode {
+		{ width = 700; height = 500; }
+
+		private final int rxAntenna1; // rx antennas to display
+		private final int rxAntenna2;
+
+		public AmplitudeDiffPreview(int rxAntenna1, int rxAntenna2) {
+			this.rxAntenna1 = rxAntenna1;
+			this.rxAntenna2 = rxAntenna2;
+		}
+
+		@Override
+		public XYChart createChart() {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("CSI Amplitude difference preview")
+					.xAxisTitle("Subcarrier")
+					.yAxisTitle("Amplitude difference")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			chart.getStyler().setYAxisMin(-500.0);
+			chart.getStyler().setYAxisMax(500.0);
+			chart.getStyler().setXAxisMin(0.0);
+			chart.getStyler().setXAxisMax(56.0);
+
+			chart.addSeries(String.format("RX1:%d, RX2:%d", rxAntenna1, rxAntenna2), new double[114]);
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
+			int subcarriers = csi.getNumTones();
+			if(subcarriers > 56) {
+				chart.getStyler().setXAxisMax((double) subcarriers);
+			}
+			if(dataInfo instanceof IntCSIInfo) {
+				chart.getStyler().setXAxisMax(30.0);
+			}
+
+			double[] xData = new double[subcarriers];
+			double[] yData = new double[subcarriers];
+
+			for(int i = 0;i < subcarriers;i++) {
+				xData[i] = i;
+				double diff = csi.getCsi_matrix()[rxAntenna1][0][i].getAmplitude() - csi.getCsi_matrix()[rxAntenna2][0][i].getAmplitude();
+				yData[i] = diff;
+			}
+
+			chart.updateXYSeries(String.format("RX1:%d, RX2:%d", rxAntenna1, rxAntenna2), xData, yData, null);
+		}
+	}
+
+	/**
+	 * Displays the evolution of the phase difference between two antennas on one subcarrier over time
+	 */
+	public static class AmplitudeEvolutionPreview extends PreviewMode {
+		{ width = 700; height = 500; }
+		private final int dataWidth = 150;
+
+		private final int rxAntenna;
+		private final int txAntenna;
+		private final int smoothingPacketCount;
+		private final int[] subcarriers;
+
+		private final List<Double>[] previousDataPoints;
+		private final List<Double>[] previousUnprocessedDataPoints;
+
+		/**
+		 * @param rxAntenna the rx antenna to use
+		 * @param txAntenna the tx antenna to use
+		 * @param smoothingPacketCount
+		 * @param subcarriers the subcarriers to display
+		 */
+		public AmplitudeEvolutionPreview(int rxAntenna, int txAntenna, int smoothingPacketCount, int... subcarriers) {
+			this.rxAntenna = rxAntenna;
+			this.txAntenna = txAntenna;
+			this.smoothingPacketCount = smoothingPacketCount;
+			this.subcarriers = subcarriers;
+			previousDataPoints = new List[subcarriers.length];
+			previousUnprocessedDataPoints = new List[subcarriers.length];
+			for (int i = 0;i < subcarriers.length;i++) {
+				previousDataPoints[i] = new LinkedList<>();
+				previousUnprocessedDataPoints[i] = new LinkedList<>();
+				for(int j = 0;j < dataWidth;j++) {
+					previousDataPoints[i].add(0.0);
+					previousUnprocessedDataPoints[i].add(0.0);
+				}
+			}
+
+		}
+
+		@Override
+		public XYChart createChart() {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("Amplitude Evolution")
+					.xAxisTitle("Time")
+					.yAxisTitle("Amplitude difference")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			chart.getStyler().setYAxisMin(0.0);
+			chart.getStyler().setYAxisMax(500.0);
+			chart.getStyler().setXAxisMin((double)dataWidth);
+			chart.getStyler().setXAxisMax(0.0);
+
+			for (int subcarrierIndex = 0;subcarrierIndex < subcarriers.length;subcarrierIndex++) {
+				chart.addSeries(String.format("RX%d-TX%d, sub: %d", rxAntenna, txAntenna, subcarriers[subcarrierIndex]), new double[dataWidth]);
+			}
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
+
+			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
+
+			for (int subcarrierIndex = 0;subcarrierIndex < this.subcarriers.length;subcarrierIndex++) {
+
+				double currentData = csi.getCsi_matrix()[rxAntenna][txAntenna][this.subcarriers[subcarrierIndex]].getAmplitude();
+
+				List<Double> previousList = this.previousDataPoints[subcarrierIndex];
+				List<Double> previousUnprocessedList = this.previousUnprocessedDataPoints[subcarrierIndex];
+				if(previousList.size() == dataWidth) {
+					previousList.remove(previousList.size() - 1);
+				}
+				if(previousUnprocessedList.size() == dataWidth) {
+					previousUnprocessedList.remove(previousUnprocessedList.size() - 1);
+				}
+				previousUnprocessedList.add(0, currentData);
+
+				previousList.add(0, previousUnprocessedList.stream().mapToDouble(d -> d).limit(smoothingPacketCount).average().orElse(0));
+
+				chart.updateXYSeries(String.format("RX%d-TX%d, sub: %d", rxAntenna, txAntenna, this.subcarriers[subcarrierIndex]), xData, previousList.stream().mapToDouble(d -> d).toArray(), null);
+			}
+		}
+	}
+
+	/**
 	 * Displays the phase difference between 2 antennas
 	 * data is unwrapped and shifted by mean before displaying
 	 */

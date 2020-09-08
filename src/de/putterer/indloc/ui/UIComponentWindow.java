@@ -1,6 +1,7 @@
 package de.putterer.indloc.ui;
 
 import de.putterer.indloc.Station;
+import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
 import lombok.Getter;
@@ -48,6 +49,10 @@ public abstract class UIComponentWindow extends JPanel {
 	}
 
 	public abstract void onDataInfo(Station station, DataInfo dataInfo);
+
+	public void onPreviewCreated(DataPreview dataPreview) {
+
+	}
 
 	public void destroy() {
 		frame.dispose();

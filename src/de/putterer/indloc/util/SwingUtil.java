@@ -10,6 +10,11 @@ import java.util.stream.Collectors;
 
 public class SwingUtil {
 
+
+	public static double openDoubleDialog(String message, double defaultValue, Component component, boolean returnDefault) {
+		return returnDefault ? defaultValue : openDoubleDialog(message, defaultValue, component);
+	}
+
 	public static double openDoubleDialog(String message, double defaultValue, Component component) {
 		String s = JOptionPane.showInputDialog(component, message, defaultValue);
 		try {
@@ -19,6 +24,9 @@ public class SwingUtil {
 		}
 	}
 
+	public static int openIntDialog(String message, int defaultValue, Component component, boolean returnDefault) {
+		return returnDefault ? defaultValue : openIntDialog(message, defaultValue, component);
+	}
 	public static int openIntDialog(String message, int defaultValue, Component component) {
 		String s = JOptionPane.showInputDialog(component, message, defaultValue);
 		try {
@@ -26,6 +34,10 @@ public class SwingUtil {
 		} catch(NumberFormatException | NullPointerException e) {
 			return defaultValue;
 		}
+	}
+
+	public static int[] openIntListDialog(String message, int[] defaultValue, Map<Integer, String> stringMapping, Component component, boolean returnDefault) {
+		return returnDefault ? defaultValue : openIntListDialog(message, defaultValue, stringMapping, component);
 	}
 
 	public static int[] openIntListDialog(String message, int[] defaultValue, Map<Integer, String> stringMapping, Component component) {
@@ -50,10 +62,16 @@ public class SwingUtil {
 		}
 	}
 
+	public static String openStringDialog(String message, String defaultValue, Component component, boolean returnDefault) {
+		return returnDefault ? defaultValue : openStringDialog(message, defaultValue, component);
+	}
 	public static String openStringDialog(String message, String defaultValue, Component component) {
 		return JOptionPane.showInputDialog(component, message, defaultValue);
 	}
 
+	public static int[] openIntListDialog(String message, int[] defaultValue, Component component, boolean returnDefault) {
+		return openIntListDialog(message, defaultValue, Collections.emptyMap(), component, returnDefault);
+	}
 	public static int[] openIntListDialog(String message, int[] defaultValue, Component component) {
 		return openIntListDialog(message, defaultValue, Collections.emptyMap(), component);
 	}

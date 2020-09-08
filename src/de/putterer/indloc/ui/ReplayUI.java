@@ -2,11 +2,14 @@ package de.putterer.indloc.ui;
 
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.CSIReplay;
+import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.time.Duration;
 
 public class ReplayUI extends UIComponentWindow {
@@ -114,9 +117,6 @@ public class ReplayUI extends UIComponentWindow {
             }
         });
 
-
-        // TODO: replay loading takes really long, loading bar
-
         replay.addStatusUpdateCallback(this::updateStatus);
         updateStatus();
     }
@@ -166,6 +166,20 @@ public class ReplayUI extends UIComponentWindow {
                 csiUserInterface.loadReplay(chooser.getSelectedFile().toPath(), progress ->
                         SwingUtilities.invokeLater(() -> loadingProgressBar.setValue((int) Math.round(progress * 1000)))
         )).start();
+    }
+
+    @Override
+    public void onPreviewCreated(DataPreview dataPreview) {
+        dataPreview.getFrame().addKeyListener(new KeyListener() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+                   playToggleButton.doClick();
+                }
+            }
+            @Override public void keyTyped(KeyEvent e) {}
+            @Override public void keyReleased(KeyEvent e) {}
+        });
     }
 
     @Override
