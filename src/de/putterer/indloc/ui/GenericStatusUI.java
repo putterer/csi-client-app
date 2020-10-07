@@ -39,7 +39,8 @@ public class GenericStatusUI extends UIComponentWindow {
 	private final JButton showDefaultPreviewButton = new JButton("Default");
 	private final JButton showPreviewButton = new JButton("Show");
 	private final JToggleButton recordButton = new JToggleButton("Record");
-	private final JCheckBox showActivityUICheckbox = new JCheckBox("Show activity UI", false);
+	private final JCheckBox showActivityUICheckbox = new JCheckBox("Activity", false);
+	private final JCheckBox showRespiratoryUICheckbox = new JCheckBox("Respiratory", false);
 
 	private boolean useDefaultSettingsForPreview = false;
 
@@ -117,8 +118,15 @@ public class GenericStatusUI extends UIComponentWindow {
 		});
 
 		showActivityUICheckbox.addItemListener(e -> csiUserInterface.setActivityUIsVisible(showActivityUICheckbox.isSelected()));
-		showActivityUICheckbox.setBounds(220, 220, 200, 30);
+		showActivityUICheckbox.setBounds(220, 220, 75, 30);
 		this.add(showActivityUICheckbox);
+
+		showRespiratoryUICheckbox.addItemListener(e -> csiUserInterface.setRespiratoryUIVisible(getSelectedStation(), showRespiratoryUICheckbox.isSelected()));
+		showRespiratoryUICheckbox.setBounds(305, 220, 105, 30);
+		showRespiratoryUICheckbox.setEnabled(false);
+		stationsList.addListSelectionListener(e -> showRespiratoryUICheckbox.setEnabled(true));
+		this.add(showRespiratoryUICheckbox);
+		stationsList.addListSelectionListener(e -> showRespiratoryUICheckbox.setSelected(csiUserInterface.isRespiratoryUIVisible(getSelectedStation())));
 
 		onStationUpdated(null);
 
@@ -207,6 +215,14 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("txAntenna", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("smoothingPacketCount", 10, this.getFrame(), useDefaultSettingsForPreview),
 					openIntListDialog("subcarriers", new int[]{5,15,25}, this.getFrame(), useDefaultSettingsForPreview)
+			)), station);
+		}, previewNames);
+		addPreviewOption("Phase", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.SubcarrierPropertyPreview(
+					DataPreview.SubcarrierPropertyPreview.PropertyType.PHASE,
+					openIntDialog("rxAntennaCount", 3, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntennaCount", 1, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("smoothingPacketCount", 10, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("AmplitudeDiff", station -> {

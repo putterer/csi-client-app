@@ -33,6 +33,7 @@ public class Config {
 	// Room configuration
 	// ------------------------
 	
+
 	private static final RoomConfig ROOM_CSI_TESTING = new RoomConfig(
 			1300, 1150, 
 			new Station[] {

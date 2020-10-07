@@ -76,6 +76,8 @@ public class CsiUserInterface implements KeyListener {
 		}
 		componentWindows.addAll(respiratoryUIs);
 
+
+
 		int respiratoryUIWidth = respiratoryUIs.isEmpty() ? 0 : respiratoryUIs.get(0).getWindowWidth();
 		frequencyGeneratorUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y + respiratoryUIWidth);
 		componentWindows.addAll(Arrays.asList(genericStatusUI, frequencyGeneratorUI));
@@ -201,6 +203,31 @@ public class CsiUserInterface implements KeyListener {
 
 	public void setActivityUIsVisible(boolean visible) {
 		activityUIs.forEach(au -> au.getFrame().setVisible(visible));
+	}
+
+	public void setRespiratoryUIVisible(Station station, boolean visible) {
+		//recreated as processing is more intense than for activity
+		Optional<RespiratoryUI> respiratoryUI = respiratoryUIs.stream().filter(r -> r.getStation() == station).findFirst();
+		if(visible && ! respiratoryUI.isPresent()) {
+			new Thread(() -> {
+				RespiratoryUI rui = new RespiratoryUI(frequencyGeneratorUI).setStation(station);
+				rui.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y);
+				respiratoryUIs.add(rui);
+				rui.getFrame().setVisible(true);
+				rui.getFrame().addKeyListener(this);
+				rui.postConstruct();
+				componentWindows.add(rui);
+			}).start();
+		}
+		else respiratoryUI.ifPresent(ui -> {
+			respiratoryUIs.remove(ui);
+			componentWindows.remove(ui);
+			ui.destroy();
+		});
+	}
+
+	public boolean isRespiratoryUIVisible(Station station) {
+		return respiratoryUIs.stream().anyMatch(r -> r.getStation() == station);
 	}
 
 	public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {

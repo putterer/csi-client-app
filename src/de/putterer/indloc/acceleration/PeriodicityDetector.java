@@ -1,10 +1,12 @@
 package de.putterer.indloc.acceleration;
 
 import de.putterer.indloc.csi.CSIInfo;
+import de.putterer.indloc.csi.atheros.AthCSIInfo;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
-import de.putterer.indloc.respiratory.Periodicity;
+import de.putterer.indloc.respiratory.DFTPeriodicity;
 import de.putterer.indloc.respiratory.SubcarrierSelector;
 import de.putterer.indloc.util.Observable;
 import lombok.Getter;
@@ -12,10 +14,7 @@ import lombok.Setter;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 public class PeriodicityDetector {
@@ -25,7 +24,7 @@ public class PeriodicityDetector {
     @Getter
     private final Observable<Double> currentFrequency = new Observable<>(0.0);
     @Getter
-    private final Observable<Periodicity.FrequencySpectrum> freqSpectrum = new Observable<>(null);
+    private final Observable<DFTPeriodicity.FrequencySpectrum> freqSpectrum = new Observable<>(null);
 
     @Getter
     private final double samplingFrequency;
@@ -70,14 +69,12 @@ public class PeriodicityDetector {
             return;
         }
 
+        double[] signalData = new double[0];
+
         // process sliding window
         if(info instanceof AndroidInfo) {
-            double[] values = history.stream().mapToDouble(e -> ((AndroidInfo)e).getData()[1]).toArray();
-            Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(values, samplingFrequency);
-            currentFrequency.set(spectrum.filter(7.0 / 60.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
-            freqSpectrum.set(spectrum);
-        } else if(info instanceof CSIInfo) {
-
+            signalData = history.stream().mapToDouble(e -> ((AndroidInfo)e).getData()[1]).toArray();
+        } else if (info instanceof AthCSIInfo) {
             // Calculates and supplies the respiratory processed phase for one subcarrier when called, may be called in parallel
             Function<Integer, double[]> respiratoryPhaseSupplier = carrier ->
                     RespiratoryPhaseProcessor.selectCarrier(
@@ -91,17 +88,31 @@ public class PeriodicityDetector {
 
             SubcarrierSelector subcarrierSelector = new SubcarrierSelector(subcarrier, ((CSIInfo) info).getNumTones(), respiratoryPhaseSupplier);
 
-            if(Instant.now().isAfter(lastSubcarrierSelection.plus(SUBCARRIER_SELECTION_INTERVAL))) {
+            if (Instant.now().isAfter(lastSubcarrierSelection.plus(SUBCARRIER_SELECTION_INTERVAL))) {
                 subcarrierSelector.runSelection();
                 subcarrier = subcarrierSelector.getSelectedCarrier();
 
                 lastSubcarrierSelection = Instant.now();
             }
 
-            Periodicity.FrequencySpectrum spectrum = Periodicity.detectPeriodicity(subcarrierSelector.getProcessedPhaseForCarrier(subcarrier), samplingFrequency);
-            currentFrequency.set(spectrum.filter(7.0 / 60.0, 10.0).getQuadraticMLPeriodicity());//TODO: filter parameters
-            freqSpectrum.set(spectrum);
+            signalData = subcarrierSelector.getProcessedPhaseForCarrier(subcarrier);
+        } else if (info instanceof IntCSIInfo) {
+            //TODO: use supplier and subcarrier selector like with phase
+            //TODO: run fft for all? alpha truncated mean -> variance?
+
+            // TODO: extract proccessing
+            int rx = 0, tx = 0;
+            int subcarrier = 25;
+
+            double[] originalSignal = history.stream().mapToDouble(d -> ((CSIInfo)d).getCsi_matrix()[rx][tx][subcarrier].getAmplitude()).toArray();
+
+            double mean = Arrays.stream(originalSignal).average().orElse(0.0);
+            signalData = Arrays.stream(originalSignal).map(d -> d - mean).toArray();
         }
+
+        DFTPeriodicity.FrequencySpectrum spectrum = DFTPeriodicity.detectPeriodicity(signalData, samplingFrequency);
+        currentFrequency.set(spectrum.filter(7.0 / 60.0, 10.0).getQuadraticMLPeriodicity());
+        freqSpectrum.set(spectrum);
     }
 
     public boolean isIdle() {

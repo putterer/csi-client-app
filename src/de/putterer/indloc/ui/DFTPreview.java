@@ -1,6 +1,6 @@
 package de.putterer.indloc.ui;
 
-import de.putterer.indloc.respiratory.Periodicity;
+import de.putterer.indloc.respiratory.DFTPeriodicity;
 import lombok.Getter;
 import lombok.Setter;
 import org.knowm.xchart.SwingWrapper;
@@ -46,7 +46,7 @@ public class DFTPreview {
 		chart.addSeries("spectrum", new double[]{0.0});
 	}
 
-	public void setFreqSpectrum(Periodicity.FrequencySpectrum freqSpectrum) {
+	public void setFreqSpectrum(DFTPeriodicity.FrequencySpectrum freqSpectrum) {
 		chart.getStyler().setXAxisMax(freqSpectrum.getMagnitudesByFrequency().keySet().stream().mapToDouble(f -> f * 60.0).max().getAsDouble());
 		chart.getStyler().setYAxisMax(Math.max(maxMagnitude, freqSpectrum.getMagnitudesByFrequency().entrySet().stream().mapToDouble(Map.Entry::getValue).max().getAsDouble()));
 
@@ -59,5 +59,9 @@ public class DFTPreview {
 		chart.updateXYSeries("spectrum", xData, yData, null);
 
 		SwingUtilities.invokeLater(wrapper::repaintChart);
+	}
+
+	public void destroy() {
+		frame.dispose();
 	}
 }

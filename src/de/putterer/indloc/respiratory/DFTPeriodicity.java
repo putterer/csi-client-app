@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
 import static de.putterer.indloc.util.CSIUtil.mean;
 import static de.putterer.indloc.util.CSIUtil.shift;
 
-public class Periodicity {
+public class DFTPeriodicity {
 
     private static FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
 
@@ -96,7 +96,6 @@ public class Periodicity {
     public static int getNextPowerOfTwo(int val) {
         return (int)Math.pow(2, Math.ceil(Math.log(val) / Math.log(2)));
     }
-
 
     // ------------------------------------------
     // Testing code below

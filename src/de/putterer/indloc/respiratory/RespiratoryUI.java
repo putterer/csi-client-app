@@ -12,6 +12,7 @@ import de.putterer.indloc.ui.DFTPreview;
 import de.putterer.indloc.ui.FrequencyGeneratorUI;
 import de.putterer.indloc.ui.UIComponentWindow;
 import de.putterer.indloc.util.Observable;
+import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,11 +49,14 @@ public class RespiratoryUI extends UIComponentWindow {
 
 	private final FrequencyGeneratorUI frequencyGeneratorUI;
 
+	@Getter
 	private Station station;
 	private PeriodicityDetector periodicityDetector;
 	private Thread samplingThread;
 	private DataInfo lastSeenDataInfo = null;
 	private Observable.ChangeListener<Integer> packetsReceivedListener;
+
+	private volatile boolean closing = false;
 
 	public RespiratoryUI(FrequencyGeneratorUI frequencyGeneratorUI) {
 		super("Respiratory Detection", 420, 300);
@@ -188,10 +192,12 @@ public class RespiratoryUI extends UIComponentWindow {
 		DataClient client = DataClient.getClient(station);
 
 		typeLabel.setText(station.getDataType() == AndroidInfo.class ? "Type: Android" : (station.getDataType() == IntCSIInfo.class ? "Type: CSI (int)" : "Type: CSI (ath)"));
-		packetsReceivedListener = (oldValue, newValue) -> invokeLater(
-				() -> packetsReceivedLabel.setText("Packets: " + newValue)
-		);
-		client.getPacketsReceived().addListener(packetsReceivedListener, false);
+		if(client != null) {
+			packetsReceivedListener = (oldValue, newValue) -> invokeLater(
+					() -> packetsReceivedLabel.setText("Packets: " + newValue)
+			);
+			client.getPacketsReceived().addListener(packetsReceivedListener, false);
+		}
 		stationNameLabel.setText("Station: " + Optional.ofNullable(station.getName()).orElse(station.getIP_ADDRESS()));
 
 		periodicityDetector = new PeriodicityDetector(samplingFrequency, slidingWindowSize, truncatedMeanWindowDuration, truncatedMeanWindowPct);
@@ -206,7 +212,7 @@ public class RespiratoryUI extends UIComponentWindow {
 		slidingWindowSizeLabel.setText(String.format("Sliding window: %.1f s", periodicityDetector.getSlidingWindowDuration().toMillis() / 1000.0f));
 		truncatedMeanWindowLabel.setText(String.format("Trun. μ win.: %.1f s", periodicityDetector.getTruncatedMeanWindowDuration().toMillis() / 1000.0f));
 		truncatedMeanPctLabel.setText(String.format("Trun. μ pct.: %.1f", periodicityDetector.getTruncatedMeanWindowPct()));
-		double binSpacing = Periodicity.getBinSpacing(periodicityDetector.getSamplingFrequency(), periodicityDetector.getSlidingWindowSize());
+		double binSpacing = DFTPeriodicity.getBinSpacing(periodicityDetector.getSamplingFrequency(), periodicityDetector.getSlidingWindowSize());
 		binSpacingLabel.setText(String.format("Res: %.2f Hz = %.1f bpm,    N: %d,    μ-N: %d",
 				binSpacing, binSpacing * 60.0,
 				periodicityDetector.getSlidingWindowSize(),
@@ -229,6 +235,13 @@ public class RespiratoryUI extends UIComponentWindow {
 			if(rawAndroidDataPreview.getFrame().isVisible()) {
 				rawAndroidDataPreview.setData(androidInfo);
 			}
+		}
+
+		if(info instanceof IntCSIInfo) {
+			SwingUtilities.invokeLater(() -> {
+				truncatedMeanPctLabel.setVisible(false);
+				truncatedMeanWindowLabel.setVisible(false);
+			});
 		}
 	}
 
@@ -254,7 +267,7 @@ public class RespiratoryUI extends UIComponentWindow {
 
 	private void samplingThread() {
 		long nextTime = System.currentTimeMillis();
-		while(true) {
+		while(!closing) {
 			if(periodicityDetector != null && lastSeenDataInfo != null) {
 				periodicityDetector.onData(lastSeenDataInfo);
 			}
@@ -266,5 +279,14 @@ public class RespiratoryUI extends UIComponentWindow {
 				try { Thread.sleep(Math.max(1, (System.currentTimeMillis() - nextTime) / 2)); } catch(InterruptedException e) { e.printStackTrace();break; }
 			}
 		}
+	}
+
+	@Override
+	public void destroy() {
+		super.destroy();
+		closing = true;
+
+		rawAndroidDataPreview.destroy();
+		dftPreview.destroy();
 	}
 }

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="JWave">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/JWave.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
