@@ -217,6 +217,9 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntListDialog("subcarriers", new int[]{5,15,25}, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
+		addPreviewOption("SerialEvolution", station -> {
+			csiUserInterface.addPreview(new DataPreview(new DataPreview.SerialEvolutionPreview()), station);
+		}, previewNames);
 		addPreviewOption("Phase", station -> {
 			csiUserInterface.addPreview(new DataPreview(new DataPreview.SubcarrierPropertyPreview(
 					DataPreview.SubcarrierPropertyPreview.PropertyType.PHASE,

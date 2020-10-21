@@ -11,6 +11,8 @@ import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.data.DataInfo;
+import de.putterer.indloc.data.serial.SerialClient;
+import de.putterer.indloc.data.serial.SerialInfo;
 import de.putterer.indloc.respiratory.RespiratoryUI;
 import de.putterer.indloc.util.Logger;
 import lombok.Getter;
@@ -133,11 +135,14 @@ public class CsiUserInterface implements KeyListener {
 	}
 
 	private void startClients() {
-		Arrays.stream(ROOM.getStations()).forEach(s ->
-				DataClient.addClient(new DataClient(s, SUBSCRIPTION_OPTIONS, new DataConsumer<>(
-						s.getDataType(), info -> this.onData(s, info))
-				))
-		);
+		Arrays.stream(ROOM.getStations()).forEach(s -> {
+			DataConsumer<? extends DataInfo> dataConsumer = new DataConsumer<>(s.getDataType(), info -> this.onData(s, info));
+			if(s.getDataType() == SerialInfo.class) {
+				DataClient.addClient(new SerialClient(s, dataConsumer));
+			} else {
+				DataClient.addClient(new DataClient(s, SUBSCRIPTION_OPTIONS, dataConsumer));
+			}
+		});
 
 		DataClient.getClients().stream().map(DataClient::getStatusUpdateCallback).forEach(c -> c.addListener((_void, s) -> {
 			if(genericStatusUI != null) {

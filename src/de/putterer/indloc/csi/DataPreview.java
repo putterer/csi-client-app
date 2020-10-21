@@ -5,6 +5,7 @@ import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
+import de.putterer.indloc.data.serial.SerialInfo;
 import de.putterer.indloc.util.Logger;
 import lombok.Getter;
 import org.knowm.xchart.SwingWrapper;
@@ -271,6 +272,59 @@ public class DataPreview {
 
 			AndroidDataType(Function<AndroidInfo, Float> valueDerivationFunction) { this.valueDerivationFunction = valueDerivationFunction; }
 			@Getter private final Function<AndroidInfo, Float> valueDerivationFunction;
+		}
+	}
+
+	public static class SerialEvolutionPreview extends PreviewMode {
+		{ width = 700; height = 500; }
+		private final int dataWidth = 150;
+
+		private final List<Double> previousDataPoints;
+
+		public SerialEvolutionPreview() {
+			previousDataPoints = new LinkedList<>();
+			for(int j = 0;j < dataWidth;j++) {
+				previousDataPoints.add(0.0);
+			}
+		}
+
+		@Override
+		public XYChart createChart() {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("Serial Preview")
+					.xAxisTitle("t")
+					.yAxisTitle("value")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			chart.getStyler().setYAxisMin(0.0);
+			chart.getStyler().setYAxisMax(1.0);
+			chart.getStyler().setXAxisMin((double) dataWidth);
+			chart.getStyler().setXAxisMax(0.0);
+
+			chart.addSeries("serial", new double[dataWidth]);
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof SerialInfo)) {
+				return;
+			}
+			SerialInfo info = (SerialInfo) dataInfo;
+			System.out.println(info.getValue());
+
+			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
+
+			if (previousDataPoints.size() == dataWidth) {
+				previousDataPoints.remove(previousDataPoints.size() - 1);
+			}
+			previousDataPoints.add(0, (double) info.getValue());
+			chart.updateXYSeries("serial", xData, previousDataPoints.stream().mapToDouble(d -> d).toArray(), null);
 		}
 	}
 

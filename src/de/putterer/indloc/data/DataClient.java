@@ -115,18 +115,18 @@ public class DataClient {
 
 
 
-	private final Station station; // the station this client is connected to
-	private boolean connected = false; // whether the subscription was successful
-	private boolean timedOut = false;
-	private final int subscriptionId;
-	private final DataConsumer<? extends DataInfo>[] consumers; // callback to be called when CSIInfo was received from this station
+	protected final Station station; // the station this client is connected to
+	protected boolean connected = false; // whether the subscription was successful
+	protected boolean timedOut = false;
+	protected final int subscriptionId;
+	protected final DataConsumer<? extends DataInfo>[] consumers; // callback to be called when CSIInfo was received from this station
 	private final SubscriptionOptions subscriptionOptions; // the subscription options for this client, e.g. payload length filter
 
 	// only for acceleration clients
 	private float[] accelerationCalibration = null;
 
-	private final Observable<Station> statusUpdateCallback = new Observable<>(null);
-	private final Observable<Integer> packetsReceived = new Observable<>(0);
+	protected final Observable<Station> statusUpdateCallback = new Observable<>(null);
+	protected final Observable<Integer> packetsReceived = new Observable<>(0);
 
 	public DataClient(Station station, SubscriptionOptions subscriptionOptions, DataConsumer<? extends DataInfo>... consumers) {
 		this.station = station;
@@ -180,7 +180,7 @@ public class DataClient {
 	 * Called on receiving a datagram packet from the associated station
 	 * @param packet
 	 */
-	private void onPacket(DatagramPacket packet) {
+	protected void onPacket(DatagramPacket packet) {
 		if(packet.getLength() == 0) {
 			return;
 		}
@@ -249,7 +249,7 @@ public class DataClient {
 	 * sends data to the associated station
 	 * @param buffer the data to send
 	 */
-	private void send(byte buffer[]) {
+	protected void send(byte buffer[]) {
 		try {
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 			packet.setAddress(InetAddress.getByName(station.getIP_ADDRESS()));
@@ -260,7 +260,7 @@ public class DataClient {
 		}
 	}
 
-	private <T> Stream<Consumer<T>> getApplicableConsumers(Class<T> type) {
+	protected <T> Stream<Consumer<T>> getApplicableConsumers(Class<T> type) {
 		return Arrays.stream(consumers).filter(c -> type.isAssignableFrom(c.getType()))
 				.map(c -> (Consumer<T>) c.getConsumer());
 	}
