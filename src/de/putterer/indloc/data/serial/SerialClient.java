@@ -7,15 +7,12 @@ import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
 
-import java.io.InputStreamReader;
 import java.net.DatagramPacket;
-import java.util.Scanner;
 
 public class SerialClient extends DataClient {
 
 	private final String portDescriptor;
 	private SerialPort serialPort;
-	private Scanner scanner;
 	private int messageId = 0;
 	private Thread scannerThread;
 
@@ -31,8 +28,6 @@ public class SerialClient extends DataClient {
 		serialPort.setBaudRate(115200);
 		serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
 		serialPort.openPort();
-
-		scanner = new Scanner(new InputStreamReader(serialPort.getInputStream()));
 
 		if(serialPort.isOpen()) {
 			scannerThread = new Thread(this::scannerThread);
@@ -51,7 +46,7 @@ public class SerialClient extends DataClient {
 
 	public void scannerThread() {
 		while(serialPort.isOpen() && ! Thread.interrupted()) {
-			String s = scanner.nextLine(); // TODO is this realtime? could use serialPort.read() instead
+			String s = serialReadLine(serialPort); // TODO is this realtime? could use serialPort.read() instead
 			float value;
 			try {
 				value = Float.parseFloat(s);
@@ -66,8 +61,6 @@ public class SerialClient extends DataClient {
 
 		connected = false;
 		timedOut = false;
-		scanner.close();
-		scanner = null;
 		serialPort.closePort();
 		serialPort = null;
 		statusUpdateCallback.set(station);
@@ -86,5 +79,24 @@ public class SerialClient extends DataClient {
 	@Override
 	protected void send(byte buffer[]) {
 		throw new UnsupportedOperationException("Cannot send to serial device at the moment");
+	}
+
+	public static String serialReadLine(SerialPort serialPort) {
+		StringBuilder sb = new StringBuilder();
+		byte[] data = new byte[1];
+		while(serialPort.isOpen()) {
+			int read = serialPort.readBytes(data, 1);
+			if(read == 0) {
+				continue;
+			}
+
+			if(data[0] == '\r') {
+				break;
+			}
+
+			sb.append((char)data[0]);
+		}
+		serialPort.readBytes(data, 1); // read \n
+		return sb.toString();
 	}
 }
