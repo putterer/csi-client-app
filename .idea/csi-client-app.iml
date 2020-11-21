@@ -11,5 +11,8 @@
     <orderEntry type="library" name="gson-2.8.5" level="project" />
     <orderEntry type="library" name="lombok" level="project" />
     <orderEntry type="library" name="xchart-3.5.4" level="project" />
+    <orderEntry type="library" name="flatlaf-0.41" level="project" />
+    <orderEntry type="library" name="jSerialComm-2.6.2" level="project" />
+    <orderEntry type="library" name="JWave" level="project" />
   </component>
 </module>

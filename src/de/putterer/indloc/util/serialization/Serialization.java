@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.CSIInfo;
+import de.putterer.indloc.data.DataInfo;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -25,8 +26,8 @@ public class Serialization {
 				.create();
 	}
 
-	public static void save(Path path, CSIInfo... csi) throws FileNotFoundException, IOException {
-		serialize(path, csi);
+	public static void save(Path path, DataInfo... info) throws FileNotFoundException, IOException {
+		serialize(path, info);
 	}
 
 	public static void saveLegacy(Path path, CSIInfo... csi) throws FileNotFoundException, IOException {

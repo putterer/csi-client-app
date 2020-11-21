@@ -277,7 +277,7 @@ public class DataPreview {
 
 	public static class SerialEvolutionPreview extends PreviewMode {
 		{ width = 700; height = 500; }
-		private final int dataWidth = 150;
+		private final int dataWidth = 500;
 
 		private final List<Double> previousDataPoints;
 
@@ -306,6 +306,8 @@ public class DataPreview {
 			chart.getStyler().setXAxisMin((double) dataWidth);
 			chart.getStyler().setXAxisMax(0.0);
 
+			chart.getStyler().setMarkerSize(0);
+
 			chart.addSeries("serial", new double[dataWidth]);
 			return chart;
 		}
@@ -316,7 +318,6 @@ public class DataPreview {
 				return;
 			}
 			SerialInfo info = (SerialInfo) dataInfo;
-			System.out.println(info.getValue());
 
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
 

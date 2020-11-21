@@ -7,6 +7,7 @@ import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
+import de.putterer.indloc.data.serial.SerialInfo;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.serialization.Serialization;
 
@@ -61,7 +62,7 @@ public class GenericStatusUI extends UIComponentWindow {
 			String status = "";
 			if(client != null) {
 				status = client.isConnected() ?
-						(client.getConsumers()[0].getType() == AndroidInfo.class ? "Connected: Android" : "Connected: CSI")
+						(client.getConsumers()[0].getType() == AndroidInfo.class ? "Connected: Android" : (client.getConsumers()[0].getType() == SerialInfo.class ? "Connected: Serial" : "Connected: CSI"))
 						: (client.isTimedOut() ? "Timed out" : "Connecting...");
 			}
 			return String.format("%s (at %s) - %s",
@@ -143,7 +144,7 @@ public class GenericStatusUI extends UIComponentWindow {
 		synchronized (recordingColor) {
 			String recordingName = openStringDialog(
 					"Recording directory",
-					"csi-recording_" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()),
+					(getSelectedStation().getDataType() == SerialInfo.class ? "ecg" : "csi") + "-recording_" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()),
 					this);
 
 			if(recordingName == null) {
@@ -185,11 +186,18 @@ public class GenericStatusUI extends UIComponentWindow {
 
 	@Override
 	public void onDataInfo(Station station, DataInfo dataInfo) {
-		if(dataInfo instanceof CSIInfo) {
+		if(dataInfo instanceof CSIInfo || dataInfo instanceof SerialInfo) {
 			recordingFolder.ifPresent(folder -> {
 				try {
+					String file = "";
+					if(dataInfo instanceof CSIInfo) {
+						file = station.getHW_ADDRESS() + "-" + dataInfo.getMessageId() + ".csi";
+					} else {
+						file = station.getIP_ADDRESS().replace("/", "_") + "-" + dataInfo.getMessageId() + ".ecg";
+					}
+
 					// looses type information, dataInfo type is present in station inside room config
-					Serialization.save(folder.resolve(station.getHW_ADDRESS() + "-" + dataInfo.getMessageId() + ".csi"), (CSIInfo)dataInfo);
+					Serialization.save(folder.resolve(file), dataInfo);
 				} catch (IOException e) {
 					Logger.error("Could not serialize csi", e);
 				}

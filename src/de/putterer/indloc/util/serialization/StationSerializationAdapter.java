@@ -30,7 +30,7 @@ public class StationSerializationAdapter implements JsonDeserializer<Station>, J
 
 	@Override
 	public JsonElement serialize(Station station, Type type, JsonSerializationContext jsonSerializationContext) {
-		JsonElement obj = jsonSerializationContext.serialize(station);
+		JsonElement obj = plainGson.toJsonTree(station);
 		obj.getAsJsonObject().addProperty(DATA_TYPE_FIELD_NAME, station.getDataType().getName());
 		return obj;
 	}
