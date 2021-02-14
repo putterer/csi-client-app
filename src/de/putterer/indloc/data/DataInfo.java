@@ -1,13 +1,17 @@
 package de.putterer.indloc.data;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Instant;
 
 /**
  * represents a data object received from any data server (e.g. csi server or acceleration server)
  */
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 public class DataInfo {
 
 	private long clientTimestamp; // the timestamp when this message was RECEIVED by this client, unix timestamp in millis

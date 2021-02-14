@@ -3,11 +3,16 @@ package de.putterer.indloc.csi.atheros;
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.util.Logger;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 public class AthCSIInfo extends CSIInfo {
 
 	private AthCSIStatus atherosCsiStatus = new AthCSIStatus();

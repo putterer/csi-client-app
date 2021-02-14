@@ -1,15 +1,16 @@
 package de.putterer.indloc.csi;
 
 import de.putterer.indloc.data.DataInfo;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 import java.io.Serializable;
 
 /**
  * Represents a CSIInfo object as sent by a station
  */
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 public abstract class CSIInfo extends DataInfo implements Serializable {
 	private static final transient long serialVersionUID = 979206976253508405L;
 

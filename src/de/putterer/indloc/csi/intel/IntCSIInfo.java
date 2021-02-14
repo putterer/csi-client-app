@@ -4,6 +4,9 @@ import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.Util;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
@@ -12,7 +15,9 @@ import java.nio.ByteOrder;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 public class IntCSIInfo extends CSIInfo {
 
 	private static final double INT_CSI_SCALE_FACTOR = 16.0;

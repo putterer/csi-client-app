@@ -2,10 +2,11 @@ package de.putterer.indloc.csi;
 
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.esp.EspCSIInfo;
 import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
-import de.putterer.indloc.data.serial.SerialInfo;
+import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.util.Logger;
 import lombok.Getter;
 import org.knowm.xchart.SwingWrapper;
@@ -314,10 +315,10 @@ public class DataPreview {
 
 		@Override
 		public void updateChart(DataInfo dataInfo, XYChart chart) {
-			if(! (dataInfo instanceof SerialInfo)) {
+			if(! (dataInfo instanceof EcgInfo)) {
 				return;
 			}
-			SerialInfo info = (SerialInfo) dataInfo;
+			EcgInfo info = (EcgInfo) dataInfo;
 
 			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
 
@@ -404,6 +405,8 @@ public class DataPreview {
 
 			if(csi instanceof IntCSIInfo) {
 				chart.getStyler().setXAxisMax(30.0);
+			} else if(csi instanceof EspCSIInfo) {
+				chart.getStyler().setXAxisMax(64.0);
 			} else {
 				chart.getStyler().setXAxisMax(114.0);
 			}

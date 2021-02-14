@@ -13,7 +13,6 @@ public class SerialClient extends DataClient {
 
 	private final String portDescriptor;
 	private SerialPort serialPort;
-	private int messageId = 0;
 	private Thread scannerThread;
 
 	public SerialClient(Station station, DataConsumer<? extends DataInfo>... consumers) {
@@ -47,15 +46,7 @@ public class SerialClient extends DataClient {
 	public void scannerThread() {
 		while(serialPort.isOpen() && ! Thread.interrupted()) {
 			String s = serialReadLine(serialPort); // TODO is this realtime? could use serialPort.read() instead
-			float value;
-			try {
-				value = Float.parseFloat(s);
-			} catch(NumberFormatException e) {
-				continue; // the reading could start in the middle of a transmission resulting in decoded garbage
-			}
-			value /= 4095.0;
-			SerialInfo info = new SerialInfo(System.currentTimeMillis(), messageId++, value);
-			getApplicableConsumers(SerialInfo.class).forEach(c -> c.accept(info));
+			onLineRead(s);
 		}
 		Logger.warn("Serial port %s no longer open, stopping scanner thread, interrupted: %s", portDescriptor, String.valueOf(Thread.interrupted()));
 
@@ -64,6 +55,10 @@ public class SerialClient extends DataClient {
 		serialPort.closePort();
 		serialPort = null;
 		statusUpdateCallback.set(station);
+	}
+
+	protected void onLineRead(String line) {
+		// override in subclass
 	}
 
 	@Override

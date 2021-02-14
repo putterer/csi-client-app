@@ -7,12 +7,14 @@ import de.putterer.indloc.activity.ActivityUI;
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.CSIReplay;
 import de.putterer.indloc.csi.DataPreview;
+import de.putterer.indloc.csi.esp.EspCSIInfo;
+import de.putterer.indloc.csi.esp.EspClient;
 import de.putterer.indloc.csi.messages.SubscriptionMessage;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.data.DataInfo;
-import de.putterer.indloc.data.serial.SerialClient;
-import de.putterer.indloc.data.serial.SerialInfo;
+import de.putterer.indloc.data.ecg.EcgClient;
+import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.respiratory.RespiratoryUI;
 import de.putterer.indloc.util.Logger;
 import lombok.Getter;
@@ -137,8 +139,10 @@ public class CsiUserInterface implements KeyListener {
 	private void startClients() {
 		Arrays.stream(ROOM.getStations()).forEach(s -> {
 			DataConsumer<? extends DataInfo> dataConsumer = new DataConsumer<>(s.getDataType(), info -> this.onData(s, info));
-			if(s.getDataType() == SerialInfo.class) {
-				DataClient.addClient(new SerialClient(s, dataConsumer));
+			if(s.getDataType() == EcgInfo.class) {
+				DataClient.addClient(new EcgClient(s, dataConsumer));
+			} else if(s.getDataType() == EspCSIInfo.class) {
+				DataClient.addClient(new EspClient(s, dataConsumer));
 			} else {
 				DataClient.addClient(new DataClient(s, SUBSCRIPTION_OPTIONS, dataConsumer));
 			}

@@ -7,7 +7,7 @@ import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
-import de.putterer.indloc.data.serial.SerialInfo;
+import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.serialization.Serialization;
 
@@ -62,7 +62,7 @@ public class GenericStatusUI extends UIComponentWindow {
 			String status = "";
 			if(client != null) {
 				status = client.isConnected() ?
-						(client.getConsumers()[0].getType() == AndroidInfo.class ? "Connected: Android" : (client.getConsumers()[0].getType() == SerialInfo.class ? "Connected: Serial" : "Connected: CSI"))
+						(client.getConsumers()[0].getType() == AndroidInfo.class ? "Connected: Android" : (client.getConsumers()[0].getType() == EcgInfo.class ? "Connected: Serial" : "Connected: CSI"))
 						: (client.isTimedOut() ? "Timed out" : "Connecting...");
 			}
 			return String.format("%s (at %s) - %s",
@@ -144,7 +144,7 @@ public class GenericStatusUI extends UIComponentWindow {
 		synchronized (recordingColor) {
 			String recordingName = openStringDialog(
 					"Recording directory",
-					(getSelectedStation().getDataType() == SerialInfo.class ? "ecg" : "csi") + "-recording_" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()),
+					(getSelectedStation().getDataType() == EcgInfo.class ? "ecg" : "csi") + "-recording_" + new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date()),
 					this);
 
 			if(recordingName == null) {
@@ -186,7 +186,7 @@ public class GenericStatusUI extends UIComponentWindow {
 
 	@Override
 	public void onDataInfo(Station station, DataInfo dataInfo) {
-		if(dataInfo instanceof CSIInfo || dataInfo instanceof SerialInfo) {
+		if(dataInfo instanceof CSIInfo || dataInfo instanceof EcgInfo) {
 			recordingFolder.ifPresent(folder -> {
 				try {
 					String file = "";
