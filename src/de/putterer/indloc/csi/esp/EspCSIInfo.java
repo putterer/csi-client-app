@@ -1,5 +1,6 @@
 package de.putterer.indloc.csi.esp;
 
+import com.google.gson.annotations.SerializedName;
 import de.putterer.indloc.csi.CSIInfo;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -18,11 +19,33 @@ public class EspCSIInfo extends CSIInfo {
     private int subcarriers = 0;
     private final String sourceMac;
     private final int length;
+    private final boolean firstWordInvalid; // first four bytes of the CSI data invalid
+    private final int rssi; // signed rssi, in dBm
+    private final int mcs;
+    private final boolean ht = true; // filtered by tool
+    private final ChannelBandwidth channelBandwidth; // 0: 20MHz, 1: 40MHz
+    private final boolean spaceTimeBlockCode;
+    private final GuardInterval guardInterval;
+    private final byte channel;
+    private final SecondaryChannel secondaryChannel;
+    private final long timestamp;
+    private final byte antenna;
 
-    public EspCSIInfo(long timestamp, int messageId, String sourceMac, int length, String csiEntry) {
+
+    public EspCSIInfo(long timestamp, int messageId, String sourceMac, int length, boolean firstWordInvalid, int rssi, int mcs, ChannelBandwidth channelBandwidth, boolean spaceTimeBlockCode, GuardInterval guardInterval, byte channel, SecondaryChannel secondaryChannel, long timestamp1, byte antenna, String csiEntry) {
         super(timestamp, messageId);
         this.sourceMac = sourceMac;
         this.length = length;
+        this.firstWordInvalid = firstWordInvalid;
+        this.rssi = rssi;
+        this.mcs = mcs;
+        this.channelBandwidth = channelBandwidth;
+        this.spaceTimeBlockCode = spaceTimeBlockCode;
+        this.guardInterval = guardInterval;
+        this.channel = channel;
+        this.secondaryChannel = secondaryChannel;
+        this.timestamp = timestamp1;
+        this.antenna = antenna;
 
         // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/wifi.html#wi-fi-channel-state-information :
         // `Each item is stored as two bytes: imaginary part followed by real part.
@@ -56,5 +79,21 @@ public class EspCSIInfo extends CSIInfo {
     @Override
     public int getNumTones() {
         return subcarriers;
+    }
+
+    public enum ChannelBandwidth {
+        @SerializedName("20MHz") BW_20MHZ,
+        @SerializedName("40MHz") BW_40MHZ
+    }
+
+    public enum GuardInterval {
+        @SerializedName("short") SHORT_GI,
+        @SerializedName("long") LONG_GI,
+    }
+
+    public enum SecondaryChannel {
+        @SerializedName("none") NONE,
+        @SerializedName("above") ABOVE,
+        @SerializedName("below") BELOW,
     }
 }
