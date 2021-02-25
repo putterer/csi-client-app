@@ -14,17 +14,23 @@ public class SerialClient extends DataClient {
 	private final String portDescriptor;
 	private SerialPort serialPort;
 	private Thread scannerThread;
+	private final int baudRate;
 
-	public SerialClient(Station station, DataConsumer<? extends DataInfo>... consumers) {
+	public SerialClient(Station station, int baudRate, DataConsumer<? extends DataInfo>... consumers) {
 		super(station, consumers);
 		this.portDescriptor = station.getIP_ADDRESS();
+		this.baudRate = baudRate;
+	}
+
+	public SerialClient(Station station, DataConsumer<? extends DataInfo>... consumers) {
+		this(station, 115200, consumers);
 	}
 
 	@Override
 	public void subscribe() {
 		serialPort = SerialPort.getCommPort(portDescriptor);
 
-		serialPort.setBaudRate(115200);
+		serialPort.setBaudRate(baudRate);
 		serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
 		serialPort.openPort();
 
@@ -68,7 +74,9 @@ public class SerialClient extends DataClient {
 
 	@Override
 	public void unsubscribe() {
-		scannerThread.interrupt();
+		if(scannerThread != null) {
+			scannerThread.interrupt();
+		}
 	}
 
 	@Override

@@ -419,6 +419,11 @@ public class DataPreview {
 					double[] yData = new double[subcarriers];
 					for(int i = 0;i < subcarriers;i++) {
 						xData[i] = i;
+
+						if(csi.getCsi_matrix()[rx][tx][i] == null) {
+							yData[i] = 0;
+							continue;
+						}
 						switch(type) {
 						case AMPLITUDE: yData[i] = csi.getCsi_matrix()[rx][tx][i].getAmplitude()/* - csi.getCsi_matrix()[rx][tx][0].getAmplitude()*/;break;
 						case PHASE: yData[i] = csi.getCsi_matrix()[rx][tx][i].getPhase() - csi.getCsi_matrix()[0][0][0].getPhase();break;

@@ -16,6 +16,7 @@ import static de.putterer.indloc.csi.esp.EspCSIInfo.GuardInterval.SHORT_GI;
 
 public class EspClient extends SerialClient {
 
+    public static final int ESP_CSI_BAUD_RATE = 921600;
     public static final Pattern ESP_CSI_SERIAL_PATTERN = Pattern.compile(
             "<CSI>" +
                     "<addr>([0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f])</addr>" +
@@ -36,7 +37,7 @@ public class EspClient extends SerialClient {
 
     private int messageId = 0;
     public EspClient(Station station, DataConsumer<? extends DataInfo>... consumers) {
-        super(station, consumers);
+        super(station, ESP_CSI_BAUD_RATE, consumers);
     }
 
     @Override

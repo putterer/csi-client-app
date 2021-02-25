@@ -2,6 +2,7 @@ package de.putterer.indloc.csi.esp;
 
 import com.google.gson.annotations.SerializedName;
 import de.putterer.indloc.csi.CSIInfo;
+import de.putterer.indloc.util.Logger;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,10 +10,18 @@ import lombok.Setter;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import static de.putterer.indloc.csi.esp.EspCSIInfo.SecondaryChannel.BELOW;
+
 @Getter
 @Setter
 @EqualsAndHashCode
 public class EspCSIInfo extends CSIInfo {
+
+    private static final int TRAINING_FIELD_LLTF = 0;
+    private static final int TRAINING_FIELD_HT_LTF = 1;
+    private static final int TRAINING_FIELD_STBC_HT_LTF = 2;
+
+    private final int TRAINING_FIELD_TO_USE = TRAINING_FIELD_LLTF;
 
     private static final int ESP_CSI_SCALE = 20;
 
@@ -54,21 +63,80 @@ public class EspCSIInfo extends CSIInfo {
         // For different types of packets which are received on channels with different state,
         // the sub-carrier index and total bytes of signed characters of CSI is shown in the following table.`
 
+        int lltfLength = 0;
+        int htLtfLength = 0;
+        int stbcHtLtfLength = 0;
+
+        // implements the table in the link above
+        // always at HT rate
+        switch(secondaryChannel) {
+            case NONE:
+                lltfLength = 64;
+                htLtfLength = 64;
+                if(isSpaceTimeBlockCode()) {
+                    stbcHtLtfLength = 64;
+                }
+                break;
+
+            case ABOVE:
+            case BELOW:
+                switch(channelBandwidth) {
+                    case BW_20MHZ:
+                        if(spaceTimeBlockCode) {
+                            lltfLength = 64;
+                            htLtfLength = (secondaryChannel == BELOW) ? 63 : 62;
+                            stbcHtLtfLength = (secondaryChannel == BELOW) ? 63 : 62;
+                        } else {
+                            lltfLength = 64;
+                            htLtfLength = 64;
+                        }
+                        break;
+                    case BW_40MHZ:
+                        if(spaceTimeBlockCode) {
+                            lltfLength = 64;
+                            htLtfLength = 121;
+                            stbcHtLtfLength = 121;
+                        } else {
+                            lltfLength = 64;
+                            htLtfLength = 128;
+                        }
+                        break;
+                }
+
+                break;
+        }
+
+        int[] trainingFieldLengths = new int[]{
+                lltfLength,
+                htLtfLength,
+                stbcHtLtfLength
+        };
+
+        int expectedLength = (Arrays.stream(trainingFieldLengths).sum()) * 2;
+        if(length != expectedLength) {
+            Logger.error("EspCSI is of wrong length, expected %d, got %d", expectedLength, length);
+        }
+
         // fill csi matrix
         ByteBuffer buffer = ByteBuffer.allocate(length);
-        Arrays.stream(csiEntry.split(" ")).map(it ->(byte) Integer.parseInt(it, 16)).forEach(buffer::put);
+        Arrays.stream(csiEntry.split(" ")).map(it -> (byte) Integer.parseInt(it, 16)).forEach(buffer::put);
 
-         byte[] data = buffer.array();
+        byte[] data = buffer.array();
+        int currentStartIndex = 0;
 
-        // 384 --> 3 (LLTF, HT-LTF, STBC-HT-LTF) * 64 * 2(imag+real), TODO: only works for a single case
-        for(int trainingFieldType = 1;trainingFieldType < 2;trainingFieldType++) { // 0, 1, 2 available, 1 selects HT_LTF
+        for(int trainingFieldType = 0;trainingFieldType < 2;trainingFieldType++) {
             for(int subcarrier = 0;subcarrier < 64;subcarrier++) {
-                csi_matrix[0][0][subcarrier] = new Complex(
-                        data[trainingFieldType*64 + subcarrier * 2 + 1] * ESP_CSI_SCALE, // yes, the imaginary part is located before the real part for some reason
-                        data[trainingFieldType*64 + subcarrier * 2] * ESP_CSI_SCALE
-                );
+                if(trainingFieldType == TRAINING_FIELD_TO_USE) {
+                    csi_matrix[0][0][subcarrier] = new Complex(
+                            data[currentStartIndex + subcarrier * 2 + 1] * ESP_CSI_SCALE, // yes, the imaginary part is located before the real part for some reason
+                            data[currentStartIndex + subcarrier * 2] * ESP_CSI_SCALE
+                    );
+                }
             }
+            currentStartIndex += trainingFieldLengths[trainingFieldType] * 2; // imag and real
         }
+
+        subcarriers = trainingFieldLengths[TRAINING_FIELD_TO_USE];
     }
 
     @Override
