@@ -3,6 +3,7 @@ package de.putterer.indloc.util.serialization;
 import com.google.gson.*;
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.atheros.AthCSIInfo;
+import de.putterer.indloc.csi.esp.EspCSIInfo;
 import de.putterer.indloc.csi.intel.IntCSIInfo;
 
 import java.lang.reflect.Type;
@@ -20,7 +21,7 @@ public class CSIInfoInterfaceAdapter implements JsonDeserializer<CSIInfo>, JsonS
 		if(clazz.isPresent()) {
 			jsonElement.getAsJsonObject().remove("csiInfoType");
 		} else {
-			clazz = Optional.of(jsonElement.getAsJsonObject().get("intelCsiNotification") != null ? IntCSIInfo.class : AthCSIInfo.class);
+			clazz = Optional.of(jsonElement.getAsJsonObject().get("intelCsiNotification") != null ? IntCSIInfo.class : (jsonElement.getAsJsonObject().get("firstWordInvalid") != null ? EspCSIInfo.class : AthCSIInfo.class));
 		}
 
 		return jsonDeserializationContext.deserialize(jsonElement, clazz.get());

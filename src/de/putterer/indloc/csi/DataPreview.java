@@ -532,6 +532,8 @@ public class DataPreview {
 		{ width = 700; height = 500; }
 		private final int dataWidth = 150;
 
+		private double yAxisHeight = 500.0;
+
 		private final int rxAntenna;
 		private final int txAntenna;
 		private final int smoothingPacketCount;
@@ -614,6 +616,10 @@ public class DataPreview {
 
 				previousList.add(0, previousUnprocessedList.stream().mapToDouble(d -> d).limit(smoothingPacketCount).average().orElse(0));
 
+				if(currentData > yAxisHeight - 100.0) {
+					yAxisHeight = currentData + 100.0;
+					chart.getStyler().setYAxisMax(yAxisHeight);
+				}
 				chart.updateXYSeries(String.format("RX%d-TX%d, sub: %d", rxAntenna, txAntenna, this.subcarriers[subcarrierIndex]), xData, previousList.stream().mapToDouble(d -> d).toArray(), null);
 			}
 		}
