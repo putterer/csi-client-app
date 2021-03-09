@@ -210,7 +210,7 @@ public class GenericStatusUI extends UIComponentWindow {
 		List<String> previewNames = new LinkedList<>();
 
 		addPreviewOption("Amplitude", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.SubcarrierPropertyPreview(
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.SubcarrierPropertyPreview(
 					DataPreview.SubcarrierPropertyPreview.PropertyType.AMPLITUDE,
 					openIntDialog("rxAntennaCount", 3, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("txAntennaCount", 1, this.getFrame(), useDefaultSettingsForPreview),
@@ -218,7 +218,7 @@ public class GenericStatusUI extends UIComponentWindow {
 			)), station);
 		}, previewNames);
 		addPreviewOption("AmplitudeEvolution", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.AmplitudeEvolutionPreview(
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.AmplitudeEvolutionPreview(
 					openIntDialog("rxAntenna", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("txAntenna", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("smoothingPacketCount", 10, this.getFrame(), useDefaultSettingsForPreview),
@@ -226,10 +226,10 @@ public class GenericStatusUI extends UIComponentWindow {
 			)), station);
 		}, previewNames);
 		addPreviewOption("SerialEvolution", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.SerialEvolutionPreview()), station);
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.SerialEvolutionPreview()), station);
 		}, previewNames);
 		addPreviewOption("Phase", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.SubcarrierPropertyPreview(
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.SubcarrierPropertyPreview(
 					DataPreview.SubcarrierPropertyPreview.PropertyType.PHASE,
 					openIntDialog("rxAntennaCount", 3, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("txAntennaCount", 1, this.getFrame(), useDefaultSettingsForPreview),
@@ -237,19 +237,19 @@ public class GenericStatusUI extends UIComponentWindow {
 			)), station);
 		}, previewNames);
 		addPreviewOption("AmplitudeDiff", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.AmplitudeDiffPreview(
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.AmplitudeDiffPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("rxAntenna2", 1, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("CSIPlot", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.CSIPlotPreview(
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.CSIPlotPreview(
 					openIntDialog("rxAntennaCount", 3, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("txAntennaCount", 1, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.PhaseDiffEvolutionPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("shortTermHistoryLength", -1, this.getFrame(), useDefaultSettingsForPreview),
@@ -260,7 +260,7 @@ public class GenericStatusUI extends UIComponentWindow {
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffVariance", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffVariancePreview(
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.PhaseDiffVariancePreview(
 					station,
 					openIntListDialog("subcarriers", new int[]{SUBCARRIER_AVG, SUBCARRIER_MAX},
 							Map.of(SUBCARRIER_MAX, "MAX", SUBCARRIER_AVG, "AVG"),
@@ -268,7 +268,7 @@ public class GenericStatusUI extends UIComponentWindow {
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiff", station -> {
-			csiUserInterface.addPreview(new DataPreview(new DataPreview.PhaseDiffPreview(
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.PhaseDiffPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);

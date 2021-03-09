@@ -64,7 +64,7 @@ public class CSIRecording {
 				new FilterOptions(payloadLen)
 		);
 		
-		DataPreview preview = new DataPreview(new DataPreview.CSIPlotPreview(3, 3));
+		DataPreview preview = new DataPreview("recording", new DataPreview.CSIPlotPreview(3, 3));
 
 		recordedPackets = 0;
 		for(Station station : Config.ROOM.getStations()) {

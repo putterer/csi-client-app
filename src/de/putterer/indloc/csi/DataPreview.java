@@ -50,12 +50,12 @@ public class DataPreview {
 	@Getter
 	private final JFrame frame;
 	
-	public DataPreview(PreviewMode mode) {
+	public DataPreview(String stationName, PreviewMode mode) {
 		this.mode = mode;
 		
-		chart = mode.createChart();		
+		chart = mode.createChart(stationName);
 		
-		wrapper = new SwingWrapper<XYChart>(chart);
+		wrapper = new SwingWrapper<>(chart);
 		this.frame = wrapper.displayChart();
 	}
 	
@@ -83,7 +83,7 @@ public class DataPreview {
 		protected int width;
 		protected int height;
 		
-		public abstract XYChart createChart();
+		public abstract XYChart createChart(String stationName);
 		public abstract void updateChart(DataInfo dataInfo, XYChart chart);
 	}
 
@@ -115,11 +115,11 @@ public class DataPreview {
 		}
 
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("PhaseDiffVariance")
+					.title("PhaseDiffVariance - " + stationName)
 					.xAxisTitle("Time")
 					.yAxisTitle("Variance")
 					.theme(CHART_THEME)
@@ -205,11 +205,11 @@ public class DataPreview {
 		}
 
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("Android position/acceleration Preview")
+					.title("Android position/acceleration Preview - " + stationName)
 					.xAxisTitle("Subcarrier")
 					.yAxisTitle("Magnitude")
 					.theme(CHART_THEME)
@@ -290,11 +290,11 @@ public class DataPreview {
 		}
 
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("Serial Preview")
+					.title("Serial Preview - " + stationName)
 					.xAxisTitle("t")
 					.yAxisTitle("value")
 					.theme(CHART_THEME)
@@ -368,11 +368,11 @@ public class DataPreview {
 		}
 		
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("CSI Preview")
+					.title("CSI Preview - " + stationName)
 					.xAxisTitle("Subcarrier")
 					.yAxisTitle(type == PropertyType.AMPLITUDE ? "Amplitude" : "Phase")
 					.theme(CHART_THEME)
@@ -476,11 +476,11 @@ public class DataPreview {
 		}
 
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("CSI Amplitude difference preview")
+					.title("CSI Amplitude difference preview - " + stationName)
 					.xAxisTitle("Subcarrier")
 					.yAxisTitle("Amplitude difference")
 					.theme(CHART_THEME)
@@ -567,11 +567,11 @@ public class DataPreview {
 		}
 
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("Amplitude Evolution")
+					.title("Amplitude Evolution - " + stationName)
 					.xAxisTitle("Time")
 					.yAxisTitle("Amplitude difference")
 					.theme(CHART_THEME)
@@ -644,11 +644,11 @@ public class DataPreview {
 		}
 		
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("CSI Preview")
+					.title("CSI Preview - " + stationName)
 					.xAxisTitle("Subcarrier")
 					.yAxisTitle("Phase difference")
 					.theme(CHART_THEME)
@@ -770,11 +770,11 @@ public class DataPreview {
 		}
 
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("PhaseDiff Evolution")
+					.title("PhaseDiff Evolution - " + stationName)
 					.xAxisTitle("Time")
 					.yAxisTitle("Phase difference")
 					.theme(CHART_THEME)
@@ -877,11 +877,11 @@ public class DataPreview {
 		}
 		
 		@Override
-		public XYChart createChart() {
+		public XYChart createChart(String stationName) {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("CSI Plot")
+					.title("CSI Plot - " + stationName)
 					.xAxisTitle("Real")
 					.yAxisTitle("Imag")
 					.theme(CHART_THEME)

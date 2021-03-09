@@ -69,7 +69,7 @@ public class RespiratoryUI extends UIComponentWindow {
 
 		setupFinished();
 
-		rawAndroidDataPreview = new DataPreview(new DataPreview.AndroidEvolutionPreview(
+		rawAndroidDataPreview = new DataPreview(station.getName(), new DataPreview.AndroidEvolutionPreview(
 				10.0f,
 				AndroidDataType.Y,
 				AndroidDataType.Z

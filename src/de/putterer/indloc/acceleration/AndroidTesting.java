@@ -21,7 +21,7 @@ public class AndroidTesting {
 	public static void main(String args[]) {
 		Logger.setLogLevel(Logger.Level.INFO);
 
-		DataPreview preview = new DataPreview(new DataPreview.AndroidEvolutionPreview(
+		DataPreview preview = new DataPreview("android testing", new DataPreview.AndroidEvolutionPreview(
 				200.0f,
 //				AndroidDataType.X,
 				AndroidDataType.Y,

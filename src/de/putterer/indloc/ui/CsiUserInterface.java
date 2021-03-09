@@ -180,7 +180,7 @@ public class CsiUserInterface implements KeyListener {
 		componentWindows.forEach(w -> executorService.submit(() -> w.onDataInfo(station, info)));
 
 		synchronized (previews) {
-			previews.entrySet().stream().filter(e -> e.getValue() == station).forEach(p -> p.getKey().setData(info));
+			previews.entrySet().stream	().filter(e -> e.getValue() == station).forEach(p -> p.getKey().setData(info));
 		}
 
 //		if(info instanceof CSIInfo) {

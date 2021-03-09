@@ -87,8 +87,8 @@ public class ActivityUI extends UIComponentWindow {
                 new SubscriptionMessage.FilterOptions(DataClient.DEFAULT_ICMP_PAYLOAD_LENGTH)
         );
 
-        previews.add(new DataPreview(new DataPreview.PhaseDiffVariancePreview(station, DataPreview.PhaseDiffVariancePreview.SUBCARRIER_AVG, DataPreview.PhaseDiffVariancePreview.SUBCARRIER_MAX)));
-        previews.add(new DataPreview(new DataPreview.PhaseDiffEvolutionPreview(0, 2, -1,10, -1, 0.0, 30, 50)));
+        previews.add(new DataPreview(station.getName(), new DataPreview.PhaseDiffVariancePreview(station, DataPreview.PhaseDiffVariancePreview.SUBCARRIER_AVG, DataPreview.PhaseDiffVariancePreview.SUBCARRIER_MAX)));
+        previews.add(new DataPreview(station.getName(), new DataPreview.PhaseDiffEvolutionPreview(0, 2, -1,10, -1, 0.0, 30, 50)));
 
         ActivityUI activityUI = new ActivityUI(station, subscriptionOptions);
 
