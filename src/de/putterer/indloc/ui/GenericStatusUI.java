@@ -163,7 +163,7 @@ public class GenericStatusUI extends UIComponentWindow {
 		}
 
 		try {
-			Serialization.serialize(recordingFolder.get().resolve("room.cfg"), Config.ROOM);
+			Serialization.serialize(recordingFolder.get().resolve("room.cfg"), false, Config.ROOM);
 		} catch (IOException e) {
 			Logger.error("Could not serialize room configuration", e);
 		}
@@ -195,6 +195,8 @@ public class GenericStatusUI extends UIComponentWindow {
 					} else {
 						file = station.getIP_ADDRESS().replace("/", "_") + "-" + dataInfo.getMessageId() + ".ecg";
 					}
+
+					file = file + ".deflate";
 
 					// looses type information, dataInfo type is present in station inside room config
 					Serialization.save(folder.resolve(file), dataInfo);

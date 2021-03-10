@@ -530,7 +530,7 @@ public class DataPreview {
 	 */
 	public static class AmplitudeEvolutionPreview extends PreviewMode {
 		{ width = 700; height = 500; }
-		private final int dataWidth = 150;
+		private final int dataWidth = 250;
 
 		private double yAxisHeight = 500.0;
 

@@ -46,7 +46,7 @@ public class CSIRecording {
 		}
 		
 		try {
-			Serialization.serialize(folder.resolve("room.cfg"), Config.ROOM);
+			Serialization.serialize(folder.resolve("room.cfg"), false, Config.ROOM);
 		} catch (IOException e) {
 			e.printStackTrace();
 			Logger.error("Could not save room settings");
@@ -70,7 +70,7 @@ public class CSIRecording {
 		for(Station station : Config.ROOM.getStations()) {
 			DataClient.addClient(new DataClient(station, subscriptionOptions, new DataConsumer<CSIInfo>(CSIInfo.class, csiInfo -> {
 				try {
-					Serialization.save(folder.resolve(station.getHW_ADDRESS() + "-" + csiInfo.getMessageId() + ".csi"), csiInfo);
+					Serialization.save(folder.resolve(station.getHW_ADDRESS() + "-" + csiInfo.getMessageId() + ".csi.deflate"), csiInfo);
 				} catch (IOException e) {
 					Logger.error("Couldn't save CSI from %s", station.getIP_ADDRESS());
 					e.printStackTrace();

@@ -33,7 +33,7 @@ import static de.putterer.indloc.csi.DataPreview.SubcarrierPropertyPreview.Prope
  */
 public class CSIReplay {
 
-    private static final String RECORDED_CSI_PATTERN = "%s-\\d+.csi";
+    private static final String RECORDED_CSI_PATTERN = "%s-\\d+.csi(.deflate)?";
     private static final ExecutorService pool = Executors.newFixedThreadPool(4);
 
     @Getter

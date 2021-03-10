@@ -5,11 +5,16 @@ import com.google.gson.GsonBuilder;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.data.DataInfo;
+import de.putterer.indloc.util.Logger;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 /**
  * Utility code for (de-)serializing objects
@@ -26,11 +31,15 @@ public class Serialization {
 				.create();
 	}
 
-	public static void save(Path path, DataInfo... info) throws FileNotFoundException, IOException {
-		serialize(path, info);
+	public static void save(Path path, boolean compress, DataInfo... info) throws IOException {
+		serialize(path, compress, info);
 	}
 
-	public static void saveLegacy(Path path, CSIInfo... csi) throws FileNotFoundException, IOException {
+	public static void save(Path path, DataInfo... info) throws IOException {
+		save(path, true, info);
+	}
+
+	public static void saveLegacy(Path path, CSIInfo... csi) throws IOException {
 		serializeLegacy(path, csi);
 	}
 	
@@ -42,13 +51,44 @@ public class Serialization {
 		return deserializeLegacy(path);
 	}
 
-	public static void serialize(Path path, Object obj) throws IOException {
+	public static void serialize(Path path, boolean compress, Object obj) throws IOException {
 		String json = gson.toJson(obj);
-		Files.write(path, json.getBytes(StandardCharsets.UTF_8));
+		byte[] serializedData = json.getBytes(StandardCharsets.UTF_8);
+
+		if(compress) {
+			byte[] compressedData = new byte[serializedData.length];
+			Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
+			deflater.setInput(serializedData);
+			deflater.finish();
+			int n = deflater.deflate(compressedData);
+			deflater.end();
+			compressedData = Arrays.copyOfRange(compressedData, 0, n);
+
+			Files.write(path, compressedData);
+		} else {
+			Files.write(path, serializedData);
+		}
 	}
 
 	public static <T> T deserialize(Path path, Class<T> clazz) throws IOException {
-		String json = new String(Files.readAllBytes(path));
+		byte[] data = Files.readAllBytes(path);
+
+		if(path.getFileName().toString().endsWith(".deflate")) {
+			byte[] uncompressedData = new byte[64000];
+			Inflater inflater = new Inflater();
+			inflater.setInput(data);
+			int n = 0;
+			try {
+				n = inflater.inflate(uncompressedData);
+			} catch (DataFormatException e) {
+				Logger.error("Couldn't detect format of compressed data", e);
+			}
+			inflater.end();
+
+			data = Arrays.copyOfRange(uncompressedData, 0, n);
+		}
+
+		String json = new String(data, StandardCharsets.UTF_8);
 		return gson.fromJson(json, clazz);
 	}
 	
