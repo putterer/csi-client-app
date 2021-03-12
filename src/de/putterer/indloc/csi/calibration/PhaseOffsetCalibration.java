@@ -2,12 +2,14 @@ package de.putterer.indloc.csi.calibration;
 
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.CSIReplay;
+import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.CSIUtil;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PhaseOffsetCalibration {
 
@@ -23,9 +25,9 @@ public class PhaseOffsetCalibration {
         int txAntenna = Integer.parseInt(args[1]);
         int rxAntenna0 = Integer.parseInt(args[2]);
         int rxAntenna1 = Integer.parseInt(args[3]);
-        List<CSIInfo> csi = replay.getCSI();
+        List<DataInfo> csi = replay.getData();
 
-        double totalAverageShift = getPhaseDiff(csi, txAntenna, rxAntenna0, rxAntenna1);
+        double totalAverageShift = getPhaseDiff(csi.stream().map(it -> (CSIInfo)it).collect(Collectors.toList()), txAntenna, rxAntenna0, rxAntenna1);
 
         System.out.printf("\n Average: %f\n", totalAverageShift);
     }

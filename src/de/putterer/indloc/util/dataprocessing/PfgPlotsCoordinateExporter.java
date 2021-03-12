@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -27,7 +28,7 @@ public class PfgPlotsCoordinateExporter {
 
         System.out.println("RX0 TX1->3, RX1 TX1->3, RX2 TX1->3");
         CSIReplay replay = new CSIReplay(path, 1, false, null);
-        List<CSIInfo> csi = new ArrayList<>(replay.getCSI());
+        List<CSIInfo> csi = new ArrayList<>(replay.getData()).stream().map(it -> (CSIInfo)it).collect(Collectors.toList());
         for(CSIInfo info : csi) {
             for(int rx = 0;rx < 3;rx++) {
                 for(int tx = 0;tx < 3;tx++) {

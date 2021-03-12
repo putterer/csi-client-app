@@ -186,14 +186,16 @@ public class GenericStatusUI extends UIComponentWindow {
 
 	@Override
 	public void onDataInfo(Station station, DataInfo dataInfo) {
-		if(dataInfo instanceof CSIInfo || dataInfo instanceof EcgInfo) {
+		if(dataInfo instanceof CSIInfo || dataInfo instanceof EcgInfo || dataInfo instanceof AndroidInfo) {
 			recordingFolder.ifPresent(folder -> {
 				try {
 					String file = "";
 					if(dataInfo instanceof CSIInfo) {
 						file = station.getHW_ADDRESS() + "-" + dataInfo.getMessageId() + ".csi";
-					} else {
+					} else if(dataInfo instanceof EcgInfo) {
 						file = station.getIP_ADDRESS().replace("/", "_") + "-" + dataInfo.getMessageId() + ".ecg";
+					} else {
+						file = station.getHW_ADDRESS() + "-" + dataInfo.getMessageId() + ".accel";
 					}
 
 					file = file + ".deflate";
