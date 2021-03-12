@@ -189,10 +189,10 @@ public class DataPreview {
 
 		private final List<Double>[] previousDataPoints;
 
-		private final float limit;
+		private final double limit;
 		private final AndroidDataType[] androidDataTypes;
 
-		public AndroidEvolutionPreview(float limit, AndroidDataType... androidDataTypes) {
+		public AndroidEvolutionPreview(double limit, AndroidDataType... androidDataTypes) {
 			this.limit = limit;
 			this.androidDataTypes = androidDataTypes;
 			previousDataPoints = new List[androidDataTypes.length];

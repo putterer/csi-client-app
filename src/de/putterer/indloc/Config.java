@@ -2,6 +2,7 @@ package de.putterer.indloc;
 
 import de.putterer.indloc.activity.ActivityDetector;
 import de.putterer.indloc.csi.atheros.AthCSIInfo;
+import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.csi.esp.EspCSIInfo;
 import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.trilateration.SimpleTrilaterator;
@@ -26,10 +27,14 @@ public class Config {
 	public static final int ICMP_ECHO_INTERVAL_MS = 500;
 	
 	public static final Trilaterator TRILATERATOR = new SimpleTrilaterator();
-	public static final String STATION_5_MAC = "90:f6:52:4e:c5:ba";
-	public static final String STATION_6_MAC = "f8:d1:11:cf:0d:9c";
-	public static final String STATION_7_MAC = "90:f6:52:4e:b8:5c";
-	public static final String STATION_10_MAC = "14:cc:20:b5:00:95";
+	public static final String STATION_5_MAC = "90:f6:52:4e:c5:ba"; // WR2543ND
+	public static final String STATION_6_MAC = "f8:d1:11:cf:0d:9c"; // WR2543ND
+	public static final String STATION_7_MAC = "90:f6:52:4e:b8:5c"; // WR2543ND
+	public static final String STATION_10_MAC = "14:cc:20:b5:00:95"; // WDR4300
+	public static final String STATION_11_MAC = "00:16:ea:ef:f1:14"; // APUBoard1
+	public static final String STATION_ESP_CSI_MAC = "esp-csi";
+	public static final String STATION_ESP_ECG_MAC = "esp-ecg";
+	public static final String STATION_ANDROID_MAC = "android";
 
 	
 	// ------------------------
@@ -38,18 +43,17 @@ public class Config {
 	
 
 	private static final RoomConfig ROOM_CSI_TESTING = new RoomConfig(
-			1300, 1150, 
+			1300, 1150,
 			new Station[] {
 //					new Station(STATION_10_MAC, "10.10.0.10", AndroidInfo.class, new Vector(0, 0), null, new ActivityDetector())
-//					new Station("", "192.168.178.28", AndroidInfo.class, null, null)
-//							.setName("Phone"),
 //					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class, null, new ActivityDetector())
 //							.setName("Router 10")
 //							.enableRespiratoryUI(),
 					new Station(STATION_5_MAC, "192.168.178.205", AthCSIInfo.class, null, new ActivityDetector()).setName("AthCsiRx"),
-					new Station(null, "192.168.178.211", IntCSIInfo.class, null, null).setName("IntCsiRx"),//.enableRespiratoryUI()
+					new Station(STATION_11_MAC, "192.168.178.211", IntCSIInfo.class, null, null).setName("IntCsiRx"),//.enableRespiratoryUI()
 //					new Station(null, "/dev/ttyUSB0", EcgInfo.class, null, null)
-					new Station(null, "/dev/ttyUSB0", EspCSIInfo.class, null, null).setName("EspCsiRx")
+					new Station(STATION_ESP_CSI_MAC, "/dev/ttyUSB0", EspCSIInfo.class, null, null).setName("EspCsiRx"),
+					new Station(STATION_ANDROID_MAC, "192.168.178.237", AndroidInfo.class, null, null).setName("Phone"),
 			},
 			new RoomObject[] {
 

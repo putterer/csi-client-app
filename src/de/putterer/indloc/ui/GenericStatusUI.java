@@ -276,7 +276,13 @@ public class GenericStatusUI extends UIComponentWindow {
 			)), station);
 		}, previewNames);
 		addPreviewOption("AndroidEvolution", station -> {
-			//TODO
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.AndroidEvolutionPreview(
+					openDoubleDialog("limit", 30.0, this.getFrame(), useDefaultSettingsForPreview),
+					Arrays.stream(openStringDialog("dataTypes (X,Y,Z,EUCLIDEAN,MANHATTAN,MAX)", "X,Y", this.getFrame(), useDefaultSettingsForPreview)
+						.split(",")).map(name ->
+							Arrays.stream(DataPreview.AndroidEvolutionPreview.AndroidDataType.values()).filter(it -> it.name().equals(name)).findFirst().orElse(null)
+						).filter(Objects::nonNull).toArray(DataPreview.AndroidEvolutionPreview.AndroidDataType[]::new)
+			)), station);
 			//TODO: convert list option to mapper for generic objects instead of string
 		}, previewNames);
 
