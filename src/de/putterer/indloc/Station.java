@@ -31,6 +31,7 @@ public class Station implements Serializable {
 	private Vector location = new Vector();
 	private transient final RSSIDistanceEstimator estimator;
 	private transient final ActivityDetector activityDetector;
+	private transient boolean proxyViaSsh = false;
 
 	//display
 	private boolean displayRespiratoryDetector = false; // will cause csi interface to run and display the respiratory detection UI
@@ -68,6 +69,11 @@ public class Station implements Serializable {
 
 	public Station disableRespiratoryUI() {
 		displayRespiratoryDetector = false;
+		return this;
+	}
+
+	public Station proxyViaSsh() {
+		proxyViaSsh = true;
 		return this;
 	}
 	

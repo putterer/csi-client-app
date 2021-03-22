@@ -15,6 +15,7 @@ import de.putterer.indloc.data.DataConsumer;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.data.ecg.EcgClient;
 import de.putterer.indloc.data.ecg.EcgInfo;
+import de.putterer.indloc.data.ssh.SSHDataClient;
 import de.putterer.indloc.respiratory.RespiratoryUI;
 import de.putterer.indloc.util.Logger;
 import lombok.Getter;
@@ -143,6 +144,8 @@ public class CsiUserInterface implements KeyListener {
 				DataClient.addClient(new EcgClient(s, dataConsumer));
 			} else if(s.getDataType() == EspCSIInfo.class) {
 				DataClient.addClient(new EspClient(s, dataConsumer));
+			} else if(s.isProxyViaSsh()) {
+				DataClient.addClient(new SSHDataClient(s, dataConsumer));
 			} else {
 				DataClient.addClient(new DataClient(s, SUBSCRIPTION_OPTIONS, dataConsumer));
 			}

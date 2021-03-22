@@ -80,6 +80,7 @@ public class GenericStatusUI extends UIComponentWindow {
 		this.add(stationsLabel);
 		stationsList.setBounds(10, 30, 400, 100);
 		stationsList.setLayoutOrientation(JList.VERTICAL);
+//		stationsList.setFont(stationsList.getFont().deriveFont(16.0f));
 		this.add(stationsList);
 
 		selectRespiratoryButton.setBounds(10, 140, 380/3, 30);
