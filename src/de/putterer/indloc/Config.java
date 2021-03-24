@@ -47,10 +47,10 @@ public class Config {
 			1300, 1150,
 			new Station[] {
 //					new Station(STATION_10_MAC, "10.10.0.10", AndroidInfo.class, new Vector(0, 0), null, new ActivityDetector())
-//					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class, null, new ActivityDetector())
+//					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class,  2 23null, new ActivityDetector())
 //							.setName("Router 10")
 //							.enableRespiratoryUI(),
-					new Station(STATION_5_MAC, "192.168.178.205", AthCSIInfo.class, null, new ActivityDetector()).setName("AthCsiRx").proxyViaSsh(),
+					new Station(STATION_5_MAC, "192.168.178.205", AthCSIInfo.class, null, new ActivityDetector()).setName("AthCsiRx"),//.proxyViaSsh(),
 					new Station(STATION_11_MAC, "192.168.178.211", IntCSIInfo.class, null, null).setName("IntCsiRx"),//.enableRespiratoryUI()
 					new Station(STATION_ESP_CSI_MAC, "/dev/ttyUSB0", EspCSIInfo.class, null, null).setName("EspCsiRx"),
 					new Station(STATION_ANDROID_MAC, "192.168.178.237", AndroidInfo.class, null, null).setName("Phone"),

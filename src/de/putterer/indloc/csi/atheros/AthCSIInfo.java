@@ -44,7 +44,11 @@ public class AthCSIInfo extends CSIInfo {
 		for(int i1 = 0;i1 < 3;i1++) {
 			for(int i2 = 0;i2 < 3;i2++) {
 				for(int i3 = 0;i3 < 114;i3++) {
-					csi_matrix[i1][i2][i3] = new Complex(buffer.getInt(), buffer.getInt());
+					if(i3 < atherosCsiStatus.num_tones) { // only send necessary data
+						csi_matrix[i1][i2][i3] = new Complex(buffer.getInt(), buffer.getInt());
+					} else {
+						csi_matrix[i1][i2][i3] = new Complex(0, 0);
+					}
 				}
 			}
 		}
