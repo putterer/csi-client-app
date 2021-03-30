@@ -1,5 +1,7 @@
 package de.putterer.indloc.util;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -22,13 +24,23 @@ public class ReflectionUtil {
 		return res;
 	}
 
+	private static VarHandle modifiersField;
+	static {
+		try {
+			modifiersField = MethodHandles.privateLookupIn(Field.class, MethodHandles.lookup()).findVarHandle(Field.class, "modifiers", int.class);
+		} catch (IllegalAccessException | NoSuchFieldException e) {
+			Logger.error("Couldn't get handle of modifiers field", e);
+			modifiersField = null;
+		}
+	}
 
 	public static void setPrivateFinalField(Field field, Object target, Object value) throws NoSuchFieldException, IllegalAccessException {
 		field.setAccessible(true);
 
-		Field modifiersField = Field.class.getDeclaredField("modifiers");
-		modifiersField.setAccessible(true);
-		modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+		int modifiers = field.getModifiers();
+		if(Modifier.isFinal(modifiers)) {
+			modifiersField.set(field, modifiers & ~Modifier.FINAL);
+		}
 
 		field.set(target, value);
 	}

@@ -228,9 +228,13 @@ public class CSIReplay {
     }
 
     private void postNearestData(Instant time) {
-        data.stream().min(Comparator.comparingLong(
-                c -> Duration.between(time, c.getClientInstant()).abs().toMillis()
-        )).ifPresent(nearestData -> postData(new DataInfo[] { nearestData }));
+        for(Station station : room.getStations()) {
+            data.stream()
+                    .filter(d -> stationByData.get(d).equals(station.getHW_ADDRESS()))
+                    .min(Comparator.comparingLong(
+                    c -> Duration.between(time, c.getClientInstant()).abs().toMillis()
+            )).ifPresent(nearestData -> postData(new DataInfo[] { nearestData }));
+        }
     }
 
     public void addStatusUpdateCallback(Runnable callback) {
