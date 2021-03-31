@@ -56,7 +56,7 @@ public class Serialization {
 		byte[] serializedData = json.getBytes(StandardCharsets.UTF_8);
 
 		if(compress) {
-			byte[] compressedData = new byte[serializedData.length];
+			byte[] compressedData = new byte[64000];
 			Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
 			deflater.setInput(serializedData);
 			deflater.finish();
@@ -89,7 +89,12 @@ public class Serialization {
 		}
 
 		String json = new String(data, StandardCharsets.UTF_8);
-		return gson.fromJson(json, clazz);
+		try {
+			return gson.fromJson(json, clazz);
+		} catch(Exception e) {
+			Logger.error("Error while deserializing: " + json);
+			throw e;
+		}
 	}
 	
 	public static void serializeLegacy(Path path, Object obj) throws FileNotFoundException, IOException {

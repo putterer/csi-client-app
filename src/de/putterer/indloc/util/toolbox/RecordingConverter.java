@@ -1,4 +1,4 @@
-package de.putterer.indloc.util.serialization;
+package de.putterer.indloc.util.toolbox;
 
 import java.io.IOException;
 import java.nio.file.Files;
