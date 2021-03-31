@@ -33,7 +33,7 @@ import static de.putterer.indloc.csi.DataPreview.SubcarrierPropertyPreview.Prope
  */
 public class CSIReplay {
 
-    private static final String RECORDED_DATA_PATTERN = "%s-\\d+.((csi)|(ecg)|(accel))(.deflate)?";
+    private static final String RECORDED_DATA_PATTERN = "%s-\\d+\\.((csi)|(ecg)|(accel))(\\.deflate)?";
     private static final ExecutorService pool = Executors.newFixedThreadPool(4);
 
     @Getter
@@ -87,9 +87,11 @@ public class CSIReplay {
             List<Path> matchingFiles = Files.list(folder)
                     .filter(p ->
                             Pattern.compile(String.format(RECORDED_DATA_PATTERN, station.getHW_ADDRESS())).matcher(p.toFile().getName()).matches()
-                        || Pattern.compile(String.format(RECORDED_DATA_PATTERN, station.getIP_ADDRESS())).matcher(p.toFile().getName()).matches())
+                        || Pattern.compile(String.format(RECORDED_DATA_PATTERN, station.getIP_ADDRESS().replace("/", "_"))).matcher(p.toFile().getName()).matches())
                     .collect(Collectors.toList());
 
+            loadingProgress = 0;
+            progressCallback.accept(0.0);
             matchingFiles.stream()
                     .map(p -> {
                         loadingProgress++;

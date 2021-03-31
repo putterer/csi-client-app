@@ -26,7 +26,7 @@ public class Serialization {
 	static {
 		// StationSerializationAdapter internally USES ITS OWN GSON
 		gson = new GsonBuilder()
-				.registerTypeAdapter(CSIInfo.class, new DataInfoInterfaceAdapter())
+				.registerTypeAdapter(DataInfo.class, new DataInfoInterfaceAdapter())
 				.registerTypeAdapter(Station.class, new StationSerializationAdapter())
 				.create();
 	}
