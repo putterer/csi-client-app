@@ -4,12 +4,15 @@ import de.putterer.indloc.Config;
 import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.DataPreview;
+import de.putterer.indloc.csi.DataPreview.AmplitudeDiffEvolutionPreview.AntennaSubcarrier;
+import de.putterer.indloc.csi.atheros.AthCSIInfo;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.serialization.Serialization;
+import org.apache.commons.math3.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
@@ -230,6 +233,25 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntListDialog("subcarriers", new int[]{5,15,25}, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
+		addPreviewOption("AmplitudeEvolutionAntDiff", station -> {
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.AmplitudeDiffEvolutionPreview(
+					new Pair[]{
+							new Pair(new AntennaSubcarrier(0, 0, 0), new AntennaSubcarrier(0, 2, 0)),
+							new Pair(new AntennaSubcarrier(0, 0, 15), new AntennaSubcarrier(0, 2, 15)),
+							new Pair(new AntennaSubcarrier(0, 0, 30), new AntennaSubcarrier(0, 2, 30))
+					},
+					openIntDialog("smoothingPacketCount", 10, this.getFrame(), useDefaultSettingsForPreview)
+			)), station);
+		}, previewNames);
+		addPreviewOption("AmplitudeEvolutionCarrierDiff", station -> {
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.AmplitudeDiffEvolutionPreview(
+					new Pair[]{
+							new Pair(new AntennaSubcarrier(0, 0, 0), new AntennaSubcarrier(0, 2, station.getDataType() == AthCSIInfo.class ? 30 : 15)),
+							new Pair(new AntennaSubcarrier(0, 0, 0), new AntennaSubcarrier(0, 2, station.getDataType() == AthCSIInfo.class ? 53 : 30))
+					},
+					openIntDialog("smoothingPacketCount", 10, this.getFrame(), useDefaultSettingsForPreview)
+			)), station);
+		}, previewNames);
 		addPreviewOption("SerialEvolution", station -> {
 			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.SerialEvolutionPreview()), station);
 		}, previewNames);
@@ -252,6 +274,22 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("rxAntennaCount", 3, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("txAntennaCount", 1, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
+		}, previewNames);
+		addPreviewOption("CSIDiffPlot", station -> {
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.CSIDiffPlotPreview(
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
+					false)), station);
+		}, previewNames);
+		addPreviewOption("CSICmPlot", station -> {
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.CSIDiffPlotPreview(
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
+					true)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {
 			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.PhaseDiffEvolutionPreview(

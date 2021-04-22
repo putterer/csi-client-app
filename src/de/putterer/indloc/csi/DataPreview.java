@@ -8,7 +8,9 @@ import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.util.Logger;
+import lombok.Data;
 import lombok.Getter;
+import org.apache.commons.math3.util.Pair;
 import org.knowm.xchart.SwingWrapper;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
@@ -625,6 +627,126 @@ public class DataPreview {
 		}
 	}
 
+	public static class AmplitudeDiffEvolutionPreview extends PreviewMode {
+		{ width = 700; height = 500; }
+		private final int dataWidth = 250;
+
+		private double yAxisHeight = 500.0;
+
+		private final Pair<AntennaSubcarrier, AntennaSubcarrier>[] antennaSubcarriersPairs;
+		private final int smoothingPacketCount;
+
+		private final List<Double>[] previousDataPoints;
+		private final List<Double>[] previousUnprocessedDataPoints;
+
+		@Data
+		public static final class AntennaSubcarrier {
+			private final int txAntenna, rxAntenna, subcarrier;
+		}
+
+		public AmplitudeDiffEvolutionPreview(Pair<AntennaSubcarrier, AntennaSubcarrier>[] antennaSubcarriersPairs, int smoothingPacketCount) {
+			this.antennaSubcarriersPairs = antennaSubcarriersPairs;
+			this.smoothingPacketCount = smoothingPacketCount;
+
+			previousDataPoints = new List[antennaSubcarriersPairs.length];
+			previousUnprocessedDataPoints = new List[antennaSubcarriersPairs.length];
+			for (int i = 0;i < antennaSubcarriersPairs.length;i++) {
+				previousDataPoints[i] = new LinkedList<>();
+				previousUnprocessedDataPoints[i] = new LinkedList<>();
+				for(int j = 0;j < dataWidth;j++) {
+					previousDataPoints[i].add(0.0);
+					previousUnprocessedDataPoints[i].add(0.0);
+				}
+			}
+
+		}
+
+
+
+		private String getSeriesName(Pair<AntennaSubcarrier, AntennaSubcarrier> it) {
+			return String.format("RX%d-TX%d-sub%d <-> RX%d-TX%d-sub%d",
+					it.getFirst().rxAntenna,
+					it.getFirst().txAntenna,
+					it.getFirst().subcarrier,
+					it.getSecond().rxAntenna,
+					it.getSecond().txAntenna,
+					it.getSecond().subcarrier
+			);
+		}
+
+		@Override
+		public XYChart createChart(String stationName) {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("Amplitude Diff Evolution - " + stationName)
+					.xAxisTitle("Time")
+					.yAxisTitle("Amplitude difference")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			chart.getStyler().setYAxisMin(-100.0);
+			chart.getStyler().setYAxisMax(+100.0);
+			chart.getStyler().setXAxisMin((double)dataWidth);
+			chart.getStyler().setXAxisMax(0.0);
+
+			Arrays.stream(antennaSubcarriersPairs).forEach(it ->
+					chart.addSeries(getSeriesName(it), new double[dataWidth])
+			);
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
+
+			double[] xData = IntStream.range(0, dataWidth).mapToDouble(i -> i).toArray();
+
+			for (int index = 0;index < this.antennaSubcarriersPairs.length;index++) {
+
+				Pair<AntennaSubcarrier, AntennaSubcarrier> antennaSubcarrierPair = antennaSubcarriersPairs[index];
+
+
+				double firstAmplitude = csi.getCsi_matrix()
+						[antennaSubcarrierPair.getFirst().rxAntenna]
+						[antennaSubcarrierPair.getFirst().txAntenna]
+						[antennaSubcarrierPair.getFirst().subcarrier]
+						.getAmplitude();
+				double secondAmplitude = csi.getCsi_matrix()
+						[antennaSubcarrierPair.getSecond().rxAntenna]
+						[antennaSubcarrierPair.getSecond().txAntenna]
+						[antennaSubcarrierPair.getSecond().subcarrier]
+						.getAmplitude();
+
+				double currentData = secondAmplitude - firstAmplitude;
+
+				List<Double> previousList = this.previousDataPoints[index];
+				List<Double> previousUnprocessedList = this.previousUnprocessedDataPoints[index];
+				if(previousList.size() == dataWidth) {
+					previousList.remove(previousList.size() - 1);
+				}
+				if(previousUnprocessedList.size() == dataWidth) {
+					previousUnprocessedList.remove(previousUnprocessedList.size() - 1);
+				}
+				previousUnprocessedList.add(0, currentData);
+
+				previousList.add(0, previousUnprocessedList.stream().mapToDouble(d -> d).limit(smoothingPacketCount).average().orElse(0));
+
+				if(currentData > yAxisHeight - 100.0) {
+					yAxisHeight = currentData + 100.0;
+					chart.getStyler().setYAxisMax(yAxisHeight);
+				}
+				chart.updateXYSeries(getSeriesName(antennaSubcarrierPair), xData, previousList.stream().mapToDouble(d -> d).toArray(), null);
+			}
+		}
+	}
+
 	/**
 	 * Displays the phase difference between 2 antennas
 	 * data is unwrapped and shifted by mean before displaying
@@ -922,6 +1044,80 @@ public class DataPreview {
 					chart.updateXYSeries(String.format("RX:%d, TX:%d", rx, tx), xData, yData, null);
 				}
 			}
+		}
+	}
+
+	public static class CSIDiffPlotPreview extends PreviewMode {
+
+		private String seriesName;
+
+		{ width = 500; height = 500; }
+
+		private final int rxAntenna1;
+		private final int txAntenna1;
+		private final int rxAntenna2;
+		private final int txAntenna2;
+		private final boolean conjugateMultiplication;
+
+		public CSIDiffPlotPreview(int rxAntenna1, int txAntenna1, int rxAntenna2, int txAntenna2, boolean conjugateMultiplication) {
+			this.rxAntenna1 = rxAntenna1;
+			this.txAntenna1 = txAntenna1;
+			this.rxAntenna2 = rxAntenna2;
+			this.txAntenna2 = txAntenna2;
+			this.conjugateMultiplication = conjugateMultiplication;
+
+			seriesName = String.format("RX:%d, TX:%d to RX:%d, TX:%d", rxAntenna1, txAntenna1, rxAntenna2, txAntenna2);
+		}
+
+		@Override
+		public XYChart createChart(String stationName) {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("CSI Plot - " + stationName)
+					.xAxisTitle("Real")
+					.yAxisTitle("Imag")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			double maxValue = conjugateMultiplication ? 8192.0 : 512.0;
+			chart.getStyler().setYAxisMin(-maxValue);
+			chart.getStyler().setYAxisMax(maxValue);
+			chart.getStyler().setXAxisMin(-maxValue);
+			chart.getStyler().setXAxisMax(maxValue);
+
+			chart.addSeries(seriesName, new double[114]);
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
+			int subcarriers = csi.getNumTones();
+
+			double[] xData = new double[subcarriers];
+			double[] yData = new double[subcarriers];
+			for (int i = 0; i < subcarriers; i++) {
+				CSIInfo.Complex v1 = csi.getCsi_matrix()[rxAntenna1][txAntenna1][i];
+				CSIInfo.Complex v2 = csi.getCsi_matrix()[rxAntenna2][txAntenna2][i];
+				CSIInfo.Complex diff;
+
+				if(conjugateMultiplication) {
+					diff = v1.prod(v2.conjugate());
+				} else {
+					diff = v2.sub(v1);
+				}
+
+				xData[i] = diff.getReal();
+				yData[i] = diff.getImag();
+			}
+			chart.updateXYSeries(seriesName, xData, yData, null);
 		}
 	}
 }
