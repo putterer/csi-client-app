@@ -71,16 +71,16 @@ public class SSHDataClient extends DataClient {
 				if(line.startsWith("<athCSI>")) {
 					StringBuilder sb = new StringBuilder(line);
 					while(true) {
-						line = stdout.readLine();
+						char c = (char) stdout.read();
 //						System.out.println(line);
-						sb.append(line);
-						if(line.endsWith("</athCSI>")) {
+						sb.append(c);
+						if(sb.toString().endsWith("</athCSI>")) {
 							break;
 						}
 					}
 
-					String csiData = sb.toString().replace("<athCSI>", "").replace("</athCSI>", "");
-					byte[] data = Base64.getDecoder().decode(csiData);
+					String csiData = sb.toString().replace("<athCSI>", "").replace("</athCSI>", "").replace("\n", "");
+ 					byte[] data = Base64.getDecoder().decode(csiData);
 
 					if(data[0] != TYPE_ATH_CSI_INFO) {
 						Logger.warn("Received SSH payload doesn't match expected data type");
