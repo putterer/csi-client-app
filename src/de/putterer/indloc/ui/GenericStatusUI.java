@@ -7,6 +7,7 @@ import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.csi.DataPreview.AmplitudeDiffEvolutionPreview.AntennaSubcarrier;
 import de.putterer.indloc.csi.atheros.AthCSIInfo;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
+import de.putterer.indloc.csi.intel.IntCSIInfo;
 import de.putterer.indloc.data.DataClient;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.data.ecg.EcgInfo;
@@ -294,12 +295,12 @@ public class GenericStatusUI extends UIComponentWindow {
 		addPreviewOption("PhaseDiffEvolution", station -> {
 			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.PhaseDiffEvolutionPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
-					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", station.getDataType() == IntCSIInfo.class ? 1 : 2, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("shortTermHistoryLength", -1, this.getFrame(), useDefaultSettingsForPreview),
 					openDoubleDialog("jumpThreshold", 10, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("truncated mean length", 10, this.getFrame(), useDefaultSettingsForPreview),
 					openDoubleDialog("truncated mean pct", 0.8, this.getFrame(), useDefaultSettingsForPreview),
-					openIntListDialog("subcarriers", new int[]{10,30,50}, this.getFrame(), useDefaultSettingsForPreview)
+					openIntListDialog("subcarriers", station.getDataType() == IntCSIInfo.class ? new int[]{5,15,25} : new int[]{10,30,50}, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffVariance", station -> {

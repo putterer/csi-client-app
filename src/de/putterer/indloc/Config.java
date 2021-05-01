@@ -52,9 +52,9 @@ public class Config {
 //							.enableRespiratoryUI(),
 					new Station(STATION_5_MAC, "192.168.178.205", AthCSIInfo.class, null, new ActivityDetector()).setName("AthCsiRx"),//.proxyViaSsh(),
 					new Station(STATION_11_MAC, "192.168.178.211", IntCSIInfo.class, null, null).setName("IntCsiRx"),//.enableRespiratoryUI()
-					new Station(STATION_ESP_CSI_MAC, "/dev/ttyUSB0", EspCSIInfo.class, null, null).setName("EspCsiRx"),
+					new Station(STATION_ESP_CSI_MAC, "/dev/ttyUSB1", EspCSIInfo.class, null, null).setName("EspCsiRx"),
 					new Station(STATION_ANDROID_MAC, "192.168.178.237", AndroidInfo.class, null, null).setName("Phone"),
-					new Station(STATION_ESP_ECG_MAC, "/dev/ttyUSB1", EcgInfo.class, null, null)
+					new Station(STATION_ESP_ECG_MAC, "/dev/ttyUSB0", EcgInfo.class, null, null)
 			},
 			new RoomObject[] {
 

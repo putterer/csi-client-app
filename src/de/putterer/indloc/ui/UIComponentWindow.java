@@ -4,6 +4,7 @@ import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.DataPreview;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.util.Logger;
+import de.putterer.indloc.util.PlatformUtil;
 import lombok.Getter;
 
 import javax.swing.*;
@@ -21,7 +22,7 @@ public abstract class UIComponentWindow extends JPanel {
 	public UIComponentWindow(String title, int windowWidth, int windowHeight) {
 		this.windowWidth = windowWidth;
 		this.windowHeight = windowHeight;
-		frame = new JFrame(title);
+		frame = new JFrame(title + (PlatformUtil.isRunningI3() ? " i3float" : ""));
 		frame.setSize(windowWidth, windowHeight);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLocationRelativeTo(null);

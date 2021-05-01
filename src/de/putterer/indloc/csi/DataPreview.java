@@ -8,6 +8,7 @@ import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.util.Logger;
+import de.putterer.indloc.util.PlatformUtil;
 import lombok.Data;
 import lombok.Getter;
 import org.apache.commons.math3.util.Pair;
@@ -59,6 +60,8 @@ public class DataPreview {
 		
 		wrapper = new SwingWrapper<>(chart);
 		this.frame = wrapper.displayChart();
+
+		this.frame.setTitle(this.frame.getTitle() + (PlatformUtil.isRunningI3() ? " i3float" : ""));
 	}
 	
 	public void setData(DataInfo info) {
@@ -1074,7 +1077,7 @@ public class DataPreview {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title("CSI Plot - " + stationName)
+					.title(conjugateMultiplication ? "CSI CM Plot - " : "CSI Plot - " + stationName)
 					.xAxisTitle("Real")
 					.yAxisTitle("Imag")
 					.theme(CHART_THEME)

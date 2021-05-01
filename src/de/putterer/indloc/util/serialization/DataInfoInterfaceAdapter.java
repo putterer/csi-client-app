@@ -17,6 +17,7 @@ public class DataInfoInterfaceAdapter implements JsonDeserializer<DataInfo>, Jso
 	public DataInfo deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
 		Optional<Class<?>> clazz = Optional.ofNullable(jsonElement.getAsJsonObject().get("csiInfoType"))
 				.map(JsonElement::getAsString)
+				.map(it -> it.replace("class ", ""))
 				.map(DataInfoInterfaceAdapter::classForName);
 
 
