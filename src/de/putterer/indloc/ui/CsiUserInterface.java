@@ -242,7 +242,13 @@ public class CsiUserInterface implements KeyListener {
 		return respiratoryUIs.stream().anyMatch(r -> r.getStation() == station);
 	}
 
+
+	public static String REPLAY_TO_RUN_ON_STARTUP = null;
 	public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
+		if(args.length >= 2 && args[0].equals("--run-replay")) {
+			REPLAY_TO_RUN_ON_STARTUP = args[1];
+		}
+
 		Logger.setLogLevel(Logger.Level.DEBUG);
 
 //		FlatDarculaLaf.install();

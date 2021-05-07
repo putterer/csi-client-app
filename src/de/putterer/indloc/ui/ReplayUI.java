@@ -10,9 +10,16 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ReplayUI extends UIComponentWindow {
+
+    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private CsiUserInterface csiUserInterface;
 
@@ -45,6 +52,15 @@ public class ReplayUI extends UIComponentWindow {
         initUI();
 
         setupFinished();
+
+        if(CsiUserInterface.REPLAY_TO_RUN_ON_STARTUP != null) {
+            executor.schedule(() -> {
+                Logger.info("Automatically load of replay requested");
+                Path path = Paths.get(CsiUserInterface.REPLAY_TO_RUN_ON_STARTUP);
+                SwingUtilities.invokeLater(() -> loadReplayFile(path));
+                CsiUserInterface.REPLAY_TO_RUN_ON_STARTUP = null;
+            }, 1000, TimeUnit.MILLISECONDS);
+        }
     }
 
     private void initUI() {
@@ -156,14 +172,18 @@ public class ReplayUI extends UIComponentWindow {
             return;
         }
 
-        Logger.info("Loading replay %s", chooser.getSelectedFile().toPath().toAbsolutePath().toString());
+        loadReplayFile(chooser.getSelectedFile().toPath());
+    }
+
+    private void loadReplayFile(Path path) {
+        Logger.info("Loading replay %s", path.toAbsolutePath().toString());
 
         loadReplayButton.setEnabled(false);
         loadReplayButton.setVisible(false);
         loadingProgressBar.setVisible(true);
 
         new Thread(() ->
-                csiUserInterface.loadReplay(chooser.getSelectedFile().toPath(), progress ->
+                csiUserInterface.loadReplay(path, progress ->
                         SwingUtilities.invokeLater(() -> loadingProgressBar.setValue((int) Math.round(progress * 1000)))
         )).start();
     }
