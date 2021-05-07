@@ -11,17 +11,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class ConjugateMultiplicationProcessor {
 
+    private static final double PHASE_SHIFT_CORRECTION_THRESHOLD = Math.toRadians(60.0); // minimum threshold for rotation/phase shift detection
+
     private final int rx1, tx1, rx2, tx2;
-    private final int slidingWindowSize;
-    private final int timestampCountForAverage;
-    private final double stddevThresholdForSamePhaseDetection;
+    private final int slidingWindowSize; // the size of the cached sliding window
+    private final int timestampCountForAverage; // the number of samples to use for the running average
+    private final double stddevThresholdForSamePhaseDetection; // threshold for detecting invalid samples where all subcarriers contain the same phase data
+    private final double thresholdForOffsetCorrection; // threshold for diff while detecting same samples that have been phase shifted (rotated)
 
     private final List<PreviousCMEntry> previousData = new LinkedList<>();
 
-    public ConjugateMultiplicationProcessor(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection) {
+    public ConjugateMultiplicationProcessor(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection) {
         this.rx1 = rx1;
         this.tx1 = tx1;
         this.rx2 = rx2;
@@ -29,14 +33,15 @@ public class ConjugateMultiplicationProcessor {
         this.slidingWindowSize = slidingWindowSize;
         this.timestampCountForAverage = timestampCountForAverage;
         this.stddevThresholdForSamePhaseDetection = stddevThresholdForSamePhaseDetection;
+        this.thresholdForOffsetCorrection = thresholdForOffsetCorrection;
     }
 
     public ConjugateMultiplicationProcessor(int rx1, int tx1, int rx2, int tx2) {
-        this(rx1, tx1, rx2, tx2, 150, 5, Math.toRadians(20.0));
+        this(rx1, tx1, rx2, tx2, 150, 10, Math.toRadians(20.0), 10000.0);
     }
 
 
-    public Complex[] process(DataInfo info) {
+    public Complex[] process(DataInfo info) { // TODO: remove duplicate code from preview
         while(previousData.size() > slidingWindowSize) {
             previousData.remove(0);
         }
@@ -44,15 +49,9 @@ public class ConjugateMultiplicationProcessor {
         Complex[] cm = getRawConjugateMultiplicative(info);
 
         // normalize amplitude
-        CSIInfo.Complex rawMean = Arrays.stream(cm).reduce(CSIInfo.Complex::add).orElse(new CSIInfo.Complex(0,0)).scale(1.0 / cm.length);
-        double amplitudeVariance = Arrays.stream(cm)
-                .map(it -> Math.pow(it.sub(rawMean).getAmplitude(), 2))
-                .reduce(Double::sum)
-                .orElse(0.0)
-                / cm.length;
-        double amplitudeDeviation = Math.sqrt(amplitudeVariance);
+        double amplitudeDeviation = CSIUtil.stddev(cm);
         double scaleFactor = 2000.0 / amplitudeDeviation; // scale around mean or origin? this scales around origin
-        System.out.println("ProcScale" + scaleFactor);
+
         for(int i = 0;i < cm.length;i++) {
             cm[i] = cm[i].scale(scaleFactor);
         }
@@ -69,6 +68,7 @@ public class ConjugateMultiplicationProcessor {
             PreviousCMEntry previous = previousData.get(previousData.size() - 1);
             previousData.add(previous);
 
+            System.out.println("filtering out invalid csi sample");
             return previous.processed;
         }
 
@@ -79,23 +79,56 @@ public class ConjugateMultiplicationProcessor {
         previousData.add(newCMEntry);
 
         // Detect and remove rotation
-        Complex mean = Arrays.stream(cm).reduce(CSIInfo.Complex::add).orElse(new CSIInfo.Complex(0,0)).scale(1.0 / cm.length);
+        // ----------------------------
+        // compare with previous processed (therefore already rotated)
+        // if rotated by mean diff, they match (squared mean diff ampl. between individual carriers), apply rotation
 
-        newCMEntry.processed = cm; // TODO: change
+        Complex[] processed = cm;
+
+        if(previousData.size() >= 2) {
+            PreviousCMEntry previousCMEntry = previousData.get(previousData.size() - 1 - 1);
+
+            Complex mean = CSIUtil.mean(cm);
+            Complex previousMean = CSIUtil.mean(previousCMEntry.processed);
+            double phaseOffset = previousMean.getPhase() - mean.getPhase();
+
+            if(phaseOffset > PHASE_SHIFT_CORRECTION_THRESHOLD) {
+                System.out.println("Rotation triggered");
+                // rotate current
+                Complex[] rotated = CSIUtil.shift(cm, phaseOffset);
+
+                // compare with previous
+                double rotatedDiff = IntStream.range(0, rotated.length)
+                        .mapToDouble(i -> rotated[i].sub(cm[i]).getAmplitude())
+                        .average().orElse(Double.MAX_VALUE);
+
+                if(rotatedDiff < thresholdForOffsetCorrection) {
+                    System.out.println("correction triggered! diff: " + rotatedDiff);
+                    // apply rotation
+                    processed = rotated;
+                } else {
+                    System.out.println("correction not triggered! diff: " + rotatedDiff);
+                    processed = cm;
+                }
+            }
+        }
+
+        newCMEntry.processed = processed;
 
         // Average
         Complex[] average = getAverage(newCMEntry.processed);
 
-        return cm;
+        return average;
     }
 
     public Complex[] getAverage(Complex[] input) {
         Complex[] sum = new Complex[input.length];
         Arrays.fill(sum, new Complex(0, 0));
-        for(int i = 0;i < Math.min(timestampCountForAverage, previousData.size());i++) {
+        int elementCount = Math.min(timestampCountForAverage, previousData.size());
+        for(int i = 0;i < elementCount;i++) {
             sum = CSIUtil.sum(sum, previousData.get(previousData.size() - 1 - i).processed);
         }
-        return CSIUtil.scale(sum, 1.0 / ((double)sum.length));
+        return CSIUtil.scale(sum, 1.0 / ((double)elementCount));
     }
 
     public Complex[] getRawConjugateMultiplicative(DataInfo info) {

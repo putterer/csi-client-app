@@ -8,6 +8,7 @@ import de.putterer.indloc.csi.processing.ConjugateMultiplicationProcessor;
 import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.data.ecg.EcgInfo;
+import de.putterer.indloc.util.CSIUtil;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.PlatformUtil;
 import lombok.Data;
@@ -1139,7 +1140,6 @@ public class DataPreview {
 
 				double amplitudeDeviation = Math.sqrt(amplitudeVariance);
 				double scaleFactor = 2000.0 / amplitudeDeviation; // scale around mean or origin? this scales around origin
-				System.out.println("OldScale" + scaleFactor);
 
 				for(int i = 0;i < complexData.length;i++) {
 					complexData[i] = complexData[i].scale(scaleFactor);
@@ -1172,12 +1172,12 @@ public class DataPreview {
 
 		private final ConjugateMultiplicationProcessor processor;
 
-		public CSICmProcessedPlotPreview(int rx1, int tx1, int rx2, int tx2) {
+		public CSICmProcessedPlotPreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection) {
 			this.rx1 = rx1;
 			this.tx1 = tx1;
 			this.rx2 = rx2;
 			this.tx2 = tx2;
-			this.processor = new ConjugateMultiplicationProcessor(rx1, tx1, rx2, tx2); // TODO: parameters
+			this.processor = new ConjugateMultiplicationProcessor(rx1, tx1, rx2, tx2, slidingWindowSize, timestampCountForAverage, stddevThresholdForSamePhaseDetection, thresholdForOffsetCorrection); // TODO: parameters
 
 			seriesName = String.format("RX:%d, TX:%d to RX:%d, TX:%d", rx1, tx1, rx2, tx2);
 		}
@@ -1224,7 +1224,10 @@ public class DataPreview {
 				yData[i] = processedData[i].getImag();
 			}
 
+			CSIInfo.Complex mean = CSIUtil.mean(processedData);
+
 			chart.updateXYSeries(seriesName, xData, yData, null);
+			chart.updateXYSeries(seriesName + " - mean", new double[]{mean.getReal()}, new double[]{mean.getImag()}, null);
 		}
 	}
 }

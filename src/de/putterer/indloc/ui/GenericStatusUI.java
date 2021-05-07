@@ -305,7 +305,11 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
-					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview)
+					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("slidingWindowSize", 150, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("timestampCountForAverage", 10, this.getFrame(), useDefaultSettingsForPreview),
+					Math.toRadians(openDoubleDialog("stddevThresholdForSamePhaseDetection (degree)", 20.0, this.getFrame(), useDefaultSettingsForPreview)),
+					openDoubleDialog("thresholdForOffsetCorrection", 10000.0, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {

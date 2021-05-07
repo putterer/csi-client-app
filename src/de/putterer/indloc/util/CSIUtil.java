@@ -1,5 +1,6 @@
 package de.putterer.indloc.util;
 
+import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.CSIInfo.Complex;
 
 import java.security.InvalidParameterException;
@@ -101,6 +102,35 @@ public class CSIUtil {
 
     public static Complex[] scale(Complex[] c, double v) {
         return Arrays.stream(c).map(it -> it.scale(v)).toArray(Complex[]::new);
+    }
+
+    public static Complex mean(Complex[] c) {
+        return Arrays.stream(c).reduce(CSIInfo.Complex::add).orElse(new CSIInfo.Complex(0,0)).scale(1.0 / c.length);
+    }
+
+    public static double variance(Complex[] c) {
+        Complex mean = mean(c);
+        return Arrays.stream(c)
+                .map(it -> Math.pow(it.sub(mean).getAmplitude(), 2))
+                .reduce(Double::sum)
+                .orElse(0.0)
+                / c.length;
+    }
+
+    public static double stddev(Complex[] c) {
+        return Math.sqrt(variance(c));
+    }
+
+    /**
+     * Shifts the complex data element wise
+     * @param c the complex data
+     * @param phaseOffset the phase shift to be applied
+     * @return the shifted data
+     */
+    public static Complex[] shift(Complex[] c, double phaseOffset) {
+        return Arrays.stream(c)
+                .map(it -> Complex.fromAmplitudePhase(it.getAmplitude(), it.getPhase() + phaseOffset))
+                .toArray(Complex[]::new);
     }
 
     /**
