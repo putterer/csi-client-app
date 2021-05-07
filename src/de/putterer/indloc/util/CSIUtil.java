@@ -1,6 +1,10 @@
 package de.putterer.indloc.util;
 
+import de.putterer.indloc.csi.CSIInfo.Complex;
+
+import java.security.InvalidParameterException;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 /**
  * Utility code for processing CSI
@@ -82,5 +86,39 @@ public class CSIUtil {
             shift(data, 2.0 * Math.PI);
         }
         return mean(data);
+    }
+
+    public static Complex[] sum(Complex[] l, Complex[] r) {
+        if(l.length != r.length) {
+            throw new InvalidParameterException(String.format("Lengths of arrays l: %d, r: %d, do not match", l.length, r.length));
+        }
+
+        return IntStream.range(0, l.length).mapToObj(i -> new Complex(
+                l[i].getReal() + r[i].getReal(),
+                l[i].getImag() + r[i].getImag()
+        )).toArray(Complex[]::new);
+    }
+
+    public static Complex[] scale(Complex[] c, double v) {
+        return Arrays.stream(c).map(it -> it.scale(v)).toArray(Complex[]::new);
+    }
+
+    /**
+     * Calculates the variance of the supplied data
+     * @param v the data
+     * @return the variance
+     */
+    public static double variance(double[] v) {
+        double mean = Arrays.stream(v).average().orElse(0.0);
+        return Arrays.stream(v).map(it -> Math.pow(it - mean, 2)).average().orElse(0.0);
+    }
+
+    /**
+     * Calculates the standard deviation of the supplied data
+     * @param v the data
+     * @return the standard deviation
+     */
+    public static double stddev(double[] v) {
+        return Math.sqrt(variance(v));
     }
 }

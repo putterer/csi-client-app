@@ -4,6 +4,7 @@ import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.csi.esp.EspCSIInfo;
 import de.putterer.indloc.csi.intel.IntCSIInfo;
+import de.putterer.indloc.csi.processing.ConjugateMultiplicationProcessor;
 import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.data.ecg.EcgInfo;
@@ -1061,13 +1062,15 @@ public class DataPreview {
 		private final int rxAntenna2;
 		private final int txAntenna2;
 		private final boolean conjugateMultiplication;
+		private final boolean normalizeAmplitude;
 
-		public CSIDiffPlotPreview(int rxAntenna1, int txAntenna1, int rxAntenna2, int txAntenna2, boolean conjugateMultiplication) {
+		public CSIDiffPlotPreview(int rxAntenna1, int txAntenna1, int rxAntenna2, int txAntenna2, boolean conjugateMultiplication, boolean normalizeAmplitude) {
 			this.rxAntenna1 = rxAntenna1;
 			this.txAntenna1 = txAntenna1;
 			this.rxAntenna2 = rxAntenna2;
 			this.txAntenna2 = txAntenna2;
 			this.conjugateMultiplication = conjugateMultiplication;
+			this.normalizeAmplitude = normalizeAmplitude;
 
 			seriesName = String.format("RX:%d, TX:%d to RX:%d, TX:%d", rxAntenna1, txAntenna1, rxAntenna2, txAntenna2);
 		}
@@ -1077,7 +1080,7 @@ public class DataPreview {
 			XYChart chart = new XYChartBuilder()
 					.width(width)
 					.height(height)
-					.title(conjugateMultiplication ? "CSI CM Plot - " : "CSI Plot - " + stationName)
+					.title(conjugateMultiplication ? "CSI CM Plot - " : "CSI Diff Plot - " + stationName)
 					.xAxisTitle("Real")
 					.yAxisTitle("Imag")
 					.theme(CHART_THEME)
@@ -1092,6 +1095,9 @@ public class DataPreview {
 			chart.getStyler().setXAxisMax(maxValue);
 
 			chart.addSeries(seriesName, new double[114]);
+			if(normalizeAmplitude) {
+				chart.addSeries(seriesName + " - mean", new double[1]);
+			}
 			return chart;
 		}
 
@@ -1104,8 +1110,9 @@ public class DataPreview {
 
 			int subcarriers = csi.getNumTones();
 
-			double[] xData = new double[subcarriers];
-			double[] yData = new double[subcarriers];
+			CSIInfo.Complex[] complexData = new CSIInfo.Complex[subcarriers];
+
+
 			for (int i = 0; i < subcarriers; i++) {
 				CSIInfo.Complex v1 = csi.getCsi_matrix()[rxAntenna1][txAntenna1][i];
 				CSIInfo.Complex v2 = csi.getCsi_matrix()[rxAntenna2][txAntenna2][i];
@@ -1117,9 +1124,106 @@ public class DataPreview {
 					diff = v2.sub(v1);
 				}
 
-				xData[i] = diff.getReal();
-				yData[i] = diff.getImag();
+				complexData[i] = diff;
 			}
+
+			// normalize standard deviation of complex data, not amplitude itself
+			if(normalizeAmplitude) {
+				CSIInfo.Complex mean = Arrays.stream(complexData).reduce(CSIInfo.Complex::add).orElse(new CSIInfo.Complex(0,0)).scale(1.0 / complexData.length);
+
+				double amplitudeVariance = Arrays.stream(complexData)
+						.map(it -> Math.pow(it.sub(mean).getAmplitude(), 2))
+						.reduce(Double::sum)
+						.orElse(0.0)
+						/ complexData.length;
+
+				double amplitudeDeviation = Math.sqrt(amplitudeVariance);
+				double scaleFactor = 2000.0 / amplitudeDeviation; // scale around mean or origin? this scales around origin
+				System.out.println("OldScale" + scaleFactor);
+
+				for(int i = 0;i < complexData.length;i++) {
+					complexData[i] = complexData[i].scale(scaleFactor);
+				}
+
+				chart.updateXYSeries(seriesName + " - mean", new double[] {mean.getReal() * scaleFactor}, new double[] {mean.getImag() * scaleFactor}, null);
+			}
+
+			double[] xData = new double[subcarriers];
+			double[] yData = new double[subcarriers];
+			for (int i = 0; i < subcarriers; i++) {
+				xData[i] = complexData[i].getReal();
+				yData[i] = complexData[i].getImag();
+			}
+
+			chart.updateXYSeries(seriesName, xData, yData, null);
+		}
+	}
+
+	public static class CSICmProcessedPlotPreview extends PreviewMode {
+
+		private String seriesName;
+
+		{ width = 500; height = 500; }
+
+		private final int rx1;
+		private final int tx1;
+		private final int rx2;
+		private final int tx2;
+
+		private final ConjugateMultiplicationProcessor processor;
+
+		public CSICmProcessedPlotPreview(int rx1, int tx1, int rx2, int tx2) {
+			this.rx1 = rx1;
+			this.tx1 = tx1;
+			this.rx2 = rx2;
+			this.tx2 = tx2;
+			this.processor = new ConjugateMultiplicationProcessor(rx1, tx1, rx2, tx2); // TODO: parameters
+
+			seriesName = String.format("RX:%d, TX:%d to RX:%d, TX:%d", rx1, tx1, rx2, tx2);
+		}
+
+		@Override
+		public XYChart createChart(String stationName) {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("CSI Processed CM Plot - " + stationName)
+					.xAxisTitle("Real")
+					.yAxisTitle("Imag")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			double maxValue = 8192.0;
+			chart.getStyler().setYAxisMin(-maxValue);
+			chart.getStyler().setYAxisMax(maxValue);
+			chart.getStyler().setXAxisMin(-maxValue);
+			chart.getStyler().setXAxisMax(maxValue);
+
+			chart.addSeries(seriesName, new double[114]);
+			chart.addSeries(seriesName + " - mean", new double[1]);
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
+			int subcarriers = csi.getNumTones();
+
+			CSIInfo.Complex[] processedData = processor.process(dataInfo);
+
+			double[] xData = new double[subcarriers];
+			double[] yData = new double[subcarriers];
+			for (int i = 0; i < subcarriers; i++) {
+				xData[i] = processedData[i].getReal();
+				yData[i] = processedData[i].getImag();
+			}
+
 			chart.updateXYSeries(seriesName, xData, yData, null);
 		}
 	}

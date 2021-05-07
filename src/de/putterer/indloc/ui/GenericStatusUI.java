@@ -282,7 +282,7 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
-					false)), station);
+					false, false)), station);
 		}, previewNames);
 		addPreviewOption("CSICmPlot", station -> {
 			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.CSIDiffPlotPreview(
@@ -290,7 +290,23 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
-					true)), station);
+					true, false)), station);
+		}, previewNames);
+		addPreviewOption("CSICmPlotNormalized", station -> {
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.CSIDiffPlotPreview(
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
+					true, true)), station);
+		}, previewNames);
+		addPreviewOption("CSICmProcessed", station -> {
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.CSICmProcessedPlotPreview(
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview)
+			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {
 			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.PhaseDiffEvolutionPreview(

@@ -85,6 +85,10 @@ public abstract class CSIInfo extends DataInfo implements Serializable {
 			);
 		}
 
+		public Complex add(Complex other) {
+			return new Complex(getReal() + other.getReal(), getImag() + other.getImag());
+		}
+
 		public Complex conjugate() {
 			return new Complex(getReal(), -getImag());
 		}
