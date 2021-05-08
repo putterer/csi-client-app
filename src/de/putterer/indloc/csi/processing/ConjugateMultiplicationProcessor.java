@@ -37,7 +37,7 @@ public class ConjugateMultiplicationProcessor {
     }
 
     public ConjugateMultiplicationProcessor(int rx1, int tx1, int rx2, int tx2) {
-        this(rx1, tx1, rx2, tx2, 150, 10, Math.toRadians(20.0), 10000.0);
+        this(rx1, tx1, rx2, tx2, 150, 10, Math.toRadians(5.0), 22000.0);
     }
 
 
@@ -63,7 +63,7 @@ public class ConjugateMultiplicationProcessor {
 
         double averagePreviousPhaseStddev = previousData.stream().mapToDouble(PreviousCMEntry::getPhaseStddev).average().orElse(0.0);
 
-        if(phaseStddev < stddevThresholdForSamePhaseDetection && phaseStddev < averagePreviousPhaseStddev * 0.66) {
+        if(phaseStddev < stddevThresholdForSamePhaseDetection && phaseStddev < averagePreviousPhaseStddev * 0.30) {
             // assume invalid data, filter
             PreviousCMEntry previous = previousData.get(previousData.size() - 1);
             previousData.add(previous);

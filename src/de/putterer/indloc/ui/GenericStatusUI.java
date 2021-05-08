@@ -308,8 +308,8 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("slidingWindowSize", 150, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("timestampCountForAverage", 10, this.getFrame(), useDefaultSettingsForPreview),
-					Math.toRadians(openDoubleDialog("stddevThresholdForSamePhaseDetection (degree)", 20.0, this.getFrame(), useDefaultSettingsForPreview)),
-					openDoubleDialog("thresholdForOffsetCorrection", 10000.0, this.getFrame(), useDefaultSettingsForPreview)
+					Math.toRadians(openDoubleDialog("stddevThresholdForSamePhaseDetection (degree)", 5.0, this.getFrame(), useDefaultSettingsForPreview)),
+					openDoubleDialog("thresholdForOffsetCorrection", 22000.0, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {

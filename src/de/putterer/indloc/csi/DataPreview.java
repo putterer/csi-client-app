@@ -1163,7 +1163,7 @@ public class DataPreview {
 
 		private String seriesName;
 
-		{ width = 500; height = 500; }
+		{ width = 800; height = 800; }
 
 		private final int rx1;
 		private final int tx1;
@@ -1195,7 +1195,7 @@ public class DataPreview {
 
 			chart.getStyler().setLegendPosition(LegendPosition.InsideNE);
 			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
-			double maxValue = 8192.0;
+			double maxValue = 8192.0 * 1.5;
 			chart.getStyler().setYAxisMin(-maxValue);
 			chart.getStyler().setYAxisMax(maxValue);
 			chart.getStyler().setXAxisMin(-maxValue);
