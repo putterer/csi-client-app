@@ -106,12 +106,40 @@ The CSI client app is currently configured by changing the `Config.java` file. T
 
 The HW address (MAC) should be set, even for devices that do not have one, as it may be used for identifying the station in the serialized recording.
 
+### Proxying Atheros data via SSH
+The client / server transmit CSI using UDP so they do not cause an acknowledgement in case the data is sent via the WiFi link used for generating the CSI. This means, some of the data might be lost, which I've seen occuring for Atheros based routers. In case this happens, the obtained CSI data flowing from the csi server to the client can be "proxied" using SSH. This can be done by calling `proxyViaSsh()` on the station in the configuration
 
+This will cause the client to connect to the server's address via SSH, kill any running server, run its own server on the remote device with a command line option, causing it to dump any obtained data into the stdout. This data will then be carried over the SSH connection and get parsed on the client side.
+
+This might cause some delay in obtaining the CSI data, therefore causing an offset in the `clientTimestamp`, but all data should reliably arrive. Additionally, the data contains timestamps from the wifi chip itself, therefore allowing correcting later on.
 
 # Preview / Processing
+To start obtaining CSI, just run the application via the CsiUserInterface entry point.
+It will open the user interface and automatically start connecting/subscribing to the configured stations until either a timeout occurs or the connection is acknowledged.
+
+You can manually **subscribe** / **unsubscribe** from a station using the buttons, the **Select** button is legacy and doesn't do anything at the moment.
+
+To start previewing live data, select a preview from the drop down, select a station as a a data source and click **Show**. This will open a series of dialogs that allow you to customize the parameters for the preview type. If you want to use the default parameters for all options, you can also just click the **Default** button.
+
+The **Activity** and **Respiratory** tick boxes activate the Activity and Respiratory submodules for the selected station. (Activity is broken at the moment, the respiratory module will work if the `enableRespiratoryUI()` call on the given station  is present in the Config file)
 
 # Recording
+To start a recording, click the **Record** button and enter a name for the recording folder. Each arriving CSI packet causes a new file to be created in the recording folder containing the serialized data.
+
+All recording data is compressed using zlib.
+
+To stop the recording, press the button again.
 
 # Replaying
+A recording can be selected in the replay UI. This will cause the recording to be loaded and the application to restart (closes all previews).
 
-## Data
+The application will then behave as if it were receiving the data contained in the recording in real time. All previews and processing modules will operated on the recording's data.
+
+The recording can be controlled using the provided user interface after having been loaded.
+
+## Data format
+The recorded data can be loaded externally for investigation, e.g. using an interactive notebook (see the provided notebook for loading CSI, ECG and acceleration data using python).
+
+Before being stored on disk, all data is compressed using zlib. The data is serialized according to the format described in `DataInfo`, `AndroidInfo`, `EcgInfo`, `CSIInfo`, `AthCSIInfo`, `IntCSIInfo`, `EspCSIInfo`. All packets share the same fields from DataInfo, `clientTimestamp` and `messageId`, all CSI packets contain the same data structure for common properties like the CSI matrix. Different devices might store different additional fields like timestamp from the wifi chip, RSSI, noise information, ... .
+
+All recording contain a `room.cfg` file that specifies the configured stations. When loading, this overrides the stations configured in the application.
