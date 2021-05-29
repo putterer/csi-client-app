@@ -8,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,7 +68,7 @@ public class RSSIUtil {
 		if(System.getProperty("os.name").startsWith("Windows")) {
 			builder.command(String.format("ping %s -t", ipAddress));
 		} else {
-			builder.command("ping", ipAddress, "-i", String.valueOf((float)Config.ICMP_ECHO_INTERVAL_MS / 1000f));
+			builder.command("ping", ipAddress, "-i", String.valueOf((float)Config.TRILATERATION_ICMP_ECHO_INTERVAL_MS / 1000f));
 		}
 		
 		Process process = builder.start();

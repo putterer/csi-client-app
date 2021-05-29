@@ -1,80 +1,117 @@
 # CSI Client App
 
-This application allows obtaining, processing, previewing, recording and replay CSI information sent by a router using the [Atheros CSI Tool](https://wands.sg/research/wifi/AtherosCSI/) in combination with my [OpenWRT CSI Server](https://github.com/putterer/csi-server-openwrt).
+This application allows obtaining, processing, previewing, recording and replaying CSI, ECG and acceleration data sent by multiple devices.
 
-It was developed as part of my bachelor's thesis and therefore includes code about indoor localization as well as trilateration using RSSI.
+It was initially developed as part of my bachelor's thesis and therefore includes code about indoor localization as well as trilateration using RSSI.
 The python implementation of the [SpotFi](https://web.stanford.edu/~skatti/pubs/sigcomm15-spotfi.pdf) algorithm was removed from this repository.
+
+The code is designed with software engineering in mind but targeting research and being able to iterate / test quickly. Its base stems from a different project with a completely different goal (indoor localization using atheros devices). It is therefore messy, composed of a lot of different subsystems that may or may not interact and not documented in most cases.
 
 The config files specify location and properties of the stations within a room due to that.
 
+Most of it is tied together by a generic user interface allowing access to different submodules, but some of the functionality might not be integrated with that, while some other legacy functionality of the user interface (like the select button or the respiratory UI) might not work anymore due to changes in the underlying data structures while adding different types of data sources (intel/esp csi, ecg, acceleration, ...).
+
 ## Building
-The project uses Java 8+.
+The project uses Java 8+ and should be runnable with every newer version of most JDKs, including OracleJDK and OpenJDK.
 
 It does not use any build automation and dependency management tool like
 Maven or Gradle as it is required to run and be modified on a system not connected
 to the internet due to running an access point as well as connecting to a router using
-Ethernet. Dependencies therefore need to be added manually. The used libraries are [Lombok](https://projectlombok.org/), [XChart](https://knowm.org/open-source/xchart/) and [Gson](https://github.com/google/gson).
-The project can also be built as a self contained runnable JAR file using the `indloc.IndoorLocalization` class as an entry point which makes most tools accessible using a command line interface (CLI). When run, it will produce a help message:
+Ethernet. Dependencies therefore need to be added manually.
 
-```
-Usage:                  (set log level with --log-level)
-help                               produce help message
+### Using IntelliJ IDEA
+Download the required libraries (as jar files) and put them into the lib folder:
+- [Lombok](https://mvnrepository.com/artifact/org.projectlombok/lombok/1.18.20)
+- [XChart](https://knowm.org/open-source/xchart/)
+- [Gson](https://mvnrepository.com/artifact/com.google.code.gson/gson/2.8.5)
+- [Apache Commons Math](https://mvnrepository.com/artifact/org.apache.commons/commons-math3/3.6.1)
+- [FlatLaf](https://mvnrepository.com/artifact/com.formdev/flatlaf/0.41)
+- [JSerialComm](https://mvnrepository.com/artifact/com.fazecast/jSerialComm/2.6.2)
+- [JWave](https://github.com/graetz23/JWave/tree/master/dist)
 
-recordcsi                          Starts recording csi
-    --path [path]                  the directory to save the recording in
-   (--payloadlen [l])              optional, filter recording for payload length
-   (--room [room])                 optional, load room from file
+Import the project into IntelliJ, open module settings by clicking on the root of the project and pressing F4. In the libraries tab, configure each downloaded library and add them to the dependencies of the project in the modules tab.
 
-replaycsi                          starts the replay (loads "path/room.cfg" as well)
-    --path [path]                  the directory the recording is located in
-   (--spotfi)                      run the spotfi algorithm defined in "spotfi.py" on every csi
-   (--group [threshold])           release packets as a group after the threshold has been reached
-   (--preview [apc])               activate preview, a: amplitude, p: phase, c: plot csi
-   (--previewRX [antennas])        number of rx antennas to show in the previews (default: 3)
-   (--previewTX [antennas])        number of tx antennas to show in the previews (default: 1)
+For using Lombok, you will also have to install the lombok plugin for IntelliJ and enable annotation processing. (Ctrl+Shift+A -> `Plugins` and `Enable annotation processing`)
 
-csitesting (--room [room])         starts the csi testing application
-rssitri (--room [room])            starts trilateration based on rssi
-uidemo (--room [room])             opens a test window of the trilateration user interface
-```
+To run the app, open the CsiUserInterface class and click the run button.
 
-## (Room) Configuration
-The application uses a configuration for the current room which can be found in `indloc.Config` and stores information about the experimental setup like the used devices, their MAC addresses, their positions, RSSI distance estimators and internal CSI phase shift calibrations. This allows storing room configurations alongside recordings and applying them once a replay is loaded. This happens automatically for replays, but can be overridden for most tools by using the `--room` parameter and specifying the path to a `room.cfg` file.
+# CSI Server
+The [CSI server](https://gitlab.lrz.de/fabian_putterer/csi-server) has to be run on devices generating CSI data. It obtains, processes, filters and forwards CSI data from the local kernel device to any subscribed client.
+It can be built using the supplied makefile (`make` and `make x86`). It supports Atheros and Intel CSI on x86 and embedded devices.
 
-```
-{
-    "width": 1000,
-    "height": 2000,
-    "stations":[
-        {
-            "HW_ADDRESS": "01:23:45:67:89:AB",
-            "IP_ADDRESS": "192.168.0.200",
-            "location": {"x":0.0,"y":0.0}
-        }
-    ]
-}
-```
+To cross compile for embedded devices using a different architecture, a toolchain generated by building the OpenWRT firmware image is required.
 
-## RSSI Trilateration
-By running `indloc.rssi.RSSITrilateration` or using the CLI `rssitri` option, the trilateration functionality can be started. It will use the room configuration and start sending ICMP echo requests to the configured stations. It will then continuously obtain the RSSI values from the kernel and use them to calculate the estimated distance. Using this distance, a target location will be estimated. The program displays a Swing-based graphical representation of the station locations, estimated distances and target location. Each time the `R` key is pressed, the next target position (by index) and estimate as well as their distance will be written to a recording file.
+# Hardware
+This application supports obtaining data from multiple sources at once.
 
-## Recording CSI
-By running `indloc.\-csi.CSIRecording` or using the CLI `recordcsi` option, a CSI recording can be started.
+## Atheros CSI
+You will need an Atheros device that supports obtaining CSI using 802.11n. This seems to work on wifi chips, newer ones from Qualcomm seem to have this functionality removed. Telling from my testing, all chips compatible with the ath9k driver should be usable as transmitters, as they set the sounding flag, but only supported chips will report CSI back to the driver.
 
-The app will subscribe to the configured station using the specified payload length as the filter option. All recorded CSI packets including timestamp, status and CSI matrix will be stored in the specified recording folder in the JSON format. The room configuration is saved there as well.
+Those include the AR9344, AR9380, AR9580 and AR9462(also known as AR5B22). For more info, see my thesis as well as this [GitHub issue](https://github.com/xieyaxiongfly/Atheros_CSI_tool_OpenWRT_src/issues/35#issuecomment-513397910). Other people have reported the QCA9558 (TP-Link Archer C7 v1-3) to work, the QCA9563 (Archer C7 v4-5) won't work.
 
-This application does not automatically start sending ICMP echo requests to the configured stations which is necessary for calculating CSI there.
+I've successfully used the following devices:
 
-## Replaying CSI
-By running `indloc.csi.CSIReplay` or using the CLI `replaycsi` option, a CSI replay can be started.
+| Device   | Type    | Wifi 2.4 | Antennas   | Wifi 5 | Antennas   |
+| :------: | :----:  | :------: | :--------: | :---:  | :--------: |
+| WR2543ND | router  | AR9380   | 3 external | AR9380 | 3 external |
+| WDR4300  | router  | AR9344   | 2 external | AR9580 | 3 external |
+| AR5B22   | client  | AR9462   | 2 pins     | AR9462 | 2 pins     |
 
-The replay including the room configuration will be loaded from the specified folder. The program will start releasing CSI packets at the same intervals as they were captured during the recording. The interface supports grouping the packets till a specified threshold and then releasing them at once. This is useful when the SpotFi implementation is activated.
+Other useable devices could be:
 
-Using the `--spotfi` parameter, the SpotFi implementation can be activated and the CSI Client will run a python process with the `spotfi.py` file each time a group threshold is reached.
+| Device      | Type    | Wifi 2.4 | Antennas   | Wifi 5 | Antennas   |
+| :------:    | :----:  | :------: | :--------: | :---:  | :--------: |
+| WR1043ND v2 | router  | QCA9558  | 3 external | -      | -          |
+| Archer C7 v1-3 | router  | QCA9558  | ? | -      | -          |
 
-Calibration information is automatically applied based on MAC address in the replay if information for the station is present in `indloc.csi.calibration.PhaseOffset`. The python process is started four times in parallel, once for each possible calibration due to 180° shifts after startup.
 
-The CLI also allows specifying a preview mode. Depending on which of the letters c, a or p the parameter contains, a preview of the plotted complex CSI (c), the amplitude across all subcarriers (a) or the phase across all subcarriers (p) will be activated. Using the `previewRX` and `previewTX` parameters, the number of antennas on each to be displayed in the previews can be selected.
+### Atheros Configuration
+To obtain CSI, we need to modify the kernel on those devices and install the [Atheros CSI Tool](https://github.com/xieyaxiongfly/Atheros_CSI_tool_OpenWRT_src).
 
-## Real Time CSI
-To preview and process CSI information in realtime, the code found in `indloc.csi.CSITesting` available by using the CLI `csitesting` option can be modified and used. This way CSI information received from the station can be investigated and the SpotFi/MUSIC algorithm be executed during runtime.
+For PCIe chips like the AR5B22/AR9462, you should use Ubuntu 14.04 with the 4.1.10 kernel, see [Instructions](https://github.com/xieyaxiongfly/Atheros_CSI_tool_OpenWRT_src/wiki/Install-Ubuntu-version-of-Atheros-CSI-tool).
+
+
+#### Embedded devices
+For embedded devices like routers, you'll want to install a modified build of OpenWRT. You can build modified firmware images using the [OpenWRT repo](https://github.com/xieyaxiongfly/Atheros_CSI_tool_OpenWRT_src/wiki/Install-OpenWRT-version-of-Atheros-CSI-tool) of the CSI Tool or use one of the prebuilt images (also found there, not available for some devices, prebuilt images for WDR4300 and WR2543ND here (TODO!!!)).
+
+Those images can then be flashed using the user interface of the factory image (using the image called factory) or by copying the sysupgrade image to the tmpfs of the openwrt installation via ssh and using the `sysupgrade` command. 
+
+Using the web interface (LUCI), the address of the eth interface can be configured. In the wireless settings, one station can be set to access point mode, the other one to client mode. Obtaining CSI should work with encryption en- and disabled.
+
+To send continous traffic to the other device, using ICMP echo packets is recommended. As the built-in `ping` tool has very limited functionality, the fping package, which allows setting individual intervals (e.g. 10ms = 1 / 100 Hz) should be installed. This can be done by connecting the device to a network with internet access or by downloading the package for the correct architecture manually and installing it using `opkg`.
+
+To run the CSI server, copy it to the device using SSH and just execute it, it should automatically detect the `/dev/CSI_dev` device and start reading CSI from it. You can now subscribe to it using the client application.
+
+
+## Intel CSI
+
+#### CSI server
+The Intel CSI tool is not integrated into the CSI Server. You can pipe the stdout of the modified `log_to_file` tool into the stdin of the CSI server though which will cause it to forward any obtained CSI to its subscribers as well (you will have to run `log_to_file` as root).
+
+## ESP CSI
+
+## ESP ECG
+
+## Android acceleration
+
+# Setup
+The devices need to be configured in a way, so that the client app is able to communicate with them. In the case of the Atheros, Intel and Android devices, this is done via UDP/IP, for the ESP's it's done using a serial connection. To edit the network and interface addresses, use the web interface for the OpenWRT based routers and the /etc/network/interfaces file for GNU/Linux based systems.
+
+The network architecture I used can be seen here:
+
+![an image of the network architecture containg 3 wireless networks with pairs of TX and RX as well as a wireless data network, a central receiving application and two CSI ESPs + one ECG ESP connected via serial](https://cloud.geosearchef.de/s/QRxz2BzzqS9HWTM/preview)
+
+# Configuration
+The CSI client app is currently configured by changing the `Config.java` file. There, you can change the stations it is trying to subscribe to, their data types and what processing is applied to them.
+
+The HW address (MAC) should be set, even for devices that do not have one, as it may be used for identifying the station in the serialized recording.
+
+
+
+# Preview / Processing
+
+# Recording
+
+# Replaying
+
+## Data

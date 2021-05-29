@@ -24,10 +24,12 @@ public class Config {
 	
 	public static final int MAX_LOCATION_PAST_LENGTH = 40;
 	
-	//Interval between the indivdual packets sent as ICMP echo req, only applies to non windows based systems
-	public static final int ICMP_ECHO_INTERVAL_MS = 500;
+	// Interval between the indivdual packets sent as ICMP echo req, only applies to non windows based systems
+	// only used for indoor localization using trilateration
+	public static final int TRILATERATION_ICMP_ECHO_INTERVAL_MS = 500;
 	
 	public static final Trilaterator TRILATERATOR = new SimpleTrilaterator();
+
 	public static final String STATION_5_MAC = "90:f6:52:4e:c5:ba"; // WR2543ND
 	public static final String STATION_6_MAC = "f8:d1:11:cf:0d:9c"; // WR2543ND
 	public static final String STATION_7_MAC = "90:f6:52:4e:b8:5c"; // WR2543ND
@@ -44,7 +46,7 @@ public class Config {
 	
 
 	private static final RoomConfig ROOM_CSI_TESTING = new RoomConfig(
-			1300, 1150,
+			1300, 1150, // width and height are only used for indoor localization
 			new Station[] {
 //					new Station(STATION_10_MAC, "10.10.0.10", AndroidInfo.class, new Vector(0, 0), null, new ActivityDetector())
 //					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class,  2 23null, new ActivityDetector())
@@ -57,24 +59,9 @@ public class Config {
 					new Station(STATION_ESP_ECG_MAC, "/dev/ttyUSB0", EcgInfo.class, null, null)
 			},
 			new RoomObject[] {
-
+				// allows setting a background image for localization
 			}
 	);
-
-//	private static final float EXAMPLE_SIG_PROP_CONST = 4.2f;
-//	private static final RoomConfig ROOM_EXAMPLE = new RoomConfig(
-//			1072, 1258,
-//			new Station[] {
-//					new Station(STATION_5_MAC, "10.10.0.5", new Vector(745, 700), new SimpleDistanceEstimator(32, EXAMPLE_SIG_PROP_CONST)), // WR2543ND 5
-//					new Station(STATION_6_MAC, "10.10.0.6", new Vector(115, 125), new SimpleDistanceEstimator(30, EXAMPLE_SIG_PROP_CONST)), // WR2543ND 6
-//					new Station(STATION_7_MAC, "10.10.0.7", new Vector(715, 235), new SimpleDistanceEstimator(30, EXAMPLE_SIG_PROP_CONST)), // WR2543ND 7
-//			},
-//			new RoomObject[] {
-//					new Target(new Vector(100, 200), 1),
-//
-//					new Background(FileUtils.loadImage("./backgroundWue.png"))
-//			}
-//	);
 
 	public static RoomConfig ROOM = ROOM_CSI_TESTING; // might be ignored by services providing their own room, like the replay of a recording
 	
