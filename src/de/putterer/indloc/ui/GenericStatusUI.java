@@ -312,6 +312,19 @@ public class GenericStatusUI extends UIComponentWindow {
 					openDoubleDialog("thresholdForOffsetCorrection", 22000.0, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
+		addPreviewOption("CSICMShapePreview", station -> {
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.CSICMCurveShapePreview(
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("slidingWindowSize", 150, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("timestampCountForAverage", 10, this.getFrame(), useDefaultSettingsForPreview),
+					Math.toRadians(openDoubleDialog("stddevThresholdForSamePhaseDetection (degree)", 5.0, this.getFrame(), useDefaultSettingsForPreview)),
+					openDoubleDialog("thresholdForOffsetCorrection", 22000.0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("relative angles", 1, this.getFrame(), useDefaultSettingsForPreview) == 1
+			)), station);
+		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {
 			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.PhaseDiffEvolutionPreview(
 					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),

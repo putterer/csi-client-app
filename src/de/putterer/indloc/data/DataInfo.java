@@ -19,7 +19,7 @@ public class DataInfo {
 
 	public DataInfo(long clientTimestamp, int messageId) {
 		this.clientTimestamp = clientTimestamp;
-		this.messageId = messageId;
+		this.messageId = messageId; 
 	}
 
 	public Instant getClientInstant() {

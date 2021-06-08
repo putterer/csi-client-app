@@ -1,4 +1,4 @@
-package de.putterer.indloc.csi.processing;
+package de.putterer.indloc.csi.processing.cm;
 
 import de.putterer.indloc.csi.CSIInfo;
 import de.putterer.indloc.csi.CSIInfo.Complex;

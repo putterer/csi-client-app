@@ -4,13 +4,15 @@ import de.putterer.indloc.Station;
 import de.putterer.indloc.csi.calibration.AndroidInfo;
 import de.putterer.indloc.csi.esp.EspCSIInfo;
 import de.putterer.indloc.csi.intel.IntCSIInfo;
-import de.putterer.indloc.csi.processing.ConjugateMultiplicationProcessor;
 import de.putterer.indloc.csi.processing.RespiratoryPhaseProcessor;
+import de.putterer.indloc.csi.processing.cm.ConjugateMultiplicationProcessor;
+import de.putterer.indloc.csi.processing.cm.ShapeRepresentationProcessor;
 import de.putterer.indloc.data.DataInfo;
 import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.util.CSIUtil;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.PlatformUtil;
+import de.putterer.indloc.util.Vector;
 import lombok.Data;
 import lombok.Getter;
 import org.apache.commons.math3.util.Pair;
@@ -23,6 +25,7 @@ import org.knowm.xchart.style.Styler.ChartTheme;
 import org.knowm.xchart.style.Styler.LegendPosition;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -1228,6 +1231,85 @@ public class DataPreview {
 
 			chart.updateXYSeries(seriesName, xData, yData, null);
 			chart.updateXYSeries(seriesName + " - mean", new double[]{mean.getReal()}, new double[]{mean.getImag()}, null);
+		}
+	}
+
+	public static class CSICMCurveShapePreview extends PreviewMode {
+
+		{ width = 800; height = 800; }
+
+		private final int rx1;
+		private final int tx1;
+		private final int rx2;
+		private final int tx2;
+
+		private final ConjugateMultiplicationProcessor cmprocessor;
+		private final ShapeRepresentationProcessor shapeProcessor;
+
+		public CSICMCurveShapePreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative) {
+			this.rx1 = rx1;
+			this.tx1 = tx1;
+			this.rx2 = rx2;
+			this.tx2 = tx2;
+			this.cmprocessor = new ConjugateMultiplicationProcessor(rx1, tx1, rx2, tx2, slidingWindowSize, timestampCountForAverage, stddevThresholdForSamePhaseDetection, thresholdForOffsetCorrection); // TODO: parameters
+			this.shapeProcessor = new ShapeRepresentationProcessor(relative);
+		}
+
+		@Override
+		public XYChart createChart(String stationName) {
+			XYChart chart = new XYChartBuilder()
+					.width(width)
+					.height(height)
+					.title("CSI CM Shape Plot - " + stationName)
+					.xAxisTitle("Real")
+					.yAxisTitle("Imag")
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
+			double maxValue = 1000.0;
+			chart.getStyler().setYAxisMin(-maxValue);
+			chart.getStyler().setYAxisMax(maxValue);
+			chart.getStyler().setXAxisMin(-maxValue);
+			chart.getStyler().setXAxisMax(maxValue);
+
+			Color[] colorPalette = new Color[113];
+			for(int i = 0;i < 113;i++) {
+				colorPalette[i] = Color.getHSBColor(0.0f + (2.0f/3.0f * (i / 56.0f)), 1.0f, 1.0f);
+			}
+			chart.getStyler().setSeriesColors(colorPalette);
+
+			for(int i = 0;i < 113;i++) {
+				chart.addSeries(String.valueOf(i), new double[1]);
+			}
+			return chart;
+		}
+
+		@Override
+		public void updateChart(DataInfo dataInfo, XYChart chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
+			int subcarriers = csi.getNumTones();
+
+			CSIInfo.Complex[] processedData = cmprocessor.process(dataInfo);
+			Vector[] shape = shapeProcessor.process(processedData);
+
+			CSIInfo.Complex[] shapeAmpPhaseEncoded = new CSIInfo.Complex[shape.length];
+			for(int i = 0;i < shape.length;i++) {
+				shapeAmpPhaseEncoded[i] = CSIInfo.Complex.fromAmplitudePhase(shape[i].getX(), shape[i].getY());
+			}
+
+			double[] xData = new double[subcarriers - 1];
+			double[] yData = new double[subcarriers - 1];
+			for (int i = 0; i < subcarriers - 1; i++) {
+				xData[i] = shapeAmpPhaseEncoded[i].getReal();
+				yData[i] = shapeAmpPhaseEncoded[i].getImag();
+
+				chart.updateXYSeries(String.valueOf(i), new double[]{xData[i]}, new double[]{yData[i]}, null);
+			}
 		}
 	}
 }
