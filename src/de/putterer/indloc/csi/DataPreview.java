@@ -16,10 +16,9 @@ import de.putterer.indloc.util.Vector;
 import lombok.Data;
 import lombok.Getter;
 import org.apache.commons.math3.util.Pair;
-import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.*;
 import org.knowm.xchart.XYSeries.XYSeriesRenderStyle;
+import org.knowm.xchart.internal.chartpart.Chart;
 import org.knowm.xchart.style.Styler;
 import org.knowm.xchart.style.Styler.ChartTheme;
 import org.knowm.xchart.style.Styler.LegendPosition;
@@ -42,7 +41,7 @@ import static de.putterer.indloc.util.Util.manhattan;
  * A preview of incoming / replayed CSI data
  * Requires XChart: https://github.com/knowm/XChart
  */
-public class DataPreview {
+public class DataPreview<T extends Chart> {
 	
 	public static final Styler.ChartTheme CHART_THEME = ChartTheme.XChart;
 
@@ -51,14 +50,14 @@ public class DataPreview {
 
 	// The preview mode used for displaying
 	@Getter
-	private PreviewMode mode;
+	private PreviewMode<T> mode;
 	
-	private final XYChart chart;
-	private final SwingWrapper<XYChart> wrapper;
+	private final T chart;
+	private final SwingWrapper<T> wrapper;
 	@Getter
 	private final JFrame frame;
 	
-	public DataPreview(String stationName, PreviewMode mode) {
+	public DataPreview(String stationName, PreviewMode<T> mode) {
 		this.mode = mode;
 		
 		chart = mode.createChart(stationName);
@@ -89,15 +88,15 @@ public class DataPreview {
 	}
 
 	@Getter
-	public static abstract class PreviewMode {
+	public static abstract class PreviewMode<T extends Chart> {
 		protected int width;
 		protected int height;
 		
-		public abstract XYChart createChart(String stationName);
-		public abstract void updateChart(DataInfo dataInfo, XYChart chart);
+		public abstract T createChart(String stationName);
+		public abstract void updateChart(DataInfo dataInfo, T chart);
 	}
 
-	public static class PhaseDiffVariancePreview extends PreviewMode {
+	public static class PhaseDiffVariancePreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 		private final int dataWidth = 150;
 
@@ -193,7 +192,7 @@ public class DataPreview {
 		}
 	}
 
-	public static class AndroidEvolutionPreview extends PreviewMode {
+	public static class AndroidEvolutionPreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 		private final int dataWidth = 150;
 
@@ -286,7 +285,7 @@ public class DataPreview {
 		}
 	}
 
-	public static class SerialEvolutionPreview extends PreviewMode {
+	public static class SerialEvolutionPreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 		private final int dataWidth = 500;
 
@@ -343,7 +342,7 @@ public class DataPreview {
 	/**
 	 * Previews one property, amplitude or phase, across all subcarriers
 	 */
-	public static class SubcarrierPropertyPreview extends PreviewMode {
+	public static class SubcarrierPropertyPreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 		
 		public enum PropertyType { AMPLITUDE, PHASE }
@@ -474,7 +473,7 @@ public class DataPreview {
 	 * Displays the amplitude difference between 2 antennas
 	 * data is unwrapped and shifted by mean before displaying
 	 */
-	public static class AmplitudeDiffPreview extends PreviewMode {
+	public static class AmplitudeDiffPreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 
 		private final int rxAntenna1; // rx antennas to display
@@ -538,7 +537,7 @@ public class DataPreview {
 	/**
 	 * Displays the evolution of the phase difference between two antennas on one subcarrier over time
 	 */
-	public static class AmplitudeEvolutionPreview extends PreviewMode {
+	public static class AmplitudeEvolutionPreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 		private final int dataWidth = 250;
 
@@ -635,7 +634,7 @@ public class DataPreview {
 		}
 	}
 
-	public static class AmplitudeDiffEvolutionPreview extends PreviewMode {
+	public static class AmplitudeDiffEvolutionPreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 		private final int dataWidth = 250;
 
@@ -759,7 +758,7 @@ public class DataPreview {
 	 * Displays the phase difference between 2 antennas
 	 * data is unwrapped and shifted by mean before displaying
 	 */
-	public static class PhaseDiffPreview extends PreviewMode {
+	public static class PhaseDiffPreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 		
 		private final int rxAntenna1; // number of tx antennas to display
@@ -844,7 +843,7 @@ public class DataPreview {
 	/**
 	 * Displays the evolution of the phase difference between two antennas on one subcarrier over time
 	 */
-	public static class PhaseDiffEvolutionPreview extends PreviewMode {
+	public static class PhaseDiffEvolutionPreview extends PreviewMode<XYChart> {
 		{ width = 700; height = 500; }
 		private final int dataWidth = 150;
 
@@ -991,7 +990,7 @@ public class DataPreview {
 	/**
 	 * Previews a simple 2-dimensional plot of the CSI as complex values
 	 */
-	public static class CSIPlotPreview extends PreviewMode {
+	public static class CSIPlotPreview extends PreviewMode<XYChart> {
 		{ width = 500; height = 500; }
 		
 		private final int txAntennas; // number of tx antennas to display
@@ -1055,7 +1054,7 @@ public class DataPreview {
 		}
 	}
 
-	public static class CSIDiffPlotPreview extends PreviewMode {
+	public static class CSIDiffPlotPreview extends PreviewMode<XYChart> {
 
 		private String seriesName;
 
@@ -1162,7 +1161,7 @@ public class DataPreview {
 		}
 	}
 
-	public static class CSICmProcessedPlotPreview extends PreviewMode {
+	public static class CSICmProcessedPlotPreview extends PreviewMode<XYChart> {
 
 		private String seriesName;
 
@@ -1234,7 +1233,7 @@ public class DataPreview {
 		}
 	}
 
-	public static class CSICMCurveShapePreview extends PreviewMode {
+	public abstract static class CSICMCurveShapePreview<T extends Chart> extends PreviewMode<T> {
 
 		{ width = 800; height = 800; }
 
@@ -1245,6 +1244,7 @@ public class DataPreview {
 
 		private final ConjugateMultiplicationProcessor cmprocessor;
 		private final ShapeRepresentationProcessor shapeProcessor;
+		protected final boolean relative;
 
 		public CSICMCurveShapePreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative) {
 			this.rx1 = rx1;
@@ -1253,6 +1253,32 @@ public class DataPreview {
 			this.tx2 = tx2;
 			this.cmprocessor = new ConjugateMultiplicationProcessor(rx1, tx1, rx2, tx2, slidingWindowSize, timestampCountForAverage, stddevThresholdForSamePhaseDetection, thresholdForOffsetCorrection); // TODO: parameters
 			this.shapeProcessor = new ShapeRepresentationProcessor(relative);
+			this.relative = relative;
+		}
+
+		@Override
+		public abstract T createChart(String stationName);
+
+		@Override
+		public void updateChart(DataInfo dataInfo, T chart) {
+			if(! (dataInfo instanceof CSIInfo)) {
+				return;
+			}
+			CSIInfo csi = (CSIInfo)dataInfo;
+
+			CSIInfo.Complex[] processedData = cmprocessor.process(dataInfo);
+			Vector[] shape = shapeProcessor.process(processedData);
+
+			setChartDate(shape, csi.getNumTones(), chart);
+		}
+
+		public abstract void setChartDate(Vector[] shape, int subcarriers, T chart);
+	}
+
+	public static class CSICMCurveShapePlotPreview extends CSICMCurveShapePreview<XYChart> {
+
+		public CSICMCurveShapePlotPreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative) {
+			super(rx1, tx1, rx2, tx2, slidingWindowSize, timestampCountForAverage, stddevThresholdForSamePhaseDetection, thresholdForOffsetCorrection, relative);
 		}
 
 		@Override
@@ -1285,18 +1311,7 @@ public class DataPreview {
 			return chart;
 		}
 
-		@Override
-		public void updateChart(DataInfo dataInfo, XYChart chart) {
-			if(! (dataInfo instanceof CSIInfo)) {
-				return;
-			}
-			CSIInfo csi = (CSIInfo)dataInfo;
-
-			int subcarriers = csi.getNumTones();
-
-			CSIInfo.Complex[] processedData = cmprocessor.process(dataInfo);
-			Vector[] shape = shapeProcessor.process(processedData);
-
+		public void setChartDate(Vector[] shape, int subcarriers, XYChart chart) {
 			CSIInfo.Complex[] shapeAmpPhaseEncoded = new CSIInfo.Complex[shape.length];
 			for(int i = 0;i < shape.length;i++) {
 				shapeAmpPhaseEncoded[i] = CSIInfo.Complex.fromAmplitudePhase(shape[i].getX(), shape[i].getY());
@@ -1310,6 +1325,50 @@ public class DataPreview {
 
 				chart.updateXYSeries(String.valueOf(i), new double[]{xData[i]}, new double[]{yData[i]}, null);
 			}
+		}
+	}
+
+	public static class CSICMCurveShapeAngleDistributionPreview extends CSICMCurveShapePreview<CategoryChart> {
+
+		{ width = 800; height = 800; }
+
+		public CSICMCurveShapeAngleDistributionPreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative) {
+			super(rx1, tx1, rx2, tx2, slidingWindowSize, timestampCountForAverage, stddevThresholdForSamePhaseDetection, thresholdForOffsetCorrection, relative);
+		}
+
+		@Override
+		public CategoryChart createChart(String stationName) {
+			CategoryChart chart = new CategoryChartBuilder()
+					.width(width)
+					.height(height)
+					.title(String.format("CSI CM Shape Angle Distribution%s - ", (this.relative ? " relative" : "")) + stationName)
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setChartTitleVisible(true);
+//			chart.getStyler().setLegendPosition(LegendPosition.InsideNW);
+			chart.getStyler().setDefaultSeriesRenderStyle(CategorySeries.CategorySeriesRenderStyle.Stick);
+
+			double maxValue = 10.0;
+			chart.getStyler().setYAxisMin(-maxValue);
+			chart.getStyler().setYAxisMax(maxValue);
+			chart.getStyler().setXAxisMin(-maxValue);
+			chart.getStyler().setXAxisMax(maxValue);
+
+			chart.addSeries("angle", new double[56], new double[56]);
+			return chart;
+		}
+
+		@Override
+		public void setChartDate(Vector[] shape, int subcarriers, CategoryChart chart) {
+			double[] xData = new double[subcarriers - 1];
+			double[] yData = new double[subcarriers - 1];
+			for (int i = 0; i < subcarriers - 1; i++) {
+				xData[i] = i;
+				yData[i] = shape[i].getY();
+			}
+
+			chart.updateCategorySeries("angle", xData, yData, null);
 		}
 	}
 }
