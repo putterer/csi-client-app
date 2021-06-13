@@ -335,7 +335,20 @@ public class GenericStatusUI extends UIComponentWindow {
 					openIntDialog("timestampCountForAverage", 10, this.getFrame(), useDefaultSettingsForPreview),
 					Math.toRadians(openDoubleDialog("stddevThresholdForSamePhaseDetection (degree)", 5.0, this.getFrame(), useDefaultSettingsForPreview)),
 					openDoubleDialog("thresholdForOffsetCorrection", 22000.0, this.getFrame(), useDefaultSettingsForPreview),
-					openIntDialog("relative angles", 1, this.getFrame(), useDefaultSettingsForPreview) == 1
+					openIntDialog("relative angles", 1, this.getFrame(), useDefaultSettingsForPreview) == 0,
+					openIntDialog("unwrap angles", 1, this.getFrame(), useDefaultSettingsForPreview) == 1
+			)), station);
+		}, previewNames);
+		addPreviewOption("CSICMShapeDist", station -> {
+			csiUserInterface.addPreview(new DataPreview(station.getName(), new DataPreview.CSICMCurveShapeDistDistributionPreview(
+					openIntDialog("rxAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna1", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("rxAntenna2", 2, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("txAntenna2", 0, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("slidingWindowSize", 150, this.getFrame(), useDefaultSettingsForPreview),
+					openIntDialog("timestampCountForAverage", 10, this.getFrame(), useDefaultSettingsForPreview),
+					Math.toRadians(openDoubleDialog("stddevThresholdForSamePhaseDetection (degree)", 5.0, this.getFrame(), useDefaultSettingsForPreview)),
+					openDoubleDialog("thresholdForOffsetCorrection", 22000.0, this.getFrame(), useDefaultSettingsForPreview)
 			)), station);
 		}, previewNames);
 		addPreviewOption("PhaseDiffEvolution", station -> {

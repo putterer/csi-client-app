@@ -39,4 +39,40 @@ public class ShapeRepresentationProcessor {
         return res;
     }
 
+
+    public void unwrapAngle(Vector[] data, boolean relativeToZero) {
+        data[0].setY(unwrapZero(data[0].getY()));
+
+        for(int i = 1;i < data.length;i++) {
+            // take into account multiple previous samples, as the previous one might be an outlier
+            float previousAngle = 0.0f;
+            float iterations = 0;
+            for(int k = Math.max(0, i - 5); k < i; k++) {
+                previousAngle += data[k].getY();
+                iterations++;
+            }
+            previousAngle /= iterations;
+
+            if(relativeToZero) {
+                data[i].setY(unwrapZero(data[i].getY()));
+            } else {
+                while(data[i].getY() - previousAngle > Math.PI) {
+                    data[i].setY((float) (data[i].getY() - 2 * Math.PI));
+                }
+                while(data[i].getY() - previousAngle < -Math.PI) {
+                    data[i].setY((float) (data[i].getY() + 2 * Math.PI));
+                }
+            }
+        }
+    }
+
+    private final float unwrapZero(float value) {
+        if(value > Math.PI) {
+            return (float) (value - 2 * Math.PI);
+        } else if(value < -Math.PI) {
+            return (float) (value + 2 * Math.PI);
+        } else {
+            return value;
+        }
+    }
 }

@@ -1242,8 +1242,8 @@ public class DataPreview<T extends Chart> {
 		private final int rx2;
 		private final int tx2;
 
-		private final ConjugateMultiplicationProcessor cmprocessor;
-		private final ShapeRepresentationProcessor shapeProcessor;
+		protected final ConjugateMultiplicationProcessor cmprocessor;
+		protected final ShapeRepresentationProcessor shapeProcessor;
 		protected final boolean relative;
 
 		public CSICMCurveShapePreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative) {
@@ -1332,8 +1332,11 @@ public class DataPreview<T extends Chart> {
 
 		{ width = 800; height = 800; }
 
-		public CSICMCurveShapeAngleDistributionPreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative) {
+		private final boolean unwrapAngle;
+
+		public CSICMCurveShapeAngleDistributionPreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative, boolean unwrapAngle) {
 			super(rx1, tx1, rx2, tx2, slidingWindowSize, timestampCountForAverage, stddevThresholdForSamePhaseDetection, thresholdForOffsetCorrection, relative);
+			this.unwrapAngle = unwrapAngle;
 		}
 
 		@Override
@@ -1361,6 +1364,10 @@ public class DataPreview<T extends Chart> {
 
 		@Override
 		public void setChartDate(Vector[] shape, int subcarriers, CategoryChart chart) {
+			if(unwrapAngle) {
+				this.shapeProcessor.unwrapAngle(shape, this.relative); // if the angle is relative to predecessors, we want to wrap it relative to 0
+			}
+
 			double[] xData = new double[subcarriers - 1];
 			double[] yData = new double[subcarriers - 1];
 			for (int i = 0; i < subcarriers - 1; i++) {
@@ -1369,6 +1376,50 @@ public class DataPreview<T extends Chart> {
 			}
 
 			chart.updateCategorySeries("angle", xData, yData, null);
+		}
+	}
+
+	public static class CSICMCurveShapeDistDistributionPreview extends CSICMCurveShapePreview<CategoryChart> {
+
+		{ width = 800; height = 800; }
+
+		public CSICMCurveShapeDistDistributionPreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection) {
+			super(rx1, tx1, rx2, tx2, slidingWindowSize, timestampCountForAverage, stddevThresholdForSamePhaseDetection, thresholdForOffsetCorrection, false);
+		}
+
+		@Override
+		public CategoryChart createChart(String stationName) {
+			CategoryChart chart = new CategoryChartBuilder()
+					.width(width)
+					.height(height)
+					.title("CSI CM Shape Distance Distribution - " + stationName)
+					.theme(CHART_THEME)
+					.build();
+
+			chart.getStyler().setChartTitleVisible(true);
+//			chart.getStyler().setLegendPosition(LegendPosition.InsideNW);
+			chart.getStyler().setDefaultSeriesRenderStyle(CategorySeries.CategorySeriesRenderStyle.Stick);
+
+			double maxValue = 600.0;
+			chart.getStyler().setYAxisMin(-maxValue);
+			chart.getStyler().setYAxisMax(maxValue);
+			chart.getStyler().setXAxisMin(-maxValue);
+			chart.getStyler().setXAxisMax(maxValue);
+
+			chart.addSeries("dist", new double[56], new double[56]);
+			return chart;
+		}
+
+		@Override
+		public void setChartDate(Vector[] shape, int subcarriers, CategoryChart chart) {
+			double[] xData = new double[subcarriers - 1];
+			double[] yData = new double[subcarriers - 1];
+			for (int i = 0; i < subcarriers - 1; i++) {
+				xData[i] = i;
+				yData[i] = shape[i].getX();
+			}
+
+			chart.updateCategorySeries("dist", xData, yData, null);
 		}
 	}
 }
