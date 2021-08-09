@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="csi-client-app:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/csi_client_app_jar</output-path>
+    <root id="archive" name="csi-client-app.jar">
+      <element id="module-output" name="csi-client-app" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/flatlaf-0.41.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/gson-2.8.5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/JWave.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-math3-3.6.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jSerialComm-2.6.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/lombok.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/xchart-3.5.4.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
