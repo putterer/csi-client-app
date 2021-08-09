@@ -2,10 +2,6 @@ package de.putterer.indloc;
 
 import de.putterer.indloc.activity.ActivityDetector;
 import de.putterer.indloc.csi.atheros.AthCSIInfo;
-import de.putterer.indloc.csi.calibration.AndroidInfo;
-import de.putterer.indloc.csi.esp.EspCSIInfo;
-import de.putterer.indloc.csi.intel.IntCSIInfo;
-import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.trilateration.SimpleTrilaterator;
 import de.putterer.indloc.trilateration.Trilaterator;
 import de.putterer.indloc.util.Vector;
@@ -52,11 +48,12 @@ public class Config {
 //					new Station(STATION_10_MAC, "192.168.178.210", CSIInfo.class,  2 23null, new ActivityDetector())
 //							.setName("Router 10")
 //							.enableRespiratoryUI(),
-					new Station(STATION_5_MAC, "192.168.178.205", AthCSIInfo.class, null, new ActivityDetector()).setName("AthCsiRx"),//.proxyViaSsh(),
-					new Station(STATION_11_MAC, "192.168.178.211", IntCSIInfo.class, null, null).setName("IntCsiRx"),//.enableRespiratoryUI()
-					new Station(STATION_ESP_CSI_MAC, "/dev/ttyUSB1", EspCSIInfo.class, null, null).setName("EspCsiRx"),
-					new Station(STATION_ANDROID_MAC, "192.168.178.237", AndroidInfo.class, null, null).setName("Phone"),
-					new Station(STATION_ESP_ECG_MAC, "/dev/ttyUSB0", EcgInfo.class, null, null)
+					new Station(STATION_6_MAC, "192.168.178.206", AthCSIInfo.class, null, new ActivityDetector()).setName("AthCsiRx"),//.proxyViaSsh(),
+//					new Station(STATION_7_MAC, "10.0.0.207", AthCSIInfo.class, null, new ActivityDetector()).setName("AthCsiRx"),//.proxyViaSsh(),
+//					new Station(STATION_11_MAC, "192.168.178.211", IntCSIInfo.class, null, null).setName("IntCsiRx"),//.enableRespiratoryUI()
+//					new Station(STATION_ESP_CSI_MAC, "/dev/ttyUSB1", EspCSIInfo.class, null, null).setName("EspCsiRx"),
+//					new Station(STATION_ANDROID_MAC, "192.168.178.237", AndroidInfo.class, null, null).setName("Phone"),
+//					new Station(STATION_ESP_ECG_MAC, "/dev/ttyUSB0", EcgInfo.class, null, null)
 			},
 			new RoomObject[] {
 				// allows setting a background image for localization

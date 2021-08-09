@@ -17,7 +17,9 @@ import de.putterer.indloc.data.ecg.EcgClient;
 import de.putterer.indloc.data.ecg.EcgInfo;
 import de.putterer.indloc.data.ssh.SSHDataClient;
 import de.putterer.indloc.respiratory.RespiratoryUI;
+import de.putterer.indloc.util.ArgumentParser;
 import de.putterer.indloc.util.Logger;
+import de.putterer.indloc.util.serialization.Serialization;
 import lombok.Getter;
 
 import javax.swing.*;
@@ -28,6 +30,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -244,9 +247,14 @@ public class CsiUserInterface implements KeyListener {
 
 
 	public static String REPLAY_TO_RUN_ON_STARTUP = null;
-	public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
-		if(args.length >= 2 && args[0].equals("--run-replay")) {
-			REPLAY_TO_RUN_ON_STARTUP = args[1];
+	public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException, IOException {
+		Map<String, String> arguments = ArgumentParser.parse(args);
+
+		if(arguments.containsKey("run-replay")) {
+			REPLAY_TO_RUN_ON_STARTUP = arguments.get("run-replay");
+		}
+		if(arguments.containsKey("config")) {
+			Config.ROOM = Serialization.deserialize(Paths.get(arguments.get("config")), Config.RoomConfig.class);
 		}
 
 		Logger.setLogLevel(Logger.Level.DEBUG);
