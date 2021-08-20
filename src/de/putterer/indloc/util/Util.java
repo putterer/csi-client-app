@@ -1,8 +1,18 @@
 package de.putterer.indloc.util;
 
+import de.putterer.indloc.csi.CSIInfo;
+
 import java.awt.*;
 
 public class Util {
+
+	public static float cyclicAngleMean(double... angles) {
+		CSIInfo.Complex sum = new CSIInfo.Complex(0, 0);
+		for(double a : angles) {
+			sum = sum.add(CSIInfo.Complex.fromAmplitudePhase(10000, a));
+		}
+		return (float) sum.getPhase();
+	}
 
 	public static float square(float f) {
 		return f * f;

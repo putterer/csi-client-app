@@ -336,7 +336,8 @@ public class GenericStatusUI extends UIComponentWindow {
 					Math.toRadians(openDoubleDialog("stddevThresholdForSamePhaseDetection (degree)", 5.0, this.getFrame(), useDefaultSettingsForPreview)),
 					openDoubleDialog("thresholdForOffsetCorrection", 22000.0, this.getFrame(), useDefaultSettingsForPreview),
 					openIntDialog("relative angles", 1, this.getFrame(), useDefaultSettingsForPreview) == 0,
-					openIntDialog("unwrap angles", 1, this.getFrame(), useDefaultSettingsForPreview) == 1
+					openIntDialog("unwrap angles", 0, this.getFrame(), useDefaultSettingsForPreview) == 1,
+					openIntDialog("fix phase offset", 1, this.getFrame(), useDefaultSettingsForPreview) == 1
 			)), station);
 		}, previewNames);
 		addPreviewOption("CSICMShapeDist", station -> {

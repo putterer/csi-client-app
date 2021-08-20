@@ -1269,10 +1269,10 @@ public class DataPreview<T extends Chart> {
 			CSIInfo.Complex[] processedData = cmprocessor.process(dataInfo);
 			Vector[] shape = shapeProcessor.process(processedData);
 
-			setChartDate(shape, csi.getNumTones(), chart);
+			setChartData(shape, csi.getNumTones(), chart);
 		}
 
-		public abstract void setChartDate(Vector[] shape, int subcarriers, T chart);
+		public abstract void setChartData(Vector[] shape, int subcarriers, T chart);
 	}
 
 	public static class CSICMCurveShapePlotPreview extends CSICMCurveShapePreview<XYChart> {
@@ -1311,7 +1311,7 @@ public class DataPreview<T extends Chart> {
 			return chart;
 		}
 
-		public void setChartDate(Vector[] shape, int subcarriers, XYChart chart) {
+		public void setChartData(Vector[] shape, int subcarriers, XYChart chart) {
 			CSIInfo.Complex[] shapeAmpPhaseEncoded = new CSIInfo.Complex[shape.length];
 			for(int i = 0;i < shape.length;i++) {
 				shapeAmpPhaseEncoded[i] = CSIInfo.Complex.fromAmplitudePhase(shape[i].getX(), shape[i].getY());
@@ -1333,10 +1333,12 @@ public class DataPreview<T extends Chart> {
 		{ width = 800; height = 800; }
 
 		private final boolean unwrapAngle;
+		private final boolean fixRotationOffset; // fixes the offset introduced by random orientations by aligning the first subcarrier to 0
 
-		public CSICMCurveShapeAngleDistributionPreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative, boolean unwrapAngle) {
+		public CSICMCurveShapeAngleDistributionPreview(int rx1, int tx1, int rx2, int tx2, int slidingWindowSize, int timestampCountForAverage, double stddevThresholdForSamePhaseDetection, double thresholdForOffsetCorrection, boolean relative, boolean unwrapAngle, boolean fixRotationOffset) {
 			super(rx1, tx1, rx2, tx2, slidingWindowSize, timestampCountForAverage, stddevThresholdForSamePhaseDetection, thresholdForOffsetCorrection, relative);
 			this.unwrapAngle = unwrapAngle;
+			this.fixRotationOffset = fixRotationOffset;
 		}
 
 		@Override
@@ -1363,7 +1365,13 @@ public class DataPreview<T extends Chart> {
 		}
 
 		@Override
-		public void setChartDate(Vector[] shape, int subcarriers, CategoryChart chart) {
+		public void setChartData(Vector[] shape, int subcarriers, CategoryChart chart) {
+			if(fixRotationOffset) {
+				this.shapeProcessor.shiftAngleZeroFirstCarriers(shape, 3);
+				this.shapeProcessor.shiftAngle(shape, (float) Math.PI);
+				this.shapeProcessor.wrapAngle(shape);
+			}
+
 			if(unwrapAngle) {
 				this.shapeProcessor.unwrapAngle(shape, this.relative); // if the angle is relative to predecessors, we want to wrap it relative to 0
 			}
@@ -1411,7 +1419,7 @@ public class DataPreview<T extends Chart> {
 		}
 
 		@Override
-		public void setChartDate(Vector[] shape, int subcarriers, CategoryChart chart) {
+		public void setChartData(Vector[] shape, int subcarriers, CategoryChart chart) {
 			double[] xData = new double[subcarriers - 1];
 			double[] yData = new double[subcarriers - 1];
 			for (int i = 0; i < subcarriers - 1; i++) {

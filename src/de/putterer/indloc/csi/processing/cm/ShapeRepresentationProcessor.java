@@ -1,7 +1,10 @@
 package de.putterer.indloc.csi.processing.cm;
 
 import de.putterer.indloc.csi.CSIInfo;
+import de.putterer.indloc.util.Util;
 import de.putterer.indloc.util.Vector;
+
+import java.util.stream.IntStream;
 
 public class ShapeRepresentationProcessor {
 
@@ -39,6 +42,27 @@ public class ShapeRepresentationProcessor {
         return res;
     }
 
+
+    public void wrapAngle(Vector[] data) {
+        for(int i = 0; i < data.length;i++) {
+            while(data[i].getY() > 2.0 * Math.PI) {
+                data[i].setY(data[i].getY() - (float)(2.0 * Math.PI));
+            }while(data[i].getY() < 0.0) {
+                data[i].setY(data[i].getY() + (float)(2.0 * Math.PI));
+            }
+        }
+    }
+
+    public void shiftAngle(Vector[] data, float offset) {
+        for(int i = 0; i < data.length;i++) {
+            data[i].setY(data[i].getY() + offset);
+        }
+    }
+
+    public void shiftAngleZeroFirstCarriers(Vector[] data, int firstCarrierCount) {
+        float angleMean = Util.cyclicAngleMean(IntStream.range(0, firstCarrierCount).mapToDouble(i -> data[i].getY()).toArray());
+        shiftAngle(data, -angleMean);
+    }
 
     public void unwrapAngle(Vector[] data, boolean relativeToZero) {
         data[0].setY(unwrapZero(data[0].getY()));
