@@ -6,21 +6,34 @@ import de.putterer.indloc.csi.CurveSampleRecorder;
 import de.putterer.indloc.data.DataInfo;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
 
+    private static final Font FONT = new Font("DejaVu Sans Mono", Font.PLAIN, 30);
+
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final CsiUserInterface csiUserInterface;
 
     private final CurveSampleRecorder curveSampleRecorder = new CurveSampleRecorder(Paths.get("./curve-recording"), 0, 0, 2, 0);
+    private int samplesRecorded = 0;
+
+    private final Color recordingColor = new Color(200, 200, 200);
+    private final Color originalBackgroundColor;
 
     private final JLabel lastRecordedSampleTime = new JLabel("no sample recorded");
     private final JLabel lastRecordedSampleClass = new JLabel("Class: ");
     private final JLabel lastRecordedSampleStationCount = new JLabel("Stations: ");
+    private final JLabel samplesRecordedLabel = new JLabel("Samples: ");
+    private final JLabel[] labels = {samplesRecordedLabel, lastRecordedSampleTime, lastRecordedSampleClass, lastRecordedSampleStationCount};
 
     public CurveRecorderUI(CsiUserInterface csiUserInterface) {
         super("CurveRecorder", 420, 300);
@@ -32,24 +45,36 @@ public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
         this.getFrame().addKeyListener(this);
 
         this.setupFinished();
+
+        originalBackgroundColor = this.getBackground();
     }
 
     private void initUI() {
-        lastRecordedSampleTime.setBounds(10, 0, 400, 20);
-        lastRecordedSampleClass.setBounds(10, 30, 400, 20);
-        lastRecordedSampleStationCount.setBounds(10, 60, 400, 20);
-
-        this.add(lastRecordedSampleTime);
-        this.add(lastRecordedSampleClass);
-        this.add(lastRecordedSampleStationCount);
+        for(int i = 0, y = 30; i < labels.length; i++, y += 60) {
+            labels[i].setBounds(30, y, 400, 50);
+            labels[i].setFont(FONT);
+            this.add(labels[i]);
+        }
     }
 
     private void recordSample(int classIndex) {
         List<Station> stations = Arrays.asList(Config.ROOM.getStations());
+        samplesRecorded++;
 
-        lastRecordedSampleTime.setText(String.format("Time %d", System.currentTimeMillis() / 1000));
-        lastRecordedSampleClass.setText(String.format("Class: %d", classIndex));
-        lastRecordedSampleStationCount.setText(String.format("Stations: %d", stations.size()));
+        SwingUtilities.invokeLater(() -> {
+            samplesRecordedLabel.setText(String.format("Samples: %d", samplesRecorded));
+            lastRecordedSampleTime.setText(String.format("Time %d", System.currentTimeMillis() / 1000));
+            lastRecordedSampleClass.setText(String.format("Class: %d", classIndex));
+            lastRecordedSampleStationCount.setText(String.format("Stations: %d", stations.size()));
+
+            this.setBackground(recordingColor);
+            this.repaint();
+
+            executor.schedule(() -> {
+                SwingUtilities.invokeLater(() -> this.setBackground(originalBackgroundColor));
+                this.repaint();
+            }, 100, TimeUnit.MILLISECONDS);
+        });
 
         curveSampleRecorder.captureCMShapeSample(stations, classIndex);
     }

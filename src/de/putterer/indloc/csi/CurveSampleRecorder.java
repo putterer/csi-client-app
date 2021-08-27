@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class CurveSampleRecorder {
 
-    private static final int SLIDING_WINDOW_SIZE = 150;
+    private static final int SLIDING_WINDOW_SIZE = 300;
     private static final int TIMESTAMP_COUNT_FOR_AVERAGE = 10;
     private static final double STDDEV_THRESHOLD_FOR_SAME_PHASE_DETECTION = 5.0;
     private static final double THRESHOLD_FOR_OFFSET_CORRECTION = 22000.0;
@@ -117,8 +117,8 @@ public class CurveSampleRecorder {
         Vector[] shapeAnglesDists = shapeProcessor.process(processedData);
         shapeProcessor.wrapAngle(shapeAnglesDists);
 
-        sample.angles = Arrays.stream(shapeAnglesDists).mapToDouble(Vector::getX).toArray();
-        sample.dists = Arrays.stream(shapeAnglesDists).mapToDouble(Vector::getY).toArray();
+        sample.dists = Arrays.stream(shapeAnglesDists).mapToDouble(Vector::getX).toArray();
+        sample.angles = Arrays.stream(shapeAnglesDists).mapToDouble(Vector::getY).toArray();
     }
 
     public void onDataInfo(Station station, DataInfo dataInfo) {
