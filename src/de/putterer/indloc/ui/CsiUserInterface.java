@@ -56,6 +56,7 @@ public class CsiUserInterface implements KeyListener {
 	private FrequencyGeneratorUI frequencyGeneratorUI;
 	private final List<ActivityUI> activityUIs = new ArrayList<>();
 	private ReplayUI replayUI;
+	private CurveRecorderUI curveRecorderUI;
 
 	@Getter
 	private CSIReplay replay = null;
@@ -75,6 +76,10 @@ public class CsiUserInterface implements KeyListener {
 		replayUI = new ReplayUI(this, replay != null);
 		replayUI.setPosition(TOP_LEFT_OFFSET.x, TOP_LEFT_OFFSET.y + genericStatusUI.getWindowHeight());
 		componentWindows.add(replayUI);
+
+		curveRecorderUI = new CurveRecorderUI(this);
+		curveRecorderUI.setPosition(TOP_LEFT_OFFSET.x + genericStatusUI.getWindowWidth(), TOP_LEFT_OFFSET.y);
+		componentWindows.add(curveRecorderUI);
 
 		Iterator<Station> stationIter = Arrays.stream(ROOM.getStations()).filter(Station::isDisplayRespiratoryDetector).iterator();
 		for(int i = 0;stationIter.hasNext();i++) {
@@ -105,6 +110,8 @@ public class CsiUserInterface implements KeyListener {
 
 		componentWindows.stream().map(UIComponentWindow::getFrame).forEach(f -> f.setVisible(true));
 		componentWindows.stream().map(UIComponentWindow::getFrame).forEach(f -> f.addKeyListener(this));
+
+		curveRecorderUI.getFrame().setVisible(false);
 
 		try { Thread.sleep(200); } catch(InterruptedException e) { e.printStackTrace(); }
 		componentWindows.forEach(UIComponentWindow::postConstruct);
@@ -188,12 +195,6 @@ public class CsiUserInterface implements KeyListener {
 		synchronized (previews) {
 			previews.entrySet().stream	().filter(e -> e.getValue() == station).forEach(p -> p.getKey().setData(info));
 		}
-
-//		if(info instanceof CSIInfo) {
-//			CSIInfo csi = (CSIInfo) info;
-//		} else if (info instanceof AndroidInfo) {
-//			AndroidInfo androidInfo = (AndroidInfo) info;
-//		}
 	}
 
 	public void loadReplay(Path replayPath, Consumer<Double> progressCallback) {
@@ -243,6 +244,15 @@ public class CsiUserInterface implements KeyListener {
 
 	public boolean isRespiratoryUIVisible(Station station) {
 		return respiratoryUIs.stream().anyMatch(r -> r.getStation() == station);
+	}
+
+	public void setCurveRecorderUIVisible(boolean visible) {
+		// ignores stations, writes samples by station!!!
+		curveRecorderUI.getFrame().setVisible(visible);
+	}
+
+	public boolean isCurveRecorderUIVisible() {
+		return curveRecorderUI.isVisible();
 	}
 
 

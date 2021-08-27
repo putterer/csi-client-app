@@ -44,8 +44,9 @@ public class GenericStatusUI extends UIComponentWindow {
 	private final JButton showDefaultPreviewButton = new JButton("Default");
 	private final JButton showPreviewButton = new JButton("Show");
 	private final JToggleButton recordButton = new JToggleButton("Record");
-	private final JCheckBox showActivityUICheckbox = new JCheckBox("Activity", false);
-	private final JCheckBox showRespiratoryUICheckbox = new JCheckBox("Respiratory", false);
+	private final JCheckBox showActivityUICheckbox = new JCheckBox("Mov.", false);
+	private final JCheckBox showRespiratoryUICheckbox = new JCheckBox("Resp.", false);
+	private final JCheckBox showSampleRecordingUICheckbox = new JCheckBox("CRec.", false);
 
 	private boolean useDefaultSettingsForPreview = false;
 
@@ -124,15 +125,19 @@ public class GenericStatusUI extends UIComponentWindow {
 		});
 
 		showActivityUICheckbox.addItemListener(e -> csiUserInterface.setActivityUIsVisible(showActivityUICheckbox.isSelected()));
-		showActivityUICheckbox.setBounds(220, 220, 75, 30);
+		showActivityUICheckbox.setBounds(220, 220, 62, 30);
 		this.add(showActivityUICheckbox);
 
 		showRespiratoryUICheckbox.addItemListener(e -> csiUserInterface.setRespiratoryUIVisible(getSelectedStation(), showRespiratoryUICheckbox.isSelected()));
-		showRespiratoryUICheckbox.setBounds(305, 220, 105, 30);
+		showRespiratoryUICheckbox.setBounds(282, 220, 62, 30);
 		showRespiratoryUICheckbox.setEnabled(false);
 		stationsList.addListSelectionListener(e -> showRespiratoryUICheckbox.setEnabled(true));
 		this.add(showRespiratoryUICheckbox);
 		stationsList.addListSelectionListener(e -> showRespiratoryUICheckbox.setSelected(csiUserInterface.isRespiratoryUIVisible(getSelectedStation())));
+
+		showSampleRecordingUICheckbox.addItemListener(e -> csiUserInterface.setCurveRecorderUIVisible(showSampleRecordingUICheckbox.isSelected()));
+		showSampleRecordingUICheckbox.setBounds(344, 220, 62, 30);
+		this.add(showSampleRecordingUICheckbox);
 
 		onStationUpdated(null);
 
@@ -140,7 +145,6 @@ public class GenericStatusUI extends UIComponentWindow {
 
 		getFrame().repaint();
 	}
-
 
 	private Color backgroundColor;
 	private final Color recordingColor = new Color(195, 0, 0);
@@ -213,7 +217,6 @@ public class GenericStatusUI extends UIComponentWindow {
 			});
 		}
 	}
-
 
 	private void initPreviewSelector() {
 		List<String> previewNames = new LinkedList<>();
