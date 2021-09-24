@@ -23,7 +23,7 @@ public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final CsiUserInterface csiUserInterface;
 
-    private final CurveSampleRecorder curveSampleRecorder = new CurveSampleRecorder(Paths.get("./curve-recording"), 0, 0, 2, 0);
+    private final CurveSampleRecorder curveSampleRecorder = new CurveSampleRecorder(Paths.get("./curve-recording"), 0, 2);
     private int samplesRecorded = 0;
 
     private final Color recordingColor = new Color(200, 200, 200);

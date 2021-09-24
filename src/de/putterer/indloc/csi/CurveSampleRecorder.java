@@ -33,20 +33,18 @@ public class CurveSampleRecorder {
     private final Map<Station, CSIInfo> cachedCSIInfoByStation = new HashMap<>();
 
     private final int rx1;
-    private final int tx1;
     private final int rx2;
-    private final int tx2;
-    private final ConjugateMultiplicationProcessor cmprocessor;
+    private final ConjugateMultiplicationProcessor[] cmprocessors = new ConjugateMultiplicationProcessor[3];
     private final ShapeRepresentationProcessor shapeProcessor;
 
-    public CurveSampleRecorder(Path recordingDirectory, int rx1, int tx1, int rx2, int tx2) {
+    public CurveSampleRecorder(Path recordingDirectory, int rx1, int rx2) {
         this.recordingDirectory = recordingDirectory;
         this.rx1 = rx1;
-        this.tx1 = tx1;
         this.rx2 = rx2;
-        this.tx2 = tx2;
 
-        this.cmprocessor = new ConjugateMultiplicationProcessor(this.rx1, this.tx1, this.rx2, this.tx2, SLIDING_WINDOW_SIZE, TIMESTAMP_COUNT_FOR_AVERAGE, STDDEV_THRESHOLD_FOR_SAME_PHASE_DETECTION, THRESHOLD_FOR_OFFSET_CORRECTION);
+        for(int i = 0; i < cmprocessors.length; i++) {
+            this.cmprocessors[i] = new ConjugateMultiplicationProcessor(this.rx1, i, this.rx2, i, SLIDING_WINDOW_SIZE, TIMESTAMP_COUNT_FOR_AVERAGE, STDDEV_THRESHOLD_FOR_SAME_PHASE_DETECTION, THRESHOLD_FOR_OFFSET_CORRECTION);
+        }
         this.shapeProcessor = new ShapeRepresentationProcessor(false);
     }
 
@@ -108,17 +106,26 @@ public class CurveSampleRecorder {
     }
 
     public void fillSample(SingleCurveSample sample, CSIInfo csi) {
-        CSIInfo.Complex[] processedData = cmprocessor.process(csi);
+        Vector[][] curves = new Vector[3][];
+        double[][] angles = new double[3][];
+        double[][] dists = new double[3][];
 
-        // 2D curve plot data
-        sample.curve = Arrays.stream(processedData).map(it -> new Vector(it.getReal(), it.getImag())).toArray(Vector[]::new);
+        for(int i = 0;i < cmprocessors.length;i++) {
+            CSIInfo.Complex[] processedData = cmprocessors[0].process(csi);
 
-        // 1D curve analysis data
-        Vector[] shapeAnglesDists = shapeProcessor.process(processedData);
-        shapeProcessor.wrapAngle(shapeAnglesDists);
+            // 2D curve plot data
+            curves[i] = Arrays.stream(processedData).map(it -> new Vector(it.getReal(), it.getImag())).toArray(Vector[]::new);
+            // 1D curve analysis data
+            Vector[] shapeAnglesDists = shapeProcessor.process(processedData);
+            shapeProcessor.wrapAngle(shapeAnglesDists);
 
-        sample.dists = Arrays.stream(shapeAnglesDists).mapToDouble(Vector::getX).toArray();
-        sample.angles = Arrays.stream(shapeAnglesDists).mapToDouble(Vector::getY).toArray();
+            dists[i] = Arrays.stream(shapeAnglesDists).mapToDouble(Vector::getX).toArray();
+            angles[i] = Arrays.stream(shapeAnglesDists).mapToDouble(Vector::getY).toArray();
+        }
+
+        sample.curve = curves[0]; sample.angles = angles[0]; sample.dists = dists[0];
+        sample.curve2 = curves[1]; sample.angles2 = angles[1]; sample.dists2 = dists[1];
+        sample.curve3 = curves[2]; sample.angles3 = angles[2]; sample.dists3 = dists[2];
     }
 
     public void onDataInfo(Station station, DataInfo dataInfo) {
@@ -132,8 +139,14 @@ public class CurveSampleRecorder {
         @SerializedName("cl") // the class of this sample according to known classification for training
         int sampleClass;
 
-        Vector[] curve;
+        Vector[] curve; // ensure backward compatibility for single TX antenna -> no array
         double[] angles;
         double[] dists;
+        Vector[] curve2;
+        double[] angles2;
+        double[] dists2;
+        Vector[] curve3;
+        double[] angles3;
+        double[] dists3;
     }
 }
