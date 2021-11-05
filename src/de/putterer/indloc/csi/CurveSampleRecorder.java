@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +76,7 @@ public class CurveSampleRecorder {
     }
 
 
-    public void captureCMShapeSample(List<Station> stations, int classIndex, boolean isTemporalRecording) {
+    public CompletableFuture captureCMShapeSample(List<Station> stations, int classIndex, boolean isTemporalRecording) {
         // TODO: optional rotation offset fix, see DataPreview:1369
 
         if(fileWriter == null) {
@@ -86,14 +87,19 @@ public class CurveSampleRecorder {
             temporalRecordingHistory.clear();
             temporalRecordingSamplingPeriod = 1000 / TEMPORAL_RECORDING_FREQUENCY;
             temporalRecordingSamplesLeft = TEMPORAL_RECORDING_DURATION  / temporalRecordingSamplingPeriod;
+            temporalRecordingFuture = new CompletableFuture<>();
+
             captureSingleCMShapeSample(stations, classIndex);
+            return temporalRecordingFuture;
         } else {
             temporalRecordingSamplesLeft = 0;
             temporalRecordingHistory.clear();
             captureSingleCMShapeSample(stations, classIndex);
+            return CompletableFuture.completedFuture(null);
         }
     }
 
+    private CompletableFuture<List<Map<String, SingleCurveSample>>> temporalRecordingFuture;
     private List<Map<String, SingleCurveSample>> temporalRecordingHistory = new ArrayList<>();
     private int temporalRecordingSamplesLeft = 0;
     private int temporalRecordingSamplingPeriod; // ms
@@ -126,6 +132,8 @@ public class CurveSampleRecorder {
                 Logger.error("Error while writing to shape recording");
                 e.printStackTrace();
             }
+
+            temporalRecordingFuture.complete(temporalRecordingHistory);
         } else {
             // schedule again in period
             executor.schedule(() -> {

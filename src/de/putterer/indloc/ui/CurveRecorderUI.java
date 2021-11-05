@@ -12,6 +12,7 @@ import java.awt.event.KeyListener;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -84,18 +85,15 @@ public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
 
             this.setBackground(recordingColor);
             this.repaint();
-
-            if(isTemporalRecording()) {
-                // TODO
-            } else {
-                executor.schedule(() -> {
-                    SwingUtilities.invokeLater(() -> this.setBackground(originalBackgroundColor));
-                    this.repaint();
-                }, 100, TimeUnit.MILLISECONDS);
-            }
         });
 
-        curveSampleRecorder.captureCMShapeSample(stations, classIndex, isTemporalRecording());
+        CompletableFuture completionFuture = curveSampleRecorder.captureCMShapeSample(stations, classIndex, isTemporalRecording());
+        completionFuture.thenRun(() -> {
+            executor.schedule(() -> {
+                SwingUtilities.invokeLater(() -> this.setBackground(originalBackgroundColor));
+                this.repaint();
+            }, 100, TimeUnit.MILLISECONDS);
+        });
     }
 
     @Override
