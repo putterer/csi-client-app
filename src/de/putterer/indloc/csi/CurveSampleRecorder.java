@@ -14,10 +14,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class CurveSampleRecorder {
 
@@ -25,6 +25,11 @@ public class CurveSampleRecorder {
     private static final int TIMESTAMP_COUNT_FOR_AVERAGE = 10;
     private static final double STDDEV_THRESHOLD_FOR_SAME_PHASE_DETECTION = 5.0;
     private static final double THRESHOLD_FOR_OFFSET_CORRECTION = 22000.0;
+
+    private static final int TEMPORAL_RECORDING_FREQUENCY = 10; // hertz
+    private static final int TEMPORAL_RECORDING_DURATION = 2000; // seconds
+
+    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private final Path recordingDirectory;
     private FileWriter fileWriter;
@@ -70,20 +75,73 @@ public class CurveSampleRecorder {
     }
 
 
-    public void captureCMShapeSample(List<Station> stations, int classIndex) {
+    public void captureCMShapeSample(List<Station> stations, int classIndex, boolean isTemporalRecording) {
         // TODO: optional rotation offset fix, see DataPreview:1369
 
         if(fileWriter == null) {
             initRecording();
         }
 
+        if(isTemporalRecording) {
+            temporalRecordingHistory.clear();
+            temporalRecordingSamplingPeriod = 1000 / TEMPORAL_RECORDING_FREQUENCY;
+            temporalRecordingSamplesLeft = TEMPORAL_RECORDING_DURATION  / temporalRecordingSamplingPeriod;
+            captureSingleCMShapeSample(stations, classIndex);
+        } else {
+            temporalRecordingSamplesLeft = 0;
+            temporalRecordingHistory.clear();
+            captureSingleCMShapeSample(stations, classIndex);
+        }
+    }
+
+    private List<Map<String, SingleCurveSample>> temporalRecordingHistory = new ArrayList<>();
+    private int temporalRecordingSamplesLeft = 0;
+    private int temporalRecordingSamplingPeriod; // ms
+
+    private void captureSingleCMShapeSample(List<Station> stations, int classIndex) {
+        Map<String, SingleCurveSample> samples = obtainsSampleForAllStations(stations, classIndex);
+
+        if(temporalRecordingHistory.isEmpty() && temporalRecordingSamplesLeft == 0) {
+            try {
+                fileWriter.write(gson.toJson(samples));
+                fileWriter.write("\n");
+                fileWriter.flush();
+            } catch(IOException e) {
+                Logger.error("Error while writing to shape recording");
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        temporalRecordingHistory.add(samples);
+        temporalRecordingSamplesLeft--;
+
+        if(temporalRecordingSamplesLeft <= 0) {
+            // save
+            try {
+                fileWriter.write(gson.toJson(temporalRecordingHistory));
+                fileWriter.write("\n");
+                fileWriter.flush();
+            } catch(IOException e) {
+                Logger.error("Error while writing to shape recording");
+                e.printStackTrace();
+            }
+        } else {
+            // schedule again in period
+            executor.schedule(() -> {
+                captureSingleCMShapeSample(stations, classIndex);
+            }, temporalRecordingSamplingPeriod, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private Map<String, SingleCurveSample> obtainsSampleForAllStations(List<Station> stations, int classIndex) {
         Map<String, SingleCurveSample> samplesByStation = new HashMap<>();
 
         for(Station station : stations) {
             CSIInfo info = cachedCSIInfoByStation.get(station);
             if(info == null) {
-                Logger.info("Not csi data found to record for station %s", station.getName());
-                return;
+                Logger.info("No csi data found to record for station %s", station.getName());
+                return null;
             }
 
             // log all 3 types of curve information
@@ -93,16 +151,9 @@ public class CurveSampleRecorder {
             fillSample(sample, info);
 
             samplesByStation.put(station.getName(), sample);
-        }
 
-        try {
-            fileWriter.write(gson.toJson(samplesByStation));
-            fileWriter.write("\n");
-            fileWriter.flush();
-        } catch(IOException e) {
-            Logger.error("Error while writing to shape recording");
-            e.printStackTrace();
         }
+        return samplesByStation;
     }
 
     public void fillSample(SingleCurveSample sample, CSIInfo csi) {

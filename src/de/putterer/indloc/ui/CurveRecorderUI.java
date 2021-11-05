@@ -35,6 +35,9 @@ public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
     private final JLabel samplesRecordedLabel = new JLabel("Samples: ");
     private final JLabel[] labels = {samplesRecordedLabel, lastRecordedSampleTime, lastRecordedSampleClass, lastRecordedSampleStationCount};
 
+    private final JButton[] recordButtons = new JButton[9];
+    private final JCheckBox temporalRecordingCheckbox = new JCheckBox("Temporal");
+
     public CurveRecorderUI(CsiUserInterface csiUserInterface) {
         super("CurveRecorder", 420, 300);
         this.csiUserInterface = csiUserInterface;
@@ -50,11 +53,23 @@ public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
     }
 
     private void initUI() {
-        for(int i = 0, y = 30; i < labels.length; i++, y += 60) {
-            labels[i].setBounds(30, y, 400, 50);
+        for(int i = 0, y = 50; i < labels.length; i++, y += 55) {
+            labels[i].setBounds(30, y, 400, 45);
             labels[i].setFont(FONT);
             this.add(labels[i]);
         }
+
+        for(int i = 0, y = 7;i < recordButtons.length;i++, y+=30) {
+            recordButtons[i] = new JButton(String.valueOf(i + 1));
+            recordButtons[i].setBounds(383, y, 28, 28);
+            this.add(recordButtons[i]);
+
+            final int classIndex = i + 1;
+            recordButtons[i].addActionListener(e -> recordSample(classIndex));
+        }
+
+        temporalRecordingCheckbox.setBounds(260, 5, 120, 30);
+        this.add(temporalRecordingCheckbox);
     }
 
     private void recordSample(int classIndex) {
@@ -70,13 +85,17 @@ public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
             this.setBackground(recordingColor);
             this.repaint();
 
-            executor.schedule(() -> {
-                SwingUtilities.invokeLater(() -> this.setBackground(originalBackgroundColor));
-                this.repaint();
-            }, 100, TimeUnit.MILLISECONDS);
+            if(isTemporalRecording()) {
+                // TODO
+            } else {
+                executor.schedule(() -> {
+                    SwingUtilities.invokeLater(() -> this.setBackground(originalBackgroundColor));
+                    this.repaint();
+                }, 100, TimeUnit.MILLISECONDS);
+            }
         });
 
-        curveSampleRecorder.captureCMShapeSample(stations, classIndex);
+        curveSampleRecorder.captureCMShapeSample(stations, classIndex, isTemporalRecording());
     }
 
     @Override
@@ -86,7 +105,7 @@ public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if(e.getKeyCode() >= '0' && e.getKeyCode() < '9') {
+        if(e.getKeyCode() >= '0' && e.getKeyCode() <= '9') {
             int pressedDigit = e.getKeyCode() - '0';
             recordSample(pressedDigit);
         }
@@ -97,4 +116,8 @@ public class CurveRecorderUI extends UIComponentWindow implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {}
+
+    public boolean isTemporalRecording() {
+        return temporalRecordingCheckbox.isSelected();
+    }
 }
