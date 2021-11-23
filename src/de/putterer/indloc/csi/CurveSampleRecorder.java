@@ -170,7 +170,7 @@ public class CurveSampleRecorder {
         double[][] dists = new double[3][];
 
         for(int i = 0;i < cmprocessors.length;i++) {
-            CSIInfo.Complex[] processedData = cmprocessors[0].process(csi);
+            CSIInfo.Complex[] processedData = cmprocessors[i].process(csi);
 
             // 2D curve plot data
             curves[i] = Arrays.stream(processedData).map(it -> new Vector(it.getReal(), it.getImag())).toArray(Vector[]::new);
