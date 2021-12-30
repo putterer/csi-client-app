@@ -11,6 +11,11 @@ The config files specify location and properties of the stations within a room d
 
 Most of it is tied together by a generic user interface allowing access to different submodules, but some of the functionality might not be integrated with that, while some other legacy functionality of the user interface (like the select button or the respiratory UI) might not work anymore due to changes in the underlying data structures while adding different types of data sources (intel/esp csi, ecg, acceleration, ...).
 
+A preview of the entire application running, previewing Atheros CSI, Intel CSI, ESP CSI, ECG and acceleration data can be seen in the following images. The system can show and record the data in real time, in this case it is being read from a recording. The previews show the android acceleration, ECG data (serial), CSI amplitude for Atheros, Intel and ESP data, the complex conjugate multiplication (CM) shape representation (see report for more details) and its corresponding angle distribution.
+![An image of the entire setup](./doc/PreviewScreenshot.png)
+
+A video of the system in operation can be found [here](./doc/PreviewRecording.mp4). You can see the respiratory pattern not present in amplitude or phase data, but in the android acceleration as well as the CM plot as a slight, periodic movement.
+
 ## Building
 The project uses Java 8+ and should be runnable with every newer version of most JDKs, including OracleJDK and OpenJDK.
 
@@ -148,3 +153,7 @@ All recordings contain a `room.cfg` file that specifies the configured stations.
 
 # Recording CSI CM shape data
 The system is capable to record "images" and "videos" of the complex conjugate multiplication as described in the report for further processing and machine learning purposes. The respective dialog can be opened using the checkbox, samples can then be recorded by using the UI buttons or pressing the respective keyboard buttons for the desired class. 
+
+# Offline processing
+The recorded data can be read and replayed for investigation later on. Alternatively, it can be read based on the jupyter notebook python implementations in this repository: TODO!
+Code for processing and investigating CSI CM shape data can also be found there.
