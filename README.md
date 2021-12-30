@@ -100,6 +100,7 @@ The Intel CSI tool is not integrated into the CSI Server. You can pipe the stdou
 ## ESP ECG
 
 ## Android acceleration
+Android acceleration data can be obtained and shipped to the csi-client-app just like with any other server using the app found at [https://github.com/putterer/accelerometer-server](https://github.com/putterer/accelerometer-server).
 
 # Setup
 The devices need to be configured in a way, so that the client app is able to communicate with them. In the case of the Atheros, Intel and Android devices, this is done via UDP/IP, for the ESP's it's done using a serial connection. To edit the network and interface addresses, use the web interface for the OpenWRT based routers and the /etc/network/interfaces file for GNU/Linux based systems.
