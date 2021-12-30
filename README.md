@@ -16,8 +16,11 @@ A preview of the entire application running, previewing Atheros CSI, Intel CSI, 
 
 A video of the system in operation can be found [here](./doc/PreviewRecording.mp4). You can see the respiratory pattern not present in amplitude or phase data, but in the android acceleration as well as the CM plot as a slight, periodic movement.
 
-## Auxillary data
-All collected data, jupyter notebooks created during my investigations, import code for the produced recording data and prebuilt firmware and software can be found in this repository: [https://github.com/putterer/csi-auxillary](https://github.com/putterer/csi-auxillary)
+## Auxiliary data
+All collected data, jupyter notebooks created during my investigations, import code for the produced recording data and prebuilt firmware and software can be found in this repository: [https://github.com/putterer/csi-auxiliary](https://github.com/putterer/csi-auxiliary)
+
+## Prebuilt binary
+A prebuilt binary can be found on the releases page. 
 
 ## Building
 The project uses Java 8+ and should be runnable with every newer version of most JDKs, including OracleJDK and OpenJDK.
@@ -112,7 +115,7 @@ The devices need to be configured in a way, so that the client app is able to co
 
 The network architecture I used can be seen here:
 
-![an image of the network architecture containg 3 wireless networks with pairs of TX and RX as well as a wireless data network, a central receiving application and two CSI ESPs + one ECG ESP connected via serial](https://cloud.geosearchef.de/s/QRxz2BzzqS9HWTM/preview)
+![an image of the network architecture containg 3 wireless networks with pairs of TX and RX as well as a wireless data network, a central receiving application and two CSI ESPs + one ECG ESP connected via serial](./doc/architectureImage.jpg)
 
 # Configuration
 The CSI client app is currently configured by changing the `Config.java` file. There, you can change the stations it is trying to subscribe to, their data types and what processing is applied to them.
@@ -161,6 +164,6 @@ All recordings contain a `room.cfg` file that specifies the configured stations.
 The system is capable to record "images" and "videos" of the complex conjugate multiplication as described in the report for further processing and machine learning purposes. The respective dialog can be opened using the checkbox, samples can then be recorded by using the UI buttons or pressing the respective keyboard buttons for the desired class. 
 
 # Offline processing
-The recorded data can be read and replayed for investigation later on. Alternatively, it can be read based on the jupyter notebook python implementations in this repository: [https://github.com/putterer/csi-auxillary](https://github.com/putterer/csi-auxillary)
+The recorded data can be read and replayed for investigation later on. Alternatively, it can be read based on the jupyter notebook python implementations in this repository: [https://github.com/putterer/csi-auxiliary](https://github.com/putterer/csi-auxiliary)
 
 Code for processing and investigating CSI CM shape data can also be found there.
