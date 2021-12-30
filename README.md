@@ -16,6 +16,9 @@ A preview of the entire application running, previewing Atheros CSI, Intel CSI, 
 
 A video of the system in operation can be found [here](./doc/PreviewRecording.mp4). You can see the respiratory pattern not present in amplitude or phase data, but in the android acceleration as well as the CM plot as a slight, periodic movement.
 
+## Auxillary data
+All collected data, jupyter notebooks created during my investigations, import code for the produced recording data and prebuilt firmware and software can be found in this repository: [https://github.com/putterer/csi-auxillary](https://github.com/putterer/csi-auxillary)
+
 ## Building
 The project uses Java 8+ and should be runnable with every newer version of most JDKs, including OracleJDK and OpenJDK.
 
@@ -96,8 +99,10 @@ To run the CSI server, copy it to the device using SSH and just execute it, it s
 The Intel CSI tool is not integrated into the CSI Server. You can pipe the stdout of the modified `log_to_file` tool into the stdin of the [CSI server](https://github.com/putterer/csi-server) though which will cause it to forward any obtained CSI to its subscribers as well (you will have to run `log_to_file` as root).
 
 ## ESP CSI
+// TODO //
 
 ## ESP ECG
+// TODO //
 
 ## Android acceleration
 Android acceleration data can be obtained and shipped to the csi-client-app just like with any other server using the app found at [https://github.com/putterer/accelerometer-server](https://github.com/putterer/accelerometer-server).
@@ -156,5 +161,6 @@ All recordings contain a `room.cfg` file that specifies the configured stations.
 The system is capable to record "images" and "videos" of the complex conjugate multiplication as described in the report for further processing and machine learning purposes. The respective dialog can be opened using the checkbox, samples can then be recorded by using the UI buttons or pressing the respective keyboard buttons for the desired class. 
 
 # Offline processing
-The recorded data can be read and replayed for investigation later on. Alternatively, it can be read based on the jupyter notebook python implementations in this repository: TODO!
+The recorded data can be read and replayed for investigation later on. Alternatively, it can be read based on the jupyter notebook python implementations in this repository: [https://github.com/putterer/csi-auxillary](https://github.com/putterer/csi-auxillary)
+
 Code for processing and investigating CSI CM shape data can also be found there.
