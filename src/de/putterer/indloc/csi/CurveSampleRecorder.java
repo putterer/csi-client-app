@@ -27,8 +27,8 @@ public class CurveSampleRecorder {
     private static final double STDDEV_THRESHOLD_FOR_SAME_PHASE_DETECTION = 5.0;
     private static final double THRESHOLD_FOR_OFFSET_CORRECTION = 22000.0;
 
-    private static final int TEMPORAL_RECORDING_FREQUENCY = 10; // hertz
-    private static final int TEMPORAL_RECORDING_DURATION = 2000; // seconds
+    private static final int TEMPORAL_RECORDING_FREQUENCY = 20; // hertz
+    private static final int TEMPORAL_RECORDING_DURATION = 3000; // seconds
 
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 

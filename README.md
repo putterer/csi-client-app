@@ -14,6 +14,8 @@ Most of it is tied together by a generic user interface allowing access to diffe
 ## Building
 The project uses Java 8+ and should be runnable with every newer version of most JDKs, including OracleJDK and OpenJDK.
 
+Instead of building yourself, a prebuilt application can also be found on the releases page of this repository.
+
 It does not use any build automation and dependency management tool like
 Maven or Gradle as it is required to run and be modified on a system not connected
 to the internet due to running an access point as well as connecting to a router using
@@ -142,4 +144,7 @@ The recorded data can be loaded externally for investigation, e.g. using an inte
 
 Before being stored on disk, all data is compressed using zlib. The data is serialized according to the format described in `DataInfo`, `AndroidInfo`, `EcgInfo`, `CSIInfo`, `AthCSIInfo`, `IntCSIInfo`, `EspCSIInfo`. All packets share the same fields from DataInfo, `clientTimestamp` and `messageId`, all CSI packets contain the same data structure for common properties like the CSI matrix. Different devices might store different additional fields like timestamp from the wifi chip, RSSI, noise information, ... .
 
-All recording contain a `room.cfg` file that specifies the configured stations. When loading, this overrides the stations configured in the application.
+All recordings contain a `room.cfg` file that specifies the configured stations. When loading, this overrides the stations configured in the application.
+
+# Recording CSI CM shape data
+The system is capable to record "images" and "videos" of the complex conjugate multiplication as described in the report for further processing and machine learning purposes. The respective dialog can be opened using the checkbox, samples can then be recorded by using the UI buttons or pressing the respective keyboard buttons for the desired class. 
