@@ -1,6 +1,6 @@
 # CSI Client App
 
-This application allows obtaining, processing, previewing, recording and replaying CSI, ECG and acceleration data sent by multiple devices.
+This application allows obtaining, processing, previewing, recording and replaying CSI, ECG and acceleration data sent by multiple devices. The corresponding server application for receiver devices and OpenWRT based routers can be found at [https://github.com/putterer/csi-server](https://github.com/putterer/csi-server). 
 
 It was initially developed as part of my bachelor's thesis and therefore includes code about indoor localization as well as trilateration using RSSI.
 The python implementation of the [SpotFi](https://web.stanford.edu/~skatti/pubs/sigcomm15-spotfi.pdf) algorithm was removed from this repository.
@@ -93,7 +93,7 @@ To run the CSI server, copy it to the device using SSH and just execute it, it s
 ## Intel CSI
 
 #### CSI server
-The Intel CSI tool is not integrated into the CSI Server. You can pipe the stdout of the modified `log_to_file` tool into the stdin of the CSI server though which will cause it to forward any obtained CSI to its subscribers as well (you will have to run `log_to_file` as root).
+The Intel CSI tool is not integrated into the CSI Server. You can pipe the stdout of the modified `log_to_file` tool into the stdin of the [CSI server](https://github.com/putterer/csi-server) though which will cause it to forward any obtained CSI to its subscribers as well (you will have to run `log_to_file` as root).
 
 ## ESP CSI
 
