@@ -20,7 +20,7 @@ A video of the system in operation can be found [here](./doc/PreviewRecording.mp
 All collected data, jupyter notebooks created during my investigations, import code for the produced recording data and prebuilt firmware and software can be found in this repository: [https://github.com/putterer/csi-auxiliary](https://github.com/putterer/csi-auxiliary)
 
 ## Prebuilt binary
-A prebuilt binary can be found on the releases page. 
+A prebuilt binary can be found on the releases page. Using the `--config [path]` parameter, a path to a config file specifying the available data sources/stations can be provided.
 
 ## Building
 The project uses Java 8+ and should be runnable with every newer version of most JDKs, including OracleJDK and OpenJDK.
