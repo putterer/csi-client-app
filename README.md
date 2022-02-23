@@ -48,6 +48,13 @@ For using Lombok, you will also have to install the lombok plugin for IntelliJ a
 
 To run the app, open the CsiUserInterface class and click the run button.
 
+## Deserialization
+For using a configuration file specified via a command line parameter or reading a replay, the reflection module needs to be accessible. This can be done from Java version 10 on using the `--add-opens java.base/java.lang.reflect=ALL-UNNAMED` JVM paramter. The launch command would then look like this:
+
+```
+java -jar --add-opens java.base/java.lang.reflect=ALL-UNNAMED csi-client-app.jar --config {config-file}
+```
+
 # CSI Server
 The [CSI server](https://gitlab.lrz.de/fabian_putterer/csi-server) has to be run on devices generating CSI data. It obtains, processes, filters and forwards CSI data from the local kernel device to any subscribed client.
 It can be built using the supplied makefile (`make` and `make x86`). It supports Atheros and Intel CSI on x86 and embedded devices.

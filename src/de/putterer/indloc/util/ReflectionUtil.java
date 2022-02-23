@@ -30,6 +30,7 @@ public class ReflectionUtil {
 			modifiersField = MethodHandles.privateLookupIn(Field.class, MethodHandles.lookup()).findVarHandle(Field.class, "modifiers", int.class);
 		} catch (IllegalAccessException | NoSuchFieldException e) {
 			Logger.error("Couldn't get handle of modifiers field", e);
+			e.printStackTrace();
 			modifiersField = null;
 		}
 	}
