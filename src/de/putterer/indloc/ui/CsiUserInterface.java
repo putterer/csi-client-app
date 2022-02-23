@@ -111,11 +111,13 @@ public class CsiUserInterface implements KeyListener {
 		componentWindows.stream().map(UIComponentWindow::getFrame).forEach(f -> f.setVisible(true));
 		componentWindows.stream().map(UIComponentWindow::getFrame).forEach(f -> f.addKeyListener(this));
 
+		try { Thread.sleep(600); } catch(InterruptedException e) { e.printStackTrace(); }
+
 		curveRecorderUI.getFrame().setVisible(false);
 
-		try { Thread.sleep(200); } catch(InterruptedException e) { e.printStackTrace(); }
+		try { Thread.sleep(300); } catch(InterruptedException e) { e.printStackTrace(); }
 		componentWindows.forEach(UIComponentWindow::postConstruct);
-		try { Thread.sleep(200); } catch(InterruptedException e) { e.printStackTrace(); }
+		try { Thread.sleep(300); } catch(InterruptedException e) { e.printStackTrace(); }
 		activityUIs.forEach(au -> au.getFrame().setVisible(false));
 
 		initComplete = true;

@@ -52,7 +52,7 @@ public class GenericStatusUI extends UIComponentWindow {
 
 	private final List<Consumer<Station>> showPreviewCallbacks = new ArrayList<>();
 	public GenericStatusUI(CsiUserInterface csiUserInterface) {
-		super("CSI toolbox - Fabian Putterer - TUM", 420, 300);
+		super("CSI toolbox", 420, 300);
 		this.csiUserInterface = csiUserInterface;
 
 		this.setLayout(null);
