@@ -20,7 +20,7 @@ A video of the system in operation can be found [here](./doc/PreviewRecording.mp
 All collected data, jupyter notebooks created during my investigations, import code for the produced recording data and prebuilt firmware and software can be found in this repository: [https://github.com/putterer/csi-auxiliary](https://github.com/putterer/csi-auxiliary)
 
 ## Prebuilt binary
-A prebuilt binary can be found on the releases page. Using the `--config [path]` parameter, a path to a config file specifying the available data sources/stations can be provided.
+A prebuilt binary can be found on the releases page. Using the `--config [path]` parameter, a path to a config file specifying the available data sources/stations can be provided. The `--run-replay [path]` parameter can be used to load the specified replay immediately. 
 
 ## Building
 The project uses Java 8+ and should be runnable with every newer version of most JDKs, including OracleJDK and OpenJDK.
@@ -109,10 +109,10 @@ To run the CSI server, copy it to the device using SSH and just execute it, it s
 The Intel CSI tool is not integrated into the CSI Server. You can pipe the stdout of the modified `log_to_file` tool into the stdin of the [CSI server](https://github.com/putterer/csi-server) though which will cause it to forward any obtained CSI to its subscribers as well (you will have to run `log_to_file` as root).
 
 ## ESP CSI
-// TODO //
+// TODO README //
 
 ## ESP ECG
-// TODO //
+// TODO README //
 
 ## Android acceleration
 Android acceleration data can be obtained and shipped to the csi-client-app just like with any other server using the app found at [https://github.com/putterer/accelerometer-server](https://github.com/putterer/accelerometer-server).
@@ -174,3 +174,73 @@ The system is capable to record "images" and "videos" of the complex conjugate m
 The recorded data can be read and replayed for investigation later on. Alternatively, it can be read based on the jupyter notebook python implementations in this repository: [https://github.com/putterer/csi-auxiliary](https://github.com/putterer/csi-auxiliary)
 
 Code for processing and investigating CSI CM shape data can also be found there.
+
+
+# Data sample
+Each file is compressed using zlib deflate and may contain multiple recorded data info packets (but usually only contains one). The content depends on the packet type, CSI (Atheros, Intel, Esp), Android (acceleration) or Serial (ECG).
+
+Entire recording folders can be compressed / decompressed using:
+
+```
+java -jar csi-client-app.jar --extract
+```
+```
+java -jar csi-client-app.jar --compress
+```
+
+The following is a sample of the recorded csi data from an Atheros device (after inflating with zlib).
+
+```
+[
+    {
+        "atherosCsiStatus": {  // as reported by the hardware, refer to datasheet for more details
+            "tstamp": 0,  // hardware timestamp
+            "channel": 2437,  // wifi channel, 2.437 GHz -> channel 6
+            "chanBW": 0,  // channel bandwidth (0->20MHz,1->40MHz)
+            "rate": -113,  // transmission rate
+            "nr": 3,  // number of receiving antennas
+            "nc": 2,  // number of transmitting antennas
+            "num_tones": 56,  // number of subcarriers
+            "noise": 0,  // noise floor
+            "phyerr": 0,  // phy error code (set to 0 if correct)
+            "rssi": 64,  // average frame rssi
+            "rssi_0": 59,  // average frame rssi rx antenna 0
+            "rssi_1": 61,  // average frame rssi rx antenna 1
+            "rssi_2": 55,  // average frame rssi rx antenna 2
+            "payload_len": 124, // payload length (bytes)
+            "csi_len": 840,  // csi data length (bytes)
+            "buf_len": 989  // entire buffer length (bytes)
+        },
+        "csi_matrix": [  // Indices: [rx-antenna][tx-antenna][subcarriers], 3x3x114
+            [  // RX antenna 1
+                [  // TX antenna 1
+                    {
+                        "real": 16,
+                        "imag": 32
+                    },
+                    ...  // a total of 114 subcarriers
+                    {
+                        "real": 0,
+                        "imag": 0
+                    }
+                ],
+                [  // TX  antenna 2
+                    ...
+                ],
+                [  // TX  antenna 3
+                    ...
+                ]
+            ],
+            [  // RX antenna 2
+                ...
+            ],
+            [  // RX antenna 3
+                ...
+            ]
+        ],
+        "clientTimestamp": 1623077881967,  // client timestamp obtained when the packet arrived at the csi client app
+        "messageId": 79476,  // message id at the client
+        "csiInfoType": "class de.putterer.indloc.csi.atheros.AthCSIInfo"  // csi type (atheros)
+    }
+]
+```

@@ -20,6 +20,8 @@ import de.putterer.indloc.respiratory.RespiratoryUI;
 import de.putterer.indloc.util.ArgumentParser;
 import de.putterer.indloc.util.Logger;
 import de.putterer.indloc.util.serialization.Serialization;
+import de.putterer.indloc.util.toolbox.RecordingConverter;
+import de.putterer.indloc.util.toolbox.RecordingConverterInflate;
 import lombok.Getter;
 
 import javax.swing.*;
@@ -261,6 +263,15 @@ public class CsiUserInterface implements KeyListener {
 	public static String REPLAY_TO_RUN_ON_STARTUP = null;
 	public static void main(String[] args) throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException, IOException {
 		Map<String, String> arguments = ArgumentParser.parse(args);
+
+		if(arguments.containsKey("extract")) {
+			RecordingConverterInflate.main(new String[0]);
+			return;
+		}
+		if(arguments.containsKey("compress")) {
+			RecordingConverter.main(new String[0]);
+			return;
+		}
 
 		if(arguments.containsKey("run-replay")) {
 			REPLAY_TO_RUN_ON_STARTUP = arguments.get("run-replay");
